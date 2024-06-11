@@ -2,21 +2,14 @@
 
 ## The Plan
 
-Idea 1:
-* Go 
-* DynamoDb - GeoHashing
-* GitHub Actions
-* AWS Infrastructure using CDK Typescript
-    * API Gateway 
-    * WAF
-    * Cognito User Group
-    * AWS Lambda: Authorizer Lambda + Application Lambda
-    * DynamoDB Table
-    * CloudWatch Alerts (using cdk-watchful)
+Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
 
-Idea 2:
 * Go
 * gRPC
-* PostGis
+* PostGis or Dynamo
 * GitHub Actions
-* AWS Infrastructure As plantUML markups since the costs for VPC + HostedZone + Domain are a lot of money for a private project
+* AWS Infrastructure:
+    * Cognito User Group for Auth
+    * Public ALB + WAF
+    * ECS Fargate Cluster
+    * ECR Container Registry
