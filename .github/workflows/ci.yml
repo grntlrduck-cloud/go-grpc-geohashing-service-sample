@@ -39,9 +39,13 @@ jobs:
             go mod download
         - name: Run tests
           run: |
+            echo $PATH
+            echo $GOBIN
+            echo $GOROOT
+            echo $GOPATH
             gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
             go tool cover -html=cover.out -o coverage.html
-            $GOBIN/gocover-cobertura < cover.out > coverage.xml
+            .$GOBIN/gocover-cobertura < cover.out > coverage.xml
     synth:
       runs-on: ubuntu-latest
       steps:
