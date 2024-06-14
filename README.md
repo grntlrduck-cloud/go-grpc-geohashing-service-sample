@@ -21,14 +21,29 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
 * Install golangci-lint `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest` 
 * Install or update ginkgo `go install github.com/onsi/ginkgo/v2/ginkgo`
 * Install or update vuln checker `go install golang.org/x/vuln/cmd/govulncheck@latest`
-* Install proto compiler `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`
+
 
 ## Generate code from protobuf
 
-The booking event lambda receives a json message with a base64 encoded bytestring, the payload, which is parsed to the bookingpb.Event.
-The code is generated with protoc and the go compiler plugin as follows:
-```bash 
- protoc --go_out=paths=source_relative:. lambda/proto/*proto
+Install required probouf binaries
+```bash
+go install \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest \
+
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+```
+
+Install buf folowing the [documentation](https://buf.build/docs/installation)
+For Homebew run 
+```
+brew install bufb
+```
+
+Generate protobuf and openapi
+```bash
+ buf generate
 ```
 
 ## Testing

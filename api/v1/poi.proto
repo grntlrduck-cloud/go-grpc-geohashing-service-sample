@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package api.v1;
+
+option go_package = "github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/adapter/grpc/poiv1";
+
+message PoI {
+  string id = 1;
+  Coordinate coordinate = 2;
+  Address address = 3;
+  repeated string features = 5;
+}
+
+message Coordinate {
+  double longitude = 1;
+  double latitude = 2;
+}
+
+message Address {
+  string street = 1;
+  string street_number = 2; // eg. 11, 13b,   
+  uint32 zip_code = 3;
+  string city = 4;
+  string country = 5;
+}
+
+message GetPoiRequest {
+  string id = 1;
+}
+
+message GetPoIResponse {
+  PoI poi = 1;
+}
+
+service PoIQueryInfo {
+  rpc GetPoI (GetPoiRequest) returns (GetPoIResponse);
+}
