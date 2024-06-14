@@ -41,7 +41,7 @@ jobs:
           run: |
             gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
             go tool cover -html=cover.out -o coverage.html
-            $GOPATH/bin/gocover-cobertura < cover.out > coverage.xml
+            $GOBIN/gocover-cobertura < cover.out > coverage.xml
     synth:
       runs-on: ubuntu-latest
       steps:
