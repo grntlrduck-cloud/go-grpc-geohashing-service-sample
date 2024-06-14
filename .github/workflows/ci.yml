@@ -5,10 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+permissions:
+  id-token: write
+  contents: read
 jobs:
     lint:
-      runs-on: ubutu-latest
+      runs-on: ubuntu-latest
       steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        - name: Setup Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: "1.22.4"
         - name: Lint
           uses: golangci/golangci-lint-action@v3
     test:
@@ -20,14 +29,19 @@ jobs:
           uses: actions/setup-go@v5
           with:
             go-version: "1.22.4"
+        - name: Setup gotestsum
+          uses: "autero1/action-gotestsum@v2.0.0"
+          with:
+            gotestsum_version: "1.12.0"
         - name: Install dependencies
           run: |
-            go get gotest.tools/gotestsum@latest 
-            go get github.com/boumenot/gocover-cobertura
+            GOBIN=$PWD/bin go install github.com/boumenot/gocover-cobertura@latest
             go mod download
+        - name: Run tests
+          run: |
             gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
             go tool cover -html=cover.out -o coverage.html
-            gocover-cobertura < cover.out > coverage.xml
+            ./bin/gocover-cobertura < cover.out > coverage.xml
     synth:
       runs-on: ubuntu-latest
       steps:
@@ -52,4 +66,4 @@ jobs:
           env:
             AWS_REGION:  ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
             AWS_ACCOUNT:  ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
-          run: cdk synth >> /dev/null            
+          run: cdk synth >> /dev/null   
