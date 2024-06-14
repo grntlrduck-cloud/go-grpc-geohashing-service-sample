@@ -1,0 +1,55 @@
+name: Go APP CI
+# run on push to main or on PR targeting main
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+    lint:
+      runs-on: ubutu-latest
+      steps:
+        - name: Lint
+          uses: golangci/golangci-lint-action@v3
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+        - name: Setup Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: "1.22.4"
+        - name: Install dependencies
+          run: |
+            go get gotest.tools/gotestsum@latest 
+            go get github.com/boumenot/gocover-cobertura
+            go mod download
+            gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
+            go tool cover -html=cover.out -o coverage.html
+            gocover-cobertura < cover.out > coverage.xml
+    synth:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout       
+          uses: actions/checkout@v4
+        - name: Setup Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: "1.22.4"
+        - name: Setup Node
+          uses: actions/setup-node@v4
+          with:
+            node-version: "22.x"
+        - name: Assume synth role
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-region:  ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+            role-to-assume: ${{ secrets.CI_CDK_SYNTH_ROLE_ARN }}
+        - name: Setup CDK
+          run: npm install -g aws-cdk
+        - name: CDK Synth
+          env:
+            AWS_REGION:  ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+            AWS_ACCOUNT:  ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
+          run: cdk synth >> /dev/null            

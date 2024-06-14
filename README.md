@@ -17,6 +17,7 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
 ## Setup
 * Install go modules required for local development
 * Install gotestsum `go install gotest.tools/gotestsum@latest` (for test reports in CI tools)
+* Install gocover-cobertura `go install github.com/boumenot/gocover-cobertura@latest` (for test reports conversion in CI tools)
 * Install golangci-lint `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest` 
 * Install or update ginkgo `go install github.com/onsi/ginkgo/v2/ginkgo`
 * Install or update vuln checker `go install golang.org/x/vuln/cmd/govulncheck@latest`
