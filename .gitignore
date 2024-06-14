@@ -24,3 +24,8 @@ go.work.sum
 .vscode
 .idea
 .DS_Store
+
+# coverage, test reports and cdk dia
+*.xml
+*.dot
+*.html
