@@ -1,143 +1,143 @@
 {
-	"swagger": "2.0",
-	"info": {
-		"title": "v1/poi.proto",
-		"version": "version not set"
-	},
-	"tags": [
-		{
-			"name": "PoIQueryInfo"
-		}
-	],
-	"consumes": [
-		"application/json"
-	],
-	"produces": [
-		"application/json"
-	],
-	"paths": {
-		"/api/v1/poi-info": {
-			"get": {
-				"operationId": "PoIQueryInfo_GetPoI",
-				"responses": {
-					"200": {
-						"description": "A successful response.",
-						"schema": {
-							"$ref": "#/definitions/v1GetPoIResponse"
-						}
-					},
-					"default": {
-						"description": "An unexpected error response.",
-						"schema": {
-							"$ref": "#/definitions/rpcStatus"
-						}
-					}
-				},
-				"parameters": [
-					{
-						"name": "id",
-						"in": "query",
-						"required": false,
-						"type": "string"
-					}
-				],
-				"tags": [
-					"PoIQueryInfo"
-				]
-			}
-		}
-	},
-	"definitions": {
-		"protobufAny": {
-			"type": "object",
-			"properties": {
-				"@type": {
-					"type": "string"
-				}
-			},
-			"additionalProperties": {}
-		},
-		"rpcStatus": {
-			"type": "object",
-			"properties": {
-				"code": {
-					"type": "integer",
-					"format": "int32"
-				},
-				"message": {
-					"type": "string"
-				},
-				"details": {
-					"type": "array",
-					"items": {
-						"type": "object",
-						"$ref": "#/definitions/protobufAny"
-					}
-				}
-			}
-		},
-		"v1Address": {
-			"type": "object",
-			"properties": {
-				"street": {
-					"type": "string"
-				},
-				"streetNumber": {
-					"type": "string",
-					"title": "eg. 11, 13b,"
-				},
-				"zipCode": {
-					"type": "integer",
-					"format": "int64"
-				},
-				"city": {
-					"type": "string"
-				},
-				"country": {
-					"type": "string"
-				}
-			}
-		},
-		"v1Coordinate": {
-			"type": "object",
-			"properties": {
-				"longitude": {
-					"type": "number",
-					"format": "double"
-				},
-				"latitude": {
-					"type": "number",
-					"format": "double"
-				}
-			}
-		},
-		"v1GetPoIResponse": {
-			"type": "object",
-			"properties": {
-				"poi": {
-					"$ref": "#/definitions/v1PoI"
-				}
-			}
-		},
-		"v1PoI": {
-			"type": "object",
-			"properties": {
-				"id": {
-					"type": "string"
-				},
-				"coordinate": {
-					"$ref": "#/definitions/v1Coordinate"
-				},
-				"address": {
-					"$ref": "#/definitions/v1Address"
-				},
-				"features": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					}
-				}
-			}
-		}
-	}
+  "swagger": "2.0",
+  "info": {
+    "title": "v1/poi.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PoIQueryInfo"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/poi/{id}": {
+      "get": {
+        "operationId": "PoIQueryInfo_GetPoI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPoIResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PoIQueryInfo"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Address": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "streetNumber": {
+          "type": "string",
+          "title": "eg. 11, 13b,"
+        },
+        "zipCode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Coordinate": {
+      "type": "object",
+      "properties": {
+        "longitude": {
+          "type": "number",
+          "format": "double"
+        },
+        "latitude": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "v1GetPoIResponse": {
+      "type": "object",
+      "properties": {
+        "poi": {
+          "$ref": "#/definitions/v1PoI"
+        }
+      }
+    },
+    "v1PoI": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "coordinate": {
+          "$ref": "#/definitions/v1Coordinate"
+        },
+        "address": {
+          "$ref": "#/definitions/v1Address"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }

@@ -31,19 +31,25 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-var (
-	filter_PoIQueryInfo_GetPoI_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_PoIQueryInfo_GetPoI_0(ctx context.Context, marshaler runtime.Marshaler, client PoIQueryInfoClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetPoiRequest
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIQueryInfo_GetPoI_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	msg, err := client.GetPoI(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -55,11 +61,21 @@ func local_request_PoIQueryInfo_GetPoI_0(ctx context.Context, marshaler runtime.
 	var protoReq GetPoiRequest
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIQueryInfo_GetPoI_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	msg, err := server.GetPoI(ctx, &protoReq)
@@ -81,7 +97,7 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoI", runtime.WithHTTPPathPattern("/api/v1/poi-info"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoI", runtime.WithHTTPPathPattern("/api/v1/poi/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -145,7 +161,7 @@ func RegisterPoIQueryInfoHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoI", runtime.WithHTTPPathPattern("/api/v1/poi-info"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoI", runtime.WithHTTPPathPattern("/api/v1/poi/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -165,7 +181,7 @@ func RegisterPoIQueryInfoHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_PoIQueryInfo_GetPoI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "poi-info"}, ""))
+	pattern_PoIQueryInfo_GetPoI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "poi", "id"}, ""))
 )
 
 var (
