@@ -35,17 +35,13 @@ jobs:
             gotestsum_version: "1.12.0"
         - name: Install dependencies
           run: |
-            go install github.com/boumenot/gocover-cobertura@latest
+            GOBIN=$PWD/bin go install github.com/boumenot/gocover-cobertura@latest
             go mod download
         - name: Run tests
           run: |
-            echo $PATH
-            echo $GOBIN
-            echo $GOROOT
-            echo $GOPATH
             gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
             go tool cover -html=cover.out -o coverage.html
-            .$GOBIN/gocover-cobertura < cover.out > coverage.xml
+            ./bin/gocover-cobertura < cover.out > coverage.xml
     synth:
       runs-on: ubuntu-latest
       steps:
