@@ -71,7 +71,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "gRPC-Gateway PoI Info Service API definition";
     version: "1.0";
-    description: "Swagger API of the gRPC-Gateway Service for PoI search (route, proximity) and info. Transcodes REST (HTTP/JSON) to gRPC to allow consumption by REST clients."
+    description: "Swagger API of the gRPC-Gateway Service for PoI search (route, proximity) and info. Transcodes REST (HTTP/JSON) to gRPC allowing consumption by REST clients."
     contact: {
       name: "gRPC Go Sample Project";
       url: "https://github.com/grntlrduck-cloud/go-grpc-geohashing-service-sample";

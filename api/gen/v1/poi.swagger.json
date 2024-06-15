@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "gRPC-Gateway PoI Info Service API definition",
-    "description": "Swagger API of the gRPC-Gateway Service for PoI search (route, proximity) and info. Transcodes REST (HTTP/JSON) to gRPC to allow consumption by REST clients.",
+    "description": "Swagger API of the gRPC-Gateway Service for PoI search (route, proximity) and info. Transcodes REST (HTTP/JSON) to gRPC allowing consumption by REST clients.",
     "version": "1.0",
     "contact": {
       "name": "gRPC Go Sample Project",
