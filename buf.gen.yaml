@@ -16,9 +16,7 @@ plugins:
     out: api/gen
     opt:
       - paths=source_relative
-      - grpc_api_configuration=api/v1/poi_mapping.yaml
   # protoc-gen-openapiv2 needs to be installed, generate swagger config files based on proto files
   - local: protoc-gen-openapiv2
     out: api/gen
-    opt:
-      - grpc_api_configuration=api/v1/poi_mapping.yaml
+  
