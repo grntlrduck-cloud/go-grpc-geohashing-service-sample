@@ -1,9 +1,9 @@
-package application_test
+package app_test
 
 import (
 	"os"
 
-	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/application"
+	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/app"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -14,7 +14,7 @@ var _ = Describe("Test application environment load", func() {
 		os.Setenv("DYNAMO_TABLE_NAME", tableName)
 		
 		It("does not panic", func() {
-			appEnv := application.NewServiceEnv()
+			appEnv := app.NewServiceEnv()
 			Expect(appEnv).Should(Not(BeNil()))
 			Expect(appEnv.TableName).Should(Equal(tableName))
 		})
