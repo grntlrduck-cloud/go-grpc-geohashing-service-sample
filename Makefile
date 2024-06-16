@@ -9,7 +9,7 @@ configure:
 	@echo "Installing golangci-lint to GOBIN..."
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@echo "Installing ginkgo to GOBIN..."
-	@go install github.com/onsi/ginkgo/v2@latest
+	@go install github.com/onsi/ginkgo/v2/ginkgo@latest
 	@echo "Installing dependencies from go.mod..."
 	@go mod download
 	@echo "Installing pre-commit hook ..."
