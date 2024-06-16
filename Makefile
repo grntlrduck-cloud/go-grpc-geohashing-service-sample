@@ -45,12 +45,12 @@ update_deps:
 vuln_scan:
 	go run --mod=mod golang.org/x/vuln/cmd/govulncheck ./...
 
-build_amd_local:
+build_amd:
 	docker buildx build --platform linux/amd64 -t grntlerduck/poi-info-service:$(shell git rev-parse --short HEAD) .
 
-build_arm_local:
+build_arm:
 	docker buildx build --platform linux/arm64 -t grntlerduck/poi-info-service:$(shell git rev-parse --short HEAD) .
 
-test_full_local_amd: lint vuln_scan test_report synth_local build_amd_local
+test_full_local_amd: lint vuln_scan test_report synth_local build_amd
 
-test_full_local_arm: lint vuln_scan test_report synth_local build_arm_local
+test_full_local_arm: lint vuln_scan test_report synth_local build_arm
