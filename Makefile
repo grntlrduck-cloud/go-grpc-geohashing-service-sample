@@ -14,6 +14,7 @@ configure:
 	@go mod download
 	@echo "Installing pre-commit hook ..."
 	@cp pre-commit.sh .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
 	@echo "Done."
 
 ci:
