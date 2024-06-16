@@ -19,9 +19,9 @@ jobs:
         with:
           go-version: "1.22.4"
       - name: Install dependencies
-        run: go mod download
+        run: mak ci
       - name: Vulnerability Scan
-        run: go run --mod=mod golang.org/x/vuln/cmd/govulncheck ./...
+        run: make vuln_scan
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -46,12 +46,9 @@ jobs:
         with:
           go-version: "1.22.4"
       - name: Install dependencies
-        run: go mod download
+        run: make ci
       - name: Run tests
-        run: |
-          go run --mod=mod gotest.tools/gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
-          go tool cover -html=cover.out -o coverage.html
-          go run --mod=mod github.com/boumenot/gocover-cobertura <cover.out > coverage.xml
+        run: make test_report
   synth:
     runs-on: ubuntu-latest
     needs: 
@@ -79,4 +76,4 @@ jobs:
         env:
           AWS_REGION:  ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
           AWS_ACCOUNT:  ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
-        run: cdk synth >> /dev/null   
+        run: make synth_ci   

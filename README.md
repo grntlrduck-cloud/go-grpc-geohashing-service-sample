@@ -1,4 +1,4 @@
-# go-grpc-geohashing-service-sample
+# go-grpc-geohashing-service-sample - poi-info-service
 
 ## The Plan
 
@@ -15,31 +15,29 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
     * ECR Container Registry
 
 ## Setup
-TODO: convert setup fully/as much as possible to Makefile!
-* Install go modules required for local development
-* Install golangci-lint `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
 
-## Generate code from protobuf
+Before setting app the required protoc plugins and tools by running `make configure` ensure to set up
+* [make](https://www.gnu.org/software/make/)
+* [buf](https://buf.build/docs/installation)
+* [docker](https://docs.docker.com/engine/install/) & [docker-buildx](https://github.com/docker/buildx)
+* [colima](https://github.com/abiosoft/colima) or [docker desktop](https://www.docker.com/products/docker-desktop/)
+* [configure GOBIN or GOPATH](https://go.dev/wiki/SettingGOPATH)
+* [aws cdk](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) & [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
-Install required probouf binaries
+### Colima and Testcontainers
+
+If you have a Mac you might be using colima since docker desktop requires a license.
+Make sure to correclty configure colima:
+
 ```bash
-go install \
-    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest \
-    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest \
-
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+export DOCKER_HOST="unix://${HOME}/.colima/docker.sock"
 ```
 
-Install buf folowing the [documentation](https://buf.build/docs/installation)
-For Homebew run 
-```
-brew install bufb
-```
+## Install Dependencies
 
-Generate protobuf and openapi
 ```bash
- buf generate
+make ci
 ```
 
 ## Testing
@@ -47,28 +45,23 @@ Generate protobuf and openapi
 The tests include unit and integrations in a BDD manner.
 For the integration tests testcontainers is used to easily automate the container lifetime during test suites.
 
-To execute all tests and reports simply run the test script to execute linting and test execution with reportsTo run
+Run tests and generate reports
 ```bash
-./test-local.sh
+make test_report
 ```
 
-run unit tests with junit test report and coverage.html report
-
+Run linter, vulnerability scan, tests & reports, synthesize cdk stacks, and build container on arm machines
 ```bash
-gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out ./... go tool cover -html=cover.out -o coverage.html
+make test_full_local_arm
 ```
 
-run linter
-````bash
-golangci-lint run ./...
-````
+on amd/x86_64 machines
+```bash
+make test_full_local_amd
+```
 
 ### Use ginkgo to bootstrap test suites
 
-make sure you have ginkgo installed, if not install as follows: 
-```bash
-go install github.com/onsi/ginkgo/v2/ginkgo
-```
 
 to bootstrap a new test suite in a module run 
 ```bash
@@ -78,31 +71,14 @@ ginkgo bootstrap
 
 Checkout ginkgo [documentation](https://onsi.github.io/ginkgo/) for more details.
 
-## Colima and Testcontainers
-
-If you have a Mac you might be using colima since docker desktop requires a license.
-Make sure to correclty configure colima:
-
-```
-export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
-export DOCKER_HOST="unix://${HOME}/.colima/docker.sock"
-```
-
-
 ## Vulnerability Checks
-
-install vulnerability checker 
-```bash 
-go install golang.org/x/vuln/cmd/govulncheck@latest
-```
-
 run vulnerability check
 
 ````bash 
-govulncheck ./...
+make vuln_scan
 ````
 
-## Useful commands
+## Other Useful commands
 
 * `cdk deploy`          deploy this stack to your default AWS account/region
 * `cdk diff`            compare deployed stack with current state
