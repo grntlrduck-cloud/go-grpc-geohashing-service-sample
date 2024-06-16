@@ -6,7 +6,7 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
 
 * Go
 * gRPC
-* PostGis or Dynamo
+* Dynamo
 * GitHub Actions
 * AWS Infrastructure:
     * Cognito User Group for Auth
@@ -17,6 +17,7 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
 ## Setup
 
 Before setting app the required protoc plugins and tools by running `make configure` ensure to set up
+* [protoc](https://grpc.io/docs/protoc-installation/) 
 * [make](https://www.gnu.org/software/make/)
 * [buf](https://buf.build/docs/installation)
 * [docker](https://docs.docker.com/engine/install/) & [docker-buildx](https://github.com/docker/buildx)
@@ -26,7 +27,7 @@ Before setting app the required protoc plugins and tools by running `make config
 
 ### Colima and Testcontainers
 
-If you have a Mac you might be using colima since docker desktop requires a license.
+If you have a Mac you might be using colima since docker desktop requires a license especially in corporate ograniyations.
 Make sure to correclty configure colima:
 
 ```bash
