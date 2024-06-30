@@ -1,0 +1,390 @@
+swagger: "2.0"
+info:
+  title: gRPC-Gateway PoI Info Service API definition
+  description: Swagger API of the gRPC-Gateway Service for PoI search (route, proximity) and info. Transcodes REST (HTTP/JSON) to gRPC allowing consumption by REST clients.
+  version: "1.0"
+  contact:
+    name: gRPC Go Sample Project
+    url: https://github.com/grntlrduck-cloud/go-grpc-geohashing-service-sample
+  license:
+    name: Apache-2.0 license
+    url: https://github.com/grntlrduck-cloud/go-grpc-geohashing-service-sample/blob/main/LICENSE
+tags:
+  - name: PoIService
+schemes:
+  - https
+consumes:
+  - application/json
+  - application/x-protobuf
+produces:
+  - application/json
+  - application/x-protobuf
+paths:
+  /api/v1/pois/bbox:
+    get:
+      operationId: PoIService_BBox
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1BBoxResponse'
+        "401":
+          description: Returned when user is forbidden to access resource.
+          schema: {}
+        "403":
+          description: Returned when the user does not have permission to access the resource.
+          schema: {}
+        "404":
+          description: Returned when the resource does not exist.
+          schema: {}
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/v1ErrorResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: bbox.sw.lon
+          description: Longitude of a WGS coordinate.
+          in: query
+          required: true
+          type: number
+          format: double
+        - name: bbox.sw.lat
+          description: Latitude of a WGS coordinate.
+          in: query
+          required: true
+          type: number
+          format: double
+        - name: bbox.ne.lon
+          description: Longitude of a WGS coordinate.
+          in: query
+          required: true
+          type: number
+          format: double
+        - name: bbox.ne.lat
+          description: Latitude of a WGS coordinate.
+          in: query
+          required: true
+          type: number
+          format: double
+        - name: X-Correlation-Id
+          description: Unique event identifier for server requests
+          in: header
+          required: true
+          type: string
+          format: uuid
+      tags:
+        - PoIService
+  /api/v1/pois/info/{id}:
+    get:
+      operationId: PoIService_PoI
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1PoIResponse'
+        "401":
+          description: Returned when user is forbidden to access resource.
+          schema: {}
+        "403":
+          description: Returned when the user does not have permission to access the resource.
+          schema: {}
+        "404":
+          description: Returned when the resource does not exist.
+          schema: {}
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/v1ErrorResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: id
+          description: The unique identifier of a PoI
+          in: path
+          required: true
+          type: string
+          format: uuid
+        - name: X-Correlation-Id
+          description: Unique event identifier for server requests
+          in: header
+          required: true
+          type: string
+          format: uuid
+      tags:
+        - PoIService
+  /api/v1/pois/proximity:
+    get:
+      operationId: PoIService_Proximity
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ProximityResponse'
+        "401":
+          description: Returned when user is forbidden to access resource.
+          schema: {}
+        "403":
+          description: Returned when the user does not have permission to access the resource.
+          schema: {}
+        "404":
+          description: Returned when the resource does not exist.
+          schema: {}
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/v1ErrorResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: center.lon
+          description: Longitude of a WGS coordinate.
+          in: query
+          required: true
+          type: number
+          format: double
+        - name: center.lat
+          description: Latitude of a WGS coordinate.
+          in: query
+          required: true
+          type: number
+          format: double
+        - name: X-Correlation-Id
+          description: Unique event identifier for server requests
+          in: header
+          required: true
+          type: string
+          format: uuid
+      tags:
+        - PoIService
+  /api/v1/pois/route:
+    post:
+      operationId: PoIService_Route
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1RouteResponse'
+        "401":
+          description: Returned when user is forbidden to access resource.
+          schema: {}
+        "403":
+          description: Returned when the user does not have permission to access the resource.
+          schema: {}
+        "404":
+          description: Returned when the resource does not exist.
+          schema: {}
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/v1ErrorResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: route
+          in: body
+          required: true
+          schema:
+            type: array
+            items:
+              type: object
+              $ref: '#/definitions/v1Coordinate'
+              maxLength: 100
+              minLength: 2
+            description: The coordinate path to search for charging stations in close proximity
+        - name: X-Correlation-Id
+          description: Unique event identifier for server requests
+          in: header
+          required: true
+          type: string
+          format: uuid
+      tags:
+        - PoIService
+definitions:
+  apiv1BBox:
+    type: object
+    properties:
+      sw:
+        $ref: '#/definitions/v1Coordinate'
+        example:
+          lat: 48.137154
+          lon: 11.576124
+        description: The WGS coordinate defining the south west corner of a bounding box.
+      ne:
+        $ref: '#/definitions/v1Coordinate'
+        example:
+          lat: 48.137154
+          lon: 11.576124
+        description: The WGS coordinate defining the north east corner of a bounding box.
+  apiv1PoI:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 2438ac3c-37eb-4902-adef-ed16b4431030
+        description: The unique event identifier for server requests
+        pattern: ^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-w9A-F]{12}$
+      coordinate:
+        $ref: '#/definitions/v1Coordinate'
+        example:
+          lat: 48.137154
+          lon: 11.576124
+        description: The WGS coordinate representing the center of the center of the PoIs' location
+      entrance:
+        $ref: '#/definitions/v1Coordinate'
+        example:
+          lat: 48.137154
+          lon: 11.576124
+        description: The WGS coordinate marking the road entrance to the PoIs' location
+      address:
+        $ref: '#/definitions/v1Address'
+        example:
+          city: Munich
+          country: Germany
+          street: My Street
+          street_number: 1b
+          zip_code: 80331
+        description: The address of the PoI
+      features:
+        type: array
+        example:
+          - charging
+          - resting
+          - shower
+          - groceries
+        items:
+          type: string
+        description: A list of free form text of available features and amenities at given location.
+  protobufAny:
+    type: object
+    properties:
+      '@type':
+        type: string
+    additionalProperties: {}
+  rpcStatus:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/protobufAny'
+  v1Address:
+    type: object
+    properties:
+      street:
+        type: string
+        example: Biergratenstr.
+        description: The name of the street
+      street_number:
+        type: string
+        example: 11a
+        description: The street number of the given address
+      zip_code:
+        type: integer
+        format: int64
+        example: 80331
+        description: The zip code for the given address
+      city:
+        type: string
+        example: Berlin
+        description: The name of the city
+      country:
+        type: string
+        example: DEU
+        description: Alpha3 country code
+  v1BBoxResponse:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/apiv1PoI'
+  v1Coordinate:
+    type: object
+    properties:
+      lon:
+        type: number
+        format: double
+        example: 11.57
+        description: Longitude of a WGS coordinate.
+      lat:
+        type: number
+        format: double
+        example: 48.13
+        description: Latitude of a WGS coordinate.
+    required:
+      - lon
+      - lat
+  v1ErrorObject:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: integer
+        description: Response code
+        pattern: ^[0-9]$
+      message:
+        type: string
+        description: Response message
+        pattern: ^[a-zA-Z0-9]{1, 32}$
+  v1ErrorResponse:
+    type: object
+    properties:
+      correlationId:
+        type: string
+        format: uuid
+        example: 2438ac3c-37eb-4902-adef-ed16b4431030
+        description: Unique event identifier for server requests
+        title: x-correlation-id
+        pattern: ^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$
+      error:
+        $ref: '#/definitions/v1ErrorObject'
+  v1PoIResponse:
+    type: object
+    properties:
+      poi:
+        $ref: '#/definitions/apiv1PoI'
+  v1ProximityResponse:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/apiv1PoI'
+  v1RouteResponse:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/apiv1PoI'
+securityDefinitions:
+  OAuth2:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://example.com/oauth/authorize
+    tokenUrl: https://example.com/oauth/token
+    scopes:
+      pois.read: Grants read access to poi resources
+security:
+  - OAuth2:
+      - pois.read

@@ -19,168 +19,208 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	PoIQueryInfo_GetPoI_FullMethodName              = "/api.v1.PoIQueryInfo/GetPoI"
-	PoIQueryInfo_GetPoIsInProximity_FullMethodName  = "/api.v1.PoIQueryInfo/GetPoIsInProximity"
-	PoIQueryInfo_PoISearchAlongRoute_FullMethodName = "/api.v1.PoIQueryInfo/PoISearchAlongRoute"
+	PoIService_PoI_FullMethodName       = "/api.v1.PoIService/PoI"
+	PoIService_Proximity_FullMethodName = "/api.v1.PoIService/Proximity"
+	PoIService_BBox_FullMethodName      = "/api.v1.PoIService/BBox"
+	PoIService_Route_FullMethodName     = "/api.v1.PoIService/Route"
 )
 
-// PoIQueryInfoClient is the client API for PoIQueryInfo service.
+// PoIServiceClient is the client API for PoIService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // see https://github.com/grpc-ecosystem/grpc-gateway
-type PoIQueryInfoClient interface {
-	GetPoI(ctx context.Context, in *GetPoIRequest, opts ...grpc.CallOption) (*GetPoIResponse, error)
-	GetPoIsInProximity(ctx context.Context, in *GetPoIsInProximityRequest, opts ...grpc.CallOption) (*PoIListResponse, error)
-	PoISearchAlongRoute(ctx context.Context, in *GetPoIsAlongRouteRequest, opts ...grpc.CallOption) (*PoIListResponse, error)
+// https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
+type PoIServiceClient interface {
+	PoI(ctx context.Context, in *PoIRequest, opts ...grpc.CallOption) (*PoIResponse, error)
+	Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*ProximityResponse, error)
+	BBox(ctx context.Context, in *BBoxRequest, opts ...grpc.CallOption) (*BBoxResponse, error)
+	Route(ctx context.Context, in *RouteRequest, opts ...grpc.CallOption) (*RouteResponse, error)
 }
 
-type poIQueryInfoClient struct {
+type poIServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPoIQueryInfoClient(cc grpc.ClientConnInterface) PoIQueryInfoClient {
-	return &poIQueryInfoClient{cc}
+func NewPoIServiceClient(cc grpc.ClientConnInterface) PoIServiceClient {
+	return &poIServiceClient{cc}
 }
 
-func (c *poIQueryInfoClient) GetPoI(ctx context.Context, in *GetPoIRequest, opts ...grpc.CallOption) (*GetPoIResponse, error) {
+func (c *poIServiceClient) PoI(ctx context.Context, in *PoIRequest, opts ...grpc.CallOption) (*PoIResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetPoIResponse)
-	err := c.cc.Invoke(ctx, PoIQueryInfo_GetPoI_FullMethodName, in, out, cOpts...)
+	out := new(PoIResponse)
+	err := c.cc.Invoke(ctx, PoIService_PoI_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *poIQueryInfoClient) GetPoIsInProximity(ctx context.Context, in *GetPoIsInProximityRequest, opts ...grpc.CallOption) (*PoIListResponse, error) {
+func (c *poIServiceClient) Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*ProximityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PoIListResponse)
-	err := c.cc.Invoke(ctx, PoIQueryInfo_GetPoIsInProximity_FullMethodName, in, out, cOpts...)
+	out := new(ProximityResponse)
+	err := c.cc.Invoke(ctx, PoIService_Proximity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *poIQueryInfoClient) PoISearchAlongRoute(ctx context.Context, in *GetPoIsAlongRouteRequest, opts ...grpc.CallOption) (*PoIListResponse, error) {
+func (c *poIServiceClient) BBox(ctx context.Context, in *BBoxRequest, opts ...grpc.CallOption) (*BBoxResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PoIListResponse)
-	err := c.cc.Invoke(ctx, PoIQueryInfo_PoISearchAlongRoute_FullMethodName, in, out, cOpts...)
+	out := new(BBoxResponse)
+	err := c.cc.Invoke(ctx, PoIService_BBox_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PoIQueryInfoServer is the server API for PoIQueryInfo service.
-// All implementations should embed UnimplementedPoIQueryInfoServer
+func (c *poIServiceClient) Route(ctx context.Context, in *RouteRequest, opts ...grpc.CallOption) (*RouteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RouteResponse)
+	err := c.cc.Invoke(ctx, PoIService_Route_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PoIServiceServer is the server API for PoIService service.
+// All implementations should embed UnimplementedPoIServiceServer
 // for forward compatibility
 //
 // see https://github.com/grpc-ecosystem/grpc-gateway
-type PoIQueryInfoServer interface {
-	GetPoI(context.Context, *GetPoIRequest) (*GetPoIResponse, error)
-	GetPoIsInProximity(context.Context, *GetPoIsInProximityRequest) (*PoIListResponse, error)
-	PoISearchAlongRoute(context.Context, *GetPoIsAlongRouteRequest) (*PoIListResponse, error)
+// https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
+type PoIServiceServer interface {
+	PoI(context.Context, *PoIRequest) (*PoIResponse, error)
+	Proximity(context.Context, *ProximityRequest) (*ProximityResponse, error)
+	BBox(context.Context, *BBoxRequest) (*BBoxResponse, error)
+	Route(context.Context, *RouteRequest) (*RouteResponse, error)
 }
 
-// UnimplementedPoIQueryInfoServer should be embedded to have forward compatible implementations.
-type UnimplementedPoIQueryInfoServer struct {
+// UnimplementedPoIServiceServer should be embedded to have forward compatible implementations.
+type UnimplementedPoIServiceServer struct {
 }
 
-func (UnimplementedPoIQueryInfoServer) GetPoI(context.Context, *GetPoIRequest) (*GetPoIResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPoI not implemented")
+func (UnimplementedPoIServiceServer) PoI(context.Context, *PoIRequest) (*PoIResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PoI not implemented")
 }
-func (UnimplementedPoIQueryInfoServer) GetPoIsInProximity(context.Context, *GetPoIsInProximityRequest) (*PoIListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPoIsInProximity not implemented")
+func (UnimplementedPoIServiceServer) Proximity(context.Context, *ProximityRequest) (*ProximityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Proximity not implemented")
 }
-func (UnimplementedPoIQueryInfoServer) PoISearchAlongRoute(context.Context, *GetPoIsAlongRouteRequest) (*PoIListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PoISearchAlongRoute not implemented")
+func (UnimplementedPoIServiceServer) BBox(context.Context, *BBoxRequest) (*BBoxResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BBox not implemented")
+}
+func (UnimplementedPoIServiceServer) Route(context.Context, *RouteRequest) (*RouteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
 }
 
-// UnsafePoIQueryInfoServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PoIQueryInfoServer will
+// UnsafePoIServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PoIServiceServer will
 // result in compilation errors.
-type UnsafePoIQueryInfoServer interface {
-	mustEmbedUnimplementedPoIQueryInfoServer()
+type UnsafePoIServiceServer interface {
+	mustEmbedUnimplementedPoIServiceServer()
 }
 
-func RegisterPoIQueryInfoServer(s grpc.ServiceRegistrar, srv PoIQueryInfoServer) {
-	s.RegisterService(&PoIQueryInfo_ServiceDesc, srv)
+func RegisterPoIServiceServer(s grpc.ServiceRegistrar, srv PoIServiceServer) {
+	s.RegisterService(&PoIService_ServiceDesc, srv)
 }
 
-func _PoIQueryInfo_GetPoI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPoIRequest)
+func _PoIService_PoI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PoIRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PoIQueryInfoServer).GetPoI(ctx, in)
+		return srv.(PoIServiceServer).PoI(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PoIQueryInfo_GetPoI_FullMethodName,
+		FullMethod: PoIService_PoI_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PoIQueryInfoServer).GetPoI(ctx, req.(*GetPoIRequest))
+		return srv.(PoIServiceServer).PoI(ctx, req.(*PoIRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PoIQueryInfo_GetPoIsInProximity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPoIsInProximityRequest)
+func _PoIService_Proximity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProximityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PoIQueryInfoServer).GetPoIsInProximity(ctx, in)
+		return srv.(PoIServiceServer).Proximity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PoIQueryInfo_GetPoIsInProximity_FullMethodName,
+		FullMethod: PoIService_Proximity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PoIQueryInfoServer).GetPoIsInProximity(ctx, req.(*GetPoIsInProximityRequest))
+		return srv.(PoIServiceServer).Proximity(ctx, req.(*ProximityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PoIQueryInfo_PoISearchAlongRoute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPoIsAlongRouteRequest)
+func _PoIService_BBox_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BBoxRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PoIQueryInfoServer).PoISearchAlongRoute(ctx, in)
+		return srv.(PoIServiceServer).BBox(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PoIQueryInfo_PoISearchAlongRoute_FullMethodName,
+		FullMethod: PoIService_BBox_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PoIQueryInfoServer).PoISearchAlongRoute(ctx, req.(*GetPoIsAlongRouteRequest))
+		return srv.(PoIServiceServer).BBox(ctx, req.(*BBoxRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// PoIQueryInfo_ServiceDesc is the grpc.ServiceDesc for PoIQueryInfo service.
+func _PoIService_Route_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RouteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PoIServiceServer).Route(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PoIService_Route_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PoIServiceServer).Route(ctx, req.(*RouteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PoIService_ServiceDesc is the grpc.ServiceDesc for PoIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var PoIQueryInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.v1.PoIQueryInfo",
-	HandlerType: (*PoIQueryInfoServer)(nil),
+var PoIService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.v1.PoIService",
+	HandlerType: (*PoIServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetPoI",
-			Handler:    _PoIQueryInfo_GetPoI_Handler,
+			MethodName: "PoI",
+			Handler:    _PoIService_PoI_Handler,
 		},
 		{
-			MethodName: "GetPoIsInProximity",
-			Handler:    _PoIQueryInfo_GetPoIsInProximity_Handler,
+			MethodName: "Proximity",
+			Handler:    _PoIService_Proximity_Handler,
 		},
 		{
-			MethodName: "PoISearchAlongRoute",
-			Handler:    _PoIQueryInfo_PoISearchAlongRoute_Handler,
+			MethodName: "BBox",
+			Handler:    _PoIService_BBox_Handler,
+		},
+		{
+			MethodName: "Route",
+			Handler:    _PoIService_Route_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

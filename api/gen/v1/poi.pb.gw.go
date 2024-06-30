@@ -31,8 +31,8 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_PoIQueryInfo_GetPoI_0(ctx context.Context, marshaler runtime.Marshaler, client PoIQueryInfoClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPoIRequest
+func request_PoIService_PoI_0(ctx context.Context, marshaler runtime.Marshaler, client PoIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq PoIRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -52,13 +52,13 @@ func request_PoIQueryInfo_GetPoI_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.GetPoI(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.PoI(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PoIQueryInfo_GetPoI_0(ctx context.Context, marshaler runtime.Marshaler, server PoIQueryInfoServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPoIRequest
+func local_request_PoIService_PoI_0(ctx context.Context, marshaler runtime.Marshaler, server PoIServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq PoIRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -78,90 +78,116 @@ func local_request_PoIQueryInfo_GetPoI_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.GetPoI(ctx, &protoReq)
+	msg, err := server.PoI(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PoIQueryInfo_GetPoIsInProximity_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_PoIService_Proximity_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PoIQueryInfo_GetPoIsInProximity_0(ctx context.Context, marshaler runtime.Marshaler, client PoIQueryInfoClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPoIsInProximityRequest
+func request_PoIService_Proximity_0(ctx context.Context, marshaler runtime.Marshaler, client PoIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ProximityRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIQueryInfo_GetPoIsInProximity_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIService_Proximity_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetPoIsInProximity(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.Proximity(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PoIQueryInfo_GetPoIsInProximity_0(ctx context.Context, marshaler runtime.Marshaler, server PoIQueryInfoServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPoIsInProximityRequest
+func local_request_PoIService_Proximity_0(ctx context.Context, marshaler runtime.Marshaler, server PoIServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ProximityRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIQueryInfo_GetPoIsInProximity_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIService_Proximity_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetPoIsInProximity(ctx, &protoReq)
+	msg, err := server.Proximity(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_PoIQueryInfo_PoISearchAlongRoute_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_PoIService_BBox_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_PoIQueryInfo_PoISearchAlongRoute_0(ctx context.Context, marshaler runtime.Marshaler, client PoIQueryInfoClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPoIsAlongRouteRequest
+func request_PoIService_BBox_0(ctx context.Context, marshaler runtime.Marshaler, client PoIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq BBoxRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIQueryInfo_PoISearchAlongRoute_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIService_BBox_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.PoISearchAlongRoute(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.BBox(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_PoIQueryInfo_PoISearchAlongRoute_0(ctx context.Context, marshaler runtime.Marshaler, server PoIQueryInfoServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPoIsAlongRouteRequest
+func local_request_PoIService_BBox_0(ctx context.Context, marshaler runtime.Marshaler, server PoIServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq BBoxRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIQueryInfo_PoISearchAlongRoute_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PoIService_BBox_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.PoISearchAlongRoute(ctx, &protoReq)
+	msg, err := server.BBox(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-// RegisterPoIQueryInfoHandlerServer registers the http handlers for service PoIQueryInfo to "mux".
-// UnaryRPC     :call PoIQueryInfoServer directly.
+func request_PoIService_Route_0(ctx context.Context, marshaler runtime.Marshaler, client PoIServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RouteRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq.Route); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.Route(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_PoIService_Route_0(ctx context.Context, marshaler runtime.Marshaler, server PoIServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RouteRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq.Route); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.Route(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+// RegisterPoIServiceHandlerServer registers the http handlers for service PoIService to "mux".
+// UnaryRPC     :call PoIServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterPoIQueryInfoHandlerFromEndpoint instead.
-func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMux, server PoIQueryInfoServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterPoIServiceHandlerFromEndpoint instead.
+func RegisterPoIServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server PoIServiceServer) error {
 
-	mux.Handle("GET", pattern_PoIQueryInfo_GetPoI_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PoIService_PoI_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -169,12 +195,12 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoI", runtime.WithHTTPPathPattern("/api/v1/pois/info/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIService/PoI", runtime.WithHTTPPathPattern("/api/v1/pois/info/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PoIQueryInfo_GetPoI_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PoIService_PoI_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -182,11 +208,11 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_PoIQueryInfo_GetPoI_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_PoIService_PoI_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PoIQueryInfo_GetPoIsInProximity_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PoIService_Proximity_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -194,12 +220,12 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoIsInProximity", runtime.WithHTTPPathPattern("/api/v1/pois/proximity"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIService/Proximity", runtime.WithHTTPPathPattern("/api/v1/pois/proximity"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PoIQueryInfo_GetPoIsInProximity_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PoIService_Proximity_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -207,11 +233,11 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_PoIQueryInfo_GetPoIsInProximity_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_PoIService_Proximity_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_PoIQueryInfo_PoISearchAlongRoute_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PoIService_BBox_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -219,12 +245,12 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIQueryInfo/PoISearchAlongRoute", runtime.WithHTTPPathPattern("/api/v1/pois/route"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIService/BBox", runtime.WithHTTPPathPattern("/api/v1/pois/bbox"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_PoIQueryInfo_PoISearchAlongRoute_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_PoIService_BBox_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -232,16 +258,41 @@ func RegisterPoIQueryInfoHandlerServer(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_PoIQueryInfo_PoISearchAlongRoute_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_PoIService_BBox_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_PoIService_Route_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/api.v1.PoIService/Route", runtime.WithHTTPPathPattern("/api/v1/pois/route"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PoIService_Route_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PoIService_Route_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterPoIQueryInfoHandlerFromEndpoint is same as RegisterPoIQueryInfoHandler but
+// RegisterPoIServiceHandlerFromEndpoint is same as RegisterPoIServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterPoIQueryInfoHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterPoIServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
@@ -261,85 +312,107 @@ func RegisterPoIQueryInfoHandlerFromEndpoint(ctx context.Context, mux *runtime.S
 		}()
 	}()
 
-	return RegisterPoIQueryInfoHandler(ctx, mux, conn)
+	return RegisterPoIServiceHandler(ctx, mux, conn)
 }
 
-// RegisterPoIQueryInfoHandler registers the http handlers for service PoIQueryInfo to "mux".
+// RegisterPoIServiceHandler registers the http handlers for service PoIService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterPoIQueryInfoHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterPoIQueryInfoHandlerClient(ctx, mux, NewPoIQueryInfoClient(conn))
+func RegisterPoIServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterPoIServiceHandlerClient(ctx, mux, NewPoIServiceClient(conn))
 }
 
-// RegisterPoIQueryInfoHandlerClient registers the http handlers for service PoIQueryInfo
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "PoIQueryInfoClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "PoIQueryInfoClient"
+// RegisterPoIServiceHandlerClient registers the http handlers for service PoIService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "PoIServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "PoIServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "PoIQueryInfoClient" to call the correct interceptors.
-func RegisterPoIQueryInfoHandlerClient(ctx context.Context, mux *runtime.ServeMux, client PoIQueryInfoClient) error {
+// "PoIServiceClient" to call the correct interceptors.
+func RegisterPoIServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client PoIServiceClient) error {
 
-	mux.Handle("GET", pattern_PoIQueryInfo_GetPoI_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PoIService_PoI_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoI", runtime.WithHTTPPathPattern("/api/v1/pois/info/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIService/PoI", runtime.WithHTTPPathPattern("/api/v1/pois/info/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PoIQueryInfo_GetPoI_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PoIService_PoI_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PoIQueryInfo_GetPoI_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_PoIService_PoI_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_PoIQueryInfo_GetPoIsInProximity_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PoIService_Proximity_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIQueryInfo/GetPoIsInProximity", runtime.WithHTTPPathPattern("/api/v1/pois/proximity"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIService/Proximity", runtime.WithHTTPPathPattern("/api/v1/pois/proximity"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PoIQueryInfo_GetPoIsInProximity_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PoIService_Proximity_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PoIQueryInfo_GetPoIsInProximity_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_PoIService_Proximity_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_PoIQueryInfo_PoISearchAlongRoute_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_PoIService_BBox_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIQueryInfo/PoISearchAlongRoute", runtime.WithHTTPPathPattern("/api/v1/pois/route"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIService/BBox", runtime.WithHTTPPathPattern("/api/v1/pois/bbox"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_PoIQueryInfo_PoISearchAlongRoute_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_PoIService_BBox_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_PoIQueryInfo_PoISearchAlongRoute_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_PoIService_BBox_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_PoIService_Route_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/api.v1.PoIService/Route", runtime.WithHTTPPathPattern("/api/v1/pois/route"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PoIService_Route_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PoIService_Route_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -347,17 +420,21 @@ func RegisterPoIQueryInfoHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_PoIQueryInfo_GetPoI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "pois", "info", "id"}, ""))
+	pattern_PoIService_PoI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "pois", "info", "id"}, ""))
 
-	pattern_PoIQueryInfo_GetPoIsInProximity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "pois", "proximity"}, ""))
+	pattern_PoIService_Proximity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "pois", "proximity"}, ""))
 
-	pattern_PoIQueryInfo_PoISearchAlongRoute_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "pois", "route"}, ""))
+	pattern_PoIService_BBox_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "pois", "bbox"}, ""))
+
+	pattern_PoIService_Route_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "pois", "route"}, ""))
 )
 
 var (
-	forward_PoIQueryInfo_GetPoI_0 = runtime.ForwardResponseMessage
+	forward_PoIService_PoI_0 = runtime.ForwardResponseMessage
 
-	forward_PoIQueryInfo_GetPoIsInProximity_0 = runtime.ForwardResponseMessage
+	forward_PoIService_Proximity_0 = runtime.ForwardResponseMessage
 
-	forward_PoIQueryInfo_PoISearchAlongRoute_0 = runtime.ForwardResponseMessage
+	forward_PoIService_BBox_0 = runtime.ForwardResponseMessage
+
+	forward_PoIService_Route_0 = runtime.ForwardResponseMessage
 )

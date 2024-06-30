@@ -33,26 +33,26 @@ type PoIParseError struct {
 	poi     *poiv1.PoI
 }
 
-func (e *PoIParseError) Error() string {
+func (e PoIParseError) Error() string {
 	return fmt.Sprintf("%s for poi=%s", e.message, e.poi.Id)
 }
 
-func Parse(poipb *poiv1.PoI) (*PoILocation, error) {
+func Parse(poipb *poiv1.PoI) (PoILocation, error) {
 	id, err := uuid.Parse(poipb.Id)
-  if err != nil {
-		return nil, &PoIParseError{message: err.Error(), poi: poipb}
+	if err != nil {
+		return PoILocation{}, PoIParseError{message: err.Error(), poi: poipb}
 	}
 	poil := PoILocation{
 		Id: id,
 		Location: Coordiantes{
-			Longitude: poipb.Coordinate.Longitude,
-			Latitude:  poipb.Coordinate.Latitude,
+      Longitude: poipb.Coordinate.Lon,
+			Latitude:  poipb.Coordinate.Lat,
 		},
 		LocbationEntrance: Coordiantes{
-			Longitude: poipb.Coordinate.Longitude,
-			Latitude:  poipb.Coordinate.Latitude,
+			Longitude: poipb.Coordinate.Lon,
+			Latitude:  poipb.Coordinate.Lat,
 		},
 		Features: poipb.Features,
 	}
-	return &poil, nil
+	return poil, nil
 }
