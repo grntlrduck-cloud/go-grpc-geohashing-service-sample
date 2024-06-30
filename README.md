@@ -88,3 +88,12 @@ make vuln_scan
 * `go mod download`     install go modules
 * `go get -u ./...`     update all dependencies recursive 
 * `ginkgo bootstrap`    boostrap ginkgo test suit into current dir
+
+## Helpful Resources
+
+* Google and gRPC gateway documentation
+    * https://buf.build/grpc-ecosystem/grpc-gateway/docs/main:grpc.gateway.protoc_gen_openapiv2.options#grpc.gateway.protoc_gen_openapiv2.options
+    * https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
+    * https://github.com/grpc-ecosystem/grpc-gateway
+    * https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
+

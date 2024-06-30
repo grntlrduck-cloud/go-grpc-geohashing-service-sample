@@ -45,7 +45,7 @@ func Parse(poipb *poiv1.PoI) (PoILocation, error) {
 	poil := PoILocation{
 		Id: id,
 		Location: Coordiantes{
-      Longitude: poipb.Coordinate.Lon,
+			Longitude: poipb.Coordinate.Lon,
 			Latitude:  poipb.Coordinate.Lat,
 		},
 		LocbationEntrance: Coordiantes{

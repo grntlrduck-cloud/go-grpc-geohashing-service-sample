@@ -7,9 +7,13 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/adapter/grpc/poiv1";
-// helpful documentation https://buf.build/grpc-ecosystem/grpc-gateway/docs/b1a658f113ba77ade0246b59f185988913deae5b:grpc.gateway.protoc_gen_openapiv2.options#grpc.gateway.protoc_gen_openapiv2.options
 
-// https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
+// google and gRPC gateway documentation
+// 1. helpful documentation https://buf.build/grpc-ecosystem/grpc-gateway/docs/main:grpc.gateway.protoc_gen_openapiv2.options#grpc.gateway.protoc_gen_openapiv2.options
+// 2. https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
+// 3. https://github.com/grpc-ecosystem/grpc-gateway
+// 4. https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
+
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "gRPC-Gateway PoI Info Service API definition"
@@ -251,8 +255,6 @@ message ErrorObject {
   }];
 }
 
-// see https://github.com/grpc-ecosystem/grpc-gateway
-// https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
 service PoIService {
   rpc PoI(PoIRequest) returns (PoIResponse) {
     option (google.api.http) = {get: "/api/v1/pois/info/{id}"};
