@@ -9,7 +9,7 @@ import (
 
 type AppStackProps struct {
 	StackProps awscdk.StackProps
-	AppName    string
+	
 }
 
 func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) awscdk.Stack {

@@ -31,9 +31,9 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 			},
 		},
 	})
-  utils.OverrideLogicalId(databucket.Node(), "ChargingDataBucket")
+	utils.OverrideLogicalId(databucket.Node(), "ChargingDataBucket")
 
-  // params
+	// params
 	bucketNameParam := awsssm.NewStringParameter(
 		stack,
 		jsii.String("SSMChargingDataBucketName"),
@@ -44,7 +44,7 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 	)
 	utils.OverrideLogicalId(bucketNameParam.Node(), "SSMChargingDataBucketName")
 
-  bucketArnParam := awsssm.NewStringParameter(
+	bucketArnParam := awsssm.NewStringParameter(
 		stack,
 		jsii.String("SSMChargingDataBucketArn"),
 		&awsssm.StringParameterProps{
@@ -52,20 +52,28 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 			ParameterName: jsii.Sprintf("/config/%s/charging-data-bucket-arn", props.AppName),
 		},
 	)
-  utils.OverrideLogicalId(bucketArnParam.Node(), "SSMChargingDataBucketArn")
+	utils.OverrideLogicalId(bucketArnParam.Node(), "SSMChargingDataBucketArn")
 
 	// outputs
-  outputBucketName := awscdk.NewCfnOutput(stack, jsii.String("ChargingDataBucketNameOutPut"), &awscdk.CfnOutputProps{
-		ExportName: jsii.Sprintf("%s-", "charging-data-bucket-name"),
-		Value:      databucket.BucketName(),
-	})
-  outputBucketName.OverrideLogicalId(jsii.String("ChargingDataBucketNameOutPut"))
+	outputBucketName := awscdk.NewCfnOutput(
+		stack,
+		jsii.String("ChargingDataBucketNameOutPut"),
+		&awscdk.CfnOutputProps{
+			ExportName: jsii.Sprintf("%s-", "charging-data-bucket-name"),
+			Value:      databucket.BucketName(),
+		},
+	)
+	outputBucketName.OverrideLogicalId(jsii.String("ChargingDataBucketNameOutPut"))
 
-  outputBucketArn := awscdk.NewCfnOutput(stack, jsii.String("ChargingDataBucketArnOutPut"), &awscdk.CfnOutputProps{
-		ExportName: jsii.Sprintf("%s-", "charging-data-bucket-arn"),
-		Value:      databucket.BucketArn(),
-	})
-  outputBucketArn.OverrideLogicalId(jsii.String("ChargingDataBucketArnOutPut"))
+	outputBucketArn := awscdk.NewCfnOutput(
+		stack,
+		jsii.String("ChargingDataBucketArnOutPut"),
+		&awscdk.CfnOutputProps{
+			ExportName: jsii.Sprintf("%s-", "charging-data-bucket-arn"),
+			Value:      databucket.BucketArn(),
+		},
+	)
+	outputBucketArn.OverrideLogicalId(jsii.String("ChargingDataBucketArnOutPut"))
 
 	return stack
 }
