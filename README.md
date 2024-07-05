@@ -14,6 +14,19 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
   - ECS Fargate Cluster
   - ECR Container Registry
 
+## Data Set for PoIs
+
+The dataset processed in this service was downloaded from
+[kaggle](https://www.kaggle.com/datasets/mexwell/electric-vehicle-charging-in-germany)
+Collected from https://opendata.rhein-kreis-neuss.de/ by the Federal Network
+Agency of Germany The dataset is licensed under the
+[ATTRIBUTION 4.0 INTERNATIONAL](https://creativecommons.org/licenses/by/4.0/)
+license
+
+The data is modified and processed as part of this sample application just for
+demo purposes. The modification is minimal and adjust it to the simple model
+defined in the API and adds gehoashing to enable querying the data efficiently.
+
 ## Setup
 
 Before setting app the required protoc plugins and tools by running
