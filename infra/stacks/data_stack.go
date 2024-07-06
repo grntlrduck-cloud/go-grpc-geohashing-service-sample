@@ -59,7 +59,7 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 		stack,
 		jsii.String("ChargingDataBucketNameOutPut"),
 		&awscdk.CfnOutputProps{
-			ExportName: jsii.Sprintf("%s-", "charging-data-bucket-name"),
+			ExportName: jsii.Sprintf("%s-charging-data-bucket-name", id),
 			Value:      databucket.BucketName(),
 		},
 	)
@@ -69,7 +69,7 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 		stack,
 		jsii.String("ChargingDataBucketArnOutPut"),
 		&awscdk.CfnOutputProps{
-			ExportName: jsii.Sprintf("%s-", "charging-data-bucket-arn"),
+			ExportName: jsii.Sprintf("%s-charging-data-bucket-arn", id),
 			Value:      databucket.BucketArn(),
 		},
 	)

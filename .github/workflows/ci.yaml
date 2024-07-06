@@ -17,7 +17,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22.4"
+          go-version: "1.22.5"
       - name: Install dependencies
         run: make ci
       - name: Vulnerability Scan
@@ -30,7 +30,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22.4"
+          go-version: "1.22.5"
       - name: Lint
         uses: golangci/golangci-lint-action@v6
   test:
@@ -44,7 +44,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22.4"
+          go-version: "1.22.5"
       - name: Install dependencies
         run: make ci
       - name: Run tests
@@ -60,7 +60,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22.4"
+          go-version: "1.22.5"
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
