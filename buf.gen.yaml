@@ -19,4 +19,6 @@ plugins:
   # protoc-gen-openapiv2 needs to be installed, generate swagger config files based on proto files
   - local: protoc-gen-openapiv2
     out: api/gen
+    opt:
+      - output_format=yaml
   

@@ -6,17 +6,18 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/jsii-runtime-go"
+
 	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
 )
 
-const appName = "go-grpc-geohashing-service-sample"
+const appName = "go-grpc-poi-service"
 
 func main() {
 	defer jsii.Close()
 
 	app := awscdk.NewApp(nil)
 
-	stacks.NewAppStack(app, fmt.Sprintf("%s-app-stack", appName), &stacks.AppStackProps{
+	stacks.NewDataStack(app, fmt.Sprintf("%s-data-stack", appName), &stacks.DataStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env(),
 		},

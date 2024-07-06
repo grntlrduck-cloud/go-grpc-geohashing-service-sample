@@ -1,8 +1,8 @@
 package app
 
 import (
-	"os"
 	"errors"
+	"os"
 )
 
 type ServiceEnvironment struct {

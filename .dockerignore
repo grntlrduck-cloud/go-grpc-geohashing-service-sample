@@ -1,0 +1,9 @@
+cdk.out/*
+.DS_STORE
+.github/*
+.vscode/*
+.idea/*
+*.out
+*.dot
+*.html
+*.xml
