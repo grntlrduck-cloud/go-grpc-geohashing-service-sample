@@ -1,6 +1,6 @@
 module github.com/grntlduck-cloud/go-grpc-geohasing-service-sample
 
-go 1.22.4
+go 1.22.5
 
 require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.146.0
