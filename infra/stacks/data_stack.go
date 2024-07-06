@@ -23,8 +23,8 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 	stack := awscdk.NewStack(scope, &id, &sprops)
 	databucket := awss3.NewBucket(stack, jsii.String("ChargingDataBucket"), &awss3.BucketProps{
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
-    EnforceSSL: jsii.Bool(true),
-		Versioned:  jsii.Bool(true),
+		EnforceSSL:    jsii.Bool(true),
+		Versioned:     jsii.Bool(true),
 		LifecycleRules: &[]*awss3.LifecycleRule{
 			{
 				Enabled:                     jsii.Bool(true),
