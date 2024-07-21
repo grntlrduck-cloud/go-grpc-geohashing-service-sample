@@ -12,7 +12,7 @@ type PoILocation struct {
 	Id                uuid.UUID
 	Location          Coordiantes
 	Address           Address
-	LocbationEntrance Coordiantes
+	LocationEntrance Coordiantes
 	Features          []string
 }
 
@@ -22,10 +22,11 @@ type Coordiantes struct {
 }
 
 type Address struct {
-	Stree                string
-	StreetNumber         int32
-	StreetNumberAddition string
-	CountryCode          string
+	Street       string
+	StreetNumber string
+	ZipCode      string
+	City         string
+	CountryCode  string
 }
 
 type PoIParseError struct {
@@ -44,11 +45,17 @@ func Parse(poipb *poiv1.PoI) (PoILocation, error) {
 	}
 	poil := PoILocation{
 		Id: id,
+		Address: Address{
+			Street:       poipb.Address.Street,
+			StreetNumber: poipb.Address.StreetNumber,
+			ZipCode:      poipb.Address.ZipCode,
+			City:         poipb.Address.City,
+		},
 		Location: Coordiantes{
 			Longitude: poipb.Coordinate.Lon,
 			Latitude:  poipb.Coordinate.Lat,
 		},
-		LocbationEntrance: Coordiantes{
+		LocationEntrance: Coordiantes{
 			Longitude: poipb.Coordinate.Lon,
 			Latitude:  poipb.Coordinate.Lat,
 		},

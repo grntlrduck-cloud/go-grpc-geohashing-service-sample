@@ -296,8 +296,7 @@ definitions:
         example: 11a
         description: The street number of the given address
       zip_code:
-        type: integer
-        format: int64
+        type: string
         example: 80331
         description: The zip code for the given address
       city:
