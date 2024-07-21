@@ -24,4 +24,6 @@ type CPoIItem struct {
 	Features     []string `json:"features"       csv:"features"      dynamodbav:"features"`
 	Longitude    float64  `json:"lon"            csv:"lon"           dynamodbav:"lon"`
 	Latitude     float64  `json:"lat"            csv:"lat"           dynamodbav:"lat"`
+	EntranceLongitude    float64  `json:"entrance_lon"            csv:"entrance_lon"           dynamodbav:"entrance_lon"`
+	EntranceLatitude     float64  `json:"entrance_lat"            csv:"entrance_lat"           dynamodbav:"entrance_lat"`
 }
