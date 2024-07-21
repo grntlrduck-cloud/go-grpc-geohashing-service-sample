@@ -4,7 +4,7 @@ plugins:
   - local: protoc-gen-go
     out: api/gen
     opt:
-     - paths=source_relative
+      - paths=source_relative
   # protoc-gen-go-grpc needs to be installed, generate grpc go files based on proto files
   - local: protoc-gen-go-grpc
     out: api/gen
@@ -21,4 +21,3 @@ plugins:
     out: api/gen
     opt:
       - output_format=yaml
-  

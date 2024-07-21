@@ -1,8 +1,8 @@
 # TODO: use configs for local and prod https://rk-docs.vercel.app/user-guide/web/gin/env/#2create-config-files
 grpc:
-  - name: greeter                   # Name of grpc entry
-    port: 8081                     # Port of grpc entry
-    enabled: true                   # Enable grpc entry
+  - name: greeter # Name of grpc entry
+    port: 8081 # Port of grpc entry
+    enabled: true # Enable grpc entry
     sw:
-      enabled: true                 # Enable swagger
-      jsonPath: "api/gen/v1"        # Provide swagger config file path
+      enabled: true # Enable swagger
+      jsonPath: "api/gen/v1" # Provide swagger config file path
