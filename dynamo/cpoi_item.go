@@ -5,6 +5,7 @@ const (
 	CPoIItemGeoIndexName = "gsi1_geo"
 	CPoIItemGeoIndexPK   = "gsi1_geo_pk"
 	CPoIItemGeoIndexSK   = "gsi1_geo_sk"
+  CPoIItemGeoHashKeyLength = 4
 )
 
 // The CPoIItem is a flattened representation of the domain with a primary key (hashkey) to get a cPoI by its id 
