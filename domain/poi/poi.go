@@ -9,11 +9,11 @@ import (
 )
 
 type PoILocation struct {
-	Id                uuid.UUID
-	Location          Coordiantes
-	Address           Address
+	Id               uuid.UUID
+	Location         Coordiantes
+	Address          Address
 	LocationEntrance Coordiantes
-	Features          []string
+	Features         []string
 }
 
 type Coordiantes struct {
@@ -56,8 +56,8 @@ func Parse(poipb *poiv1.PoI) (PoILocation, error) {
 			Latitude:  poipb.Coordinate.Lat,
 		},
 		LocationEntrance: Coordiantes{
-			Longitude: poipb.Coordinate.Lon,
-			Latitude:  poipb.Coordinate.Lat,
+			Longitude: poipb.Entrance.Lon,
+			Latitude:  poipb.Entrance.Lat,
 		},
 		Features: poipb.Features,
 	}
