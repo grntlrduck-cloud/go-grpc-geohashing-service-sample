@@ -28,9 +28,6 @@ const (
 // PoIServiceClient is the client API for PoIService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// see https://github.com/grpc-ecosystem/grpc-gateway
-// https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
 type PoIServiceClient interface {
 	PoI(ctx context.Context, in *PoIRequest, opts ...grpc.CallOption) (*PoIResponse, error)
 	Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*ProximityResponse, error)
@@ -89,9 +86,6 @@ func (c *poIServiceClient) Route(ctx context.Context, in *RouteRequest, opts ...
 // PoIServiceServer is the server API for PoIService service.
 // All implementations should embed UnimplementedPoIServiceServer
 // for forward compatibility
-//
-// see https://github.com/grpc-ecosystem/grpc-gateway
-// https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
 type PoIServiceServer interface {
 	PoI(context.Context, *PoIRequest) (*PoIResponse, error)
 	Proximity(context.Context, *ProximityRequest) (*ProximityResponse, error)

@@ -159,7 +159,7 @@ message Address {
     json_name = "street_number"
   ];
 
-  uint32 zip_code = 3 [
+  string zip_code = 3 [
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "The zip code for the given address"
       example: "80331"
