@@ -25,8 +25,9 @@ go.work.sum
 .idea
 .DS_Store
 
-# coverage, test reports and cdk dia
+# coverage, test reports and cdk dia, and other stuff related to the project
 *.xml
 *.dot
 *.html
 *.csv
+cpoi_ion_items
