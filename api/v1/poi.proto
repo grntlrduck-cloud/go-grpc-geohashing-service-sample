@@ -7,29 +7,33 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/adapter/grpc/poiv1";
-
 // google and gRPC gateway documentation
-// 1. helpful documentation https://buf.build/grpc-ecosystem/grpc-gateway/docs/main:grpc.gateway.protoc_gen_openapiv2.options#grpc.gateway.protoc_gen_openapiv2.options
-// 2. https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
+// 1. helpful documentation
+// https://buf.build/grpc-ecosystem/grpc-gateway/docs/main:grpc.gateway.protoc_gen_openapiv2.options#grpc.gateway.protoc_gen_openapiv2.options
+// 2.
+// https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
 // 3. https://github.com/grpc-ecosystem/grpc-gateway
 // 4. https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
-
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "gRPC-Gateway PoI Info Service API definition"
     version: "1.0"
     description:
-      "Swagger API of the gRPC-Gateway Service for PoI search (route, "
+      "Swagger API of the gRPC-Gateway Service for PoI search "
+      "(route, "
       "proximity) and info. Transcodes REST (HTTP/JSON) to gRPC "
       "allowing consumption by REST clients."
     contact: {
       name: "gRPC Go Sample Project"
-      url: "https://github.com/grntlrduck-cloud/go-grpc-geohashing-service-sample"
+      url:
+        "https://github.com/grntlrduck-cloud/"
+        "go-grpc-geohashing-service-sample"
     }
     license: {
       name: "Apache-2.0 license"
       url:
-        "https://github.com/grntlrduck-cloud/go-grpc-geohashing-service-sample/blob/"
+        "https://github.com/grntlrduck-cloud/"
+        "go-grpc-geohashing-service-sample/blob/"
         "main/LICENSE"
     }
   }
@@ -64,7 +68,9 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   responses: {
     key: "403"
     value: {
-      description: "Returned when the user does not have permission to access the resource."
+      description:
+        "Returned when the user does not have permission to access "
+        "the resource."
       schema: {}
     }
   }
@@ -93,7 +99,9 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
           type: "string"
           format: "uuid"
           default: "\"2438ac3c-37eb-4902-adef-ed16b4431030\""
-          pattern: "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$"
+          pattern:
+            "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-["
+            "0-9A-F]{12}$"
         }
       }
       schema: {
@@ -105,25 +113,33 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 
 message PoI {
   string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    pattern: "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-w9A-F]{12}$"
     description: "The unique event identifier for server requests"
-    format: "uuid"
-    example: "\"2438ac3c-37eb-4902-adef-ed16b4431030\""
+    format: "ksuid"
+    example: "\"2jsXANjBqBu90vaC7uPl4gN1yUn\""
   }];
   Coordinate coordinate = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The WGS coordinate representing the center of the center of the PoIs' location"
+    description:
+      "The WGS coordinate representing the center of the "
+      "center of the PoIs' location"
     example: "{\"lat\": 48.137154, \"lon\": 11.576124 }"
   }];
   optional Coordinate entrance = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The WGS coordinate marking the road entrance to the PoIs' location"
+    description:
+      "The WGS coordinate marking the road entrance to the "
+      "PoIs' location"
     example: "{\"lat\": 48.137154, \"lon\": 11.576124 }"
   }];
   Address address = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "The address of the PoI"
-    example: "{\"street\": \"My Street\", \"street_number\": \"1b\", \"zip_code\": 80331, \"city\":  \"Munich\", \"country\": \"Germany\"}"
+    example:
+      "{\"street\": \"My Street\", \"street_number\": \"1b\", "
+      "\"zip_code\": 80331, \"city\":  \"Munich\", \"country\": "
+      "\"Germany\"}"
   }];
   repeated string features = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "A list of free form text of available features and amenities at given location."
+    description:
+      "A list of free form text of available features and "
+      "amenities at given location."
     example: "[\"charging\", \"resting\", \"shower\", \"groceries\"]"
   }];
 }
@@ -180,12 +196,16 @@ message Address {
 
 message BBox {
   Coordinate sw = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The WGS coordinate defining the south west corner of a bounding box."
+    description:
+      "The WGS coordinate defining the south west corner of a "
+      "bounding box."
     example: "{\"lat\": 48.137154, \"lon\": 11.576124 }"
     field_configuration: {path_param_name: "sw"}
   }];
   Coordinate ne = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The WGS coordinate defining the north east corner of a bounding box."
+    description:
+      "The WGS coordinate defining the north east corner of a "
+      "bounding box."
     example: "{\"lat\": 48.137154, \"lon\": 11.576124 }"
     field_configuration: {path_param_name: "ne"}
   }];
@@ -193,7 +213,9 @@ message BBox {
 
 message PoIRequest {
   string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    pattern: "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-w9A-F]{12}$"
+    pattern:
+      "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-"
+      "w9A-F]{12}$"
     description: "The unique identifier of a PoI"
     format: "uuid"
     example: "\"2438ac3c-37eb-4902-adef-ed16b4431030\""
@@ -222,7 +244,9 @@ message BBoxResponse {
 
 message RouteRequest {
   repeated Coordinate route = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The coordinate path to search for charging stations in close proximity"
+    description:
+      "The coordinate path to search for charging stations in "
+      "close proximity"
     min_length: 2
     max_length: 100
   }];
@@ -234,7 +258,9 @@ message RouteResponse {
 
 message ErrorResponse {
   string correlation_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    pattern: "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$"
+    pattern:
+      "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-"
+      "9A-F]{12}$"
     title: "x-correlation-id"
     description: "Unique event identifier for server requests"
     format: "uuid"
