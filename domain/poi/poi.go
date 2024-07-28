@@ -3,13 +3,13 @@ package poi
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/segmentio/ksuid"
 
 	poiv1 "github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1"
 )
 
 type PoILocation struct {
-	Id               uuid.UUID
+	Id               ksuid.KSUID
 	Location         Coordiantes
 	Address          Address
 	LocationEntrance Coordiantes
@@ -39,7 +39,7 @@ func (e PoIParseError) Error() string {
 }
 
 func Parse(poipb *poiv1.PoI) (PoILocation, error) {
-	id, err := uuid.Parse(poipb.Id)
+	id, err := ksuid.Parse(poipb.Id)
 	if err != nil {
 		return PoILocation{}, PoIParseError{message: err.Error(), poi: poipb}
 	}
