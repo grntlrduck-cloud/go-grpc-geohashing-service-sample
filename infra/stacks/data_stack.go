@@ -7,7 +7,7 @@ import (
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 
-	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/infra/utils"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/infra/utils"
 )
 
 type DataStackProps struct {

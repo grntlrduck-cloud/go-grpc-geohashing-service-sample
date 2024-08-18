@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/jsii-runtime-go"
 
-	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
 )
 
 const appName = "go-grpc-poi-service"
