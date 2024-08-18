@@ -6,7 +6,7 @@ import (
 	"github.com/aws/jsii-runtime-go"
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
 )
 
 var _ = Describe("Given app", func() {

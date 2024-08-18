@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/app"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
 )
 
 var _ = Describe("Test application environment load", func() {

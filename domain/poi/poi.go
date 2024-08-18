@@ -5,7 +5,7 @@ import (
 
 	"github.com/segmentio/ksuid"
 
-	poiv1 "github.com/grntlduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1"
+	poiv1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1"
 )
 
 type PoILocation struct {

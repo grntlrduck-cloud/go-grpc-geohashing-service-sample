@@ -1,4 +1,4 @@
-module github.com/grntlduck-cloud/go-grpc-geohasing-service-sample
+module github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample
 
 go 1.22.5
 
@@ -60,6 +60,8 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
