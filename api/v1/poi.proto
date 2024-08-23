@@ -257,7 +257,7 @@ message RouteResponse {
 }
 
 message ErrorResponse {
-   int32 code = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+  int32 code = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     pattern: "^[0-9]$"
     description: "Response code"
     format: "integer"
@@ -266,13 +266,10 @@ message ErrorResponse {
     pattern: "^[a-zA-Z0-9]{1, 32}$"
     description: "Response message"
   }];
-  repeated string details = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Error details"
-  }];
+  repeated string details = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Error details"}];
 }
 
-message ErrorObject {
- }
+message ErrorObject {}
 
 service PoIService {
   rpc PoI(PoIRequest) returns (PoIResponse) {
