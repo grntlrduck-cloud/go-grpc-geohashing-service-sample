@@ -10,7 +10,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/rpc"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/rpc"
 )
 
 var logger *zap.Logger
