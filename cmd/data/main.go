@@ -155,7 +155,7 @@ func paramStr(ctx context.Context, ssmClient *ssm.Client, paramName string) *str
 		Name: &(paramName),
 	})
 	if err != nil {
-		panic(fmt.Errorf("faile to get param, %w", err))
+		panic(fmt.Errorf("failed to get param, %w", err))
 	}
 	return param.Parameter.Value
 }

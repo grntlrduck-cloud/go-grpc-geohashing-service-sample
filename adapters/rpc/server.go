@@ -41,8 +41,8 @@ func StartNewServer(ctx context.Context, config ServerConfig, logger *zap.Logger
 	}
 
 	// TODO: custom implementation for error handler
-  // TODO: custom implementation for response hesders to map correlationId
-	// start rpc server and attach PoIRpcService
+  // TODO: custom implementation for response headers to map correlationId	
+  // start rpc server and attach PoIRpcService
 	logger.Info("starting gRPC server")
 	server := grpc.NewServer()
 	prs := &PoIRpcService{logger: logger}

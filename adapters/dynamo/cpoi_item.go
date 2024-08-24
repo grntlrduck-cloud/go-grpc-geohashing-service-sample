@@ -22,7 +22,7 @@ const (
 
 // The CPoIItem is a flattened representation of the domain with a primary key (hashkey) to get a cPoI by its id
 // and a global secondary geo index where the primary key (hashkey) is the trimmed geohash and the sortkey is the full precision geohash.
-// The structure is flattend so that a import of the dataset from csv on table creation through IaC is easier and less errorprone.
+// The structure is flattened so that a import of the dataset from csv on table creation through IaC is easier and less errorprone.
 type CPoIItem struct {
 	Pk                string   `json:"pk"             csv:"pk"            dynamodbav:"pk"`
 	GeoIndexPk        uint64   `json:"gsi1_geo_pk_pk" csv:"gsi1_geo_pk"   dynamodbav:"gsi1_geo_pk"` // the geohash with trimmed precision
@@ -34,14 +34,14 @@ type CPoIItem struct {
 	City              string   `json:"city"           csv:"city"          dynamodbav:"city"`
 	CountryCode       string   `json:"country_code"   csv:"country_code"  dynamodbav:"country_code"`
 	Features          []string `json:"features"       csv:"features"      dynamodbav:"features"`
-  Longitude         float64  `json:"lon"            csv:"lon"           dynamodbav:"lon"`
-  Latitude          float64  `json:"lat"            csv:"lat"           dynamodbav:"lat"`
-  EntranceLongitude float64  `json:"entrance_lon"   csv:"entrance_lon"  dynamodbav:"entrance_lon"`
-  EntranceLatitude  float64  `json:"entrance_lat"   csv:"entrance_lat"  dynamodbav:"entrance_lat"`
+	Longitude         float64  `json:"lon"            csv:"lon"           dynamodbav:"lon"`
+	Latitude          float64  `json:"lat"            csv:"lat"           dynamodbav:"lat"`
+	EntranceLongitude float64  `json:"entrance_lon"   csv:"entrance_lon"  dynamodbav:"entrance_lon"`
+	EntranceLatitude  float64  `json:"entrance_lat"   csv:"entrance_lat"  dynamodbav:"entrance_lat"`
 }
 
-func (cp CPoIItem) IonItem() *IonItem {
-  return &IonItem{
+func (cp *CPoIItem) IonItem() *IonItem {
+	return &IonItem{
 		CPoIIonItem{
 			Pk:                cp.Pk,
 			GeoIndexPk:        *ion.NewDecimalInt(int64(cp.GeoIndexPk)),
@@ -62,11 +62,11 @@ func (cp CPoIItem) IonItem() *IonItem {
 }
 
 func floatToDecimal(fnum float64) ion.Decimal {
-  fstr := strconv.FormatFloat(fnum, 'f', -1, 64)
+	fstr := strconv.FormatFloat(fnum, 'f', -1, 64)
 	n, e := ion.ParseDecimal(fstr)
-  if e != nil {
-    panic(fmt.Errorf("failed to convert float %s, %w", fstr, e))
-  }
+	if e != nil {
+		panic(fmt.Errorf("failed to convert float %s, %w", fstr, e))
+	}
 	return *n
 }
 
@@ -89,8 +89,15 @@ type ChargingCSVEntry struct {
 
 func EntriesToDynamo(ctes []*ChargingCSVEntry) []*CPoIItem {
 	dynamoItems := make([]*CPoIItem, len(ctes))
-	for i, cte := range ctes {
-		dynamoItems[i] = cte.MapToDynamo()
+	c := make(chan *CPoIItem, 12)
+	defer close(c)
+	for _, cte := range ctes {
+		go func() {
+			c <- cte.MapToDynamo()
+		}()
+	}
+	for i := range len(ctes) {
+		dynamoItems[i] = <-c
 	}
 	return dynamoItems
 }

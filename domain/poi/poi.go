@@ -10,13 +10,13 @@ import (
 
 type PoILocation struct {
 	Id               ksuid.KSUID
-	Location         Coordiantes
+	Location         Coordinates
 	Address          Address
-	LocationEntrance Coordiantes
+	LocationEntrance Coordinates
 	Features         []string
 }
 
-type Coordiantes struct {
+type Coordinates struct {
 	Latitude  float64
 	Longitude float64
 }
@@ -51,11 +51,11 @@ func Parse(poipb *poiv1.PoI) (PoILocation, error) {
 			ZipCode:      poipb.Address.ZipCode,
 			City:         poipb.Address.City,
 		},
-		Location: Coordiantes{
+		Location: Coordinates{
 			Longitude: poipb.Coordinate.Lon,
 			Latitude:  poipb.Coordinate.Lat,
 		},
-		LocationEntrance: Coordiantes{
+		LocationEntrance: Coordinates{
 			Longitude: poipb.Entrance.Lon,
 			Latitude:  poipb.Entrance.Lat,
 		},
