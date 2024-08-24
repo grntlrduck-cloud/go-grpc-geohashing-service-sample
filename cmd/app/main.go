@@ -21,7 +21,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to initialize zap logger: %v", err)
 	}
-	logger.Info("initalized logger")
+	logger.Info("initialized logger")
 }
 
 func main() {
@@ -38,6 +38,7 @@ func main() {
 	}
 	defer server.Stop()
 
+	// TODO: use signal.Context
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	defer close(c)
