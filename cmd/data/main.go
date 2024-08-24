@@ -27,7 +27,7 @@ const (
 // This program requires the dataset from kaggle to be present in the root of this project as 'cpoi_data.csv'.
 // The CSV is proecessed and mapped to fit the data model for dynamo db, saved to disk as CSV and AWS ION.
 // Finally, the files, the raw and the processed data is uploaded to the S3 bucket defined in the data-stack
-// of the infrasturcture.
+// of the infrastructure.
 // TODO: This program could be optimized by using go flags to conrtol processing, uploads, and file name cusotmization
 func main() {
 	ctx := context.Background()
