@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/rpc"
+  "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
 )
 
 var logger *zap.Logger
@@ -31,14 +32,18 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	serverConfig := rpc.ServerConfig{RpcPort: 9091, HttpPort: 8081}
-	server, err := rpc.StartNewServer(ctx, serverConfig, logger)
+	serverConfig := app.ServerConfig{RpcPort: 9091, HttpPort: 8081}
+	server, err := rpc.NewServer(rpc.NewServerProps{
+		Logger: logger,
+		Ctx:    ctx,
+		Conf:   serverConfig,
+	})
 	if err != nil {
 		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/json")
 	}
 	defer server.Stop()
 
-  // TODO: use signal.Context
+	// TODO: use signal.Context
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	defer close(c)

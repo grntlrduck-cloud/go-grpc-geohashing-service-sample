@@ -45,8 +45,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   security_definitions: {
     security: {
       key: "OAuth2"
-      value: {
-        type: TYPE_OAUTH2
+      value: {        type: TYPE_OAUTH2
         flow: FLOW_ACCESS_CODE
         authorization_url: "https://example.com/oauth/authorize" // TODO
         token_url: "https://example.com/oauth/token" // TODO
