@@ -5,7 +5,7 @@ import (
 
 	"github.com/segmentio/ksuid"
 
-	poiv1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1"
+	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
 )
 
 type PoILocation struct {
@@ -31,14 +31,14 @@ type Address struct {
 
 type PoIParseError struct {
 	message string
-	poi     *poiv1.PoI
+	poi     *poi_v1.PoI
 }
 
 func (e PoIParseError) Error() string {
 	return fmt.Sprintf("%s for poi=%s", e.message, e.poi.Id)
 }
 
-func Parse(poipb *poiv1.PoI) (PoILocation, error) {
+func Parse(poipb *poi_v1.PoI) (PoILocation, error) {
 	id, err := ksuid.Parse(poipb.Id)
 	if err != nil {
 		return PoILocation{}, PoIParseError{message: err.Error(), poi: poipb}

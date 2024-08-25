@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	grpclogging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -12,20 +13,22 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1"
-  "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
+	health_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/health"
+	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
 )
 
 type Server struct {
 	prs       *PoIRpcService
+	hrs       *HealthRpcService
 	rpcServer *grpc.Server
 	logger    *zap.Logger
 }
 
 type NewServerProps struct {
-  Logger *zap.Logger
-  Ctx context.Context
-  Conf app.ServerConfig
+	Logger *zap.Logger
+	Ctx    context.Context
+	Conf   app.ServerConfig
 }
 
 type startHttpProxyProps struct {
@@ -37,11 +40,15 @@ type startHttpProxyProps struct {
 
 type startRpcServerResult struct {
 	rpcServer *grpc.Server
+	hrs       *HealthRpcService
 	prs       *PoIRpcService
 	err       error
 }
 
 func (s *Server) Stop() {
+	s.hrs.healthy(false)
+	s.logger.Info("set health endpoint to NOT_SERVING")
+	time.Sleep(1 * time.Second)
 	s.rpcServer.GracefulStop()
 	s.logger.Info("stopped gRPC server gracefully")
 }
@@ -69,9 +76,11 @@ func NewServer(props NewServerProps) (*Server, error) {
 		res.rpcServer.GracefulStop()
 		return nil, err
 	}
+	props.Logger.Info("setting endpoints to SERVING")
+	res.hrs.healthy(true)
 
 	props.Logger.Info("finished initializing server")
-	return &Server{prs: res.prs, rpcServer: res.rpcServer, logger: props.Logger}, nil
+	return &Server{hrs: res.hrs, prs: res.prs, rpcServer: res.rpcServer, logger: props.Logger}, nil
 }
 
 func startRpcServer(logger *zap.Logger, endpoint string) *startRpcServerResult {
@@ -79,28 +88,28 @@ func startRpcServer(logger *zap.Logger, endpoint string) *startRpcServerResult {
 	lis, err := net.Listen("tcp", endpoint)
 	if err != nil {
 		logger.Error("failed to listen to port")
-		return &startRpcServerResult{nil, nil, err}
-	}
-	grpcOpts := []grpclogging.Option{
-		grpclogging.WithLogOnEvents(grpclogging.StartCall, grpclogging.FinishCall),
+		return &startRpcServerResult{nil, nil, nil, err}
 	}
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			grpclogging.UnaryServerInterceptor(InterceptorLogger(logger), grpcOpts...),
+			grpclogging.UnaryServerInterceptor(InterceptorLogger(logger)),
 		),
 		grpc.ChainStreamInterceptor(
-			grpclogging.StreamServerInterceptor(InterceptorLogger(logger), grpcOpts...),
+			grpclogging.StreamServerInterceptor(InterceptorLogger(logger)),
 		),
 	)
+	hrs := &HealthRpcService{}
+	health_v1.RegisterHealthServiceServer(server, hrs)
+	hrs.healthy(false)
 	prs := &PoIRpcService{logger: logger}
-	v1.RegisterPoIServiceServer(server, prs)
+	poi_v1.RegisterPoIServiceServer(server, prs)
 	go func() {
 		servErr := server.Serve(lis)
 		if servErr != nil {
 			logger.Panic("failed to start rpc server")
 		}
 	}()
-	return &startRpcServerResult{server, prs, nil}
+	return &startRpcServerResult{server, hrs, prs, nil}
 }
 
 // https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/logging/examples/zap/example_test.go
@@ -131,7 +140,7 @@ func InterceptorLogger(l *zap.Logger) grpclogging.Logger {
 			case grpclogging.LevelDebug:
 				logger.Debug(msg)
 			case grpclogging.LevelInfo:
-				logger.Info(msg)
+				logger.Debug(msg)
 			case grpclogging.LevelWarn:
 				logger.Warn(msg)
 			case grpclogging.LevelError:
@@ -148,10 +157,26 @@ func startHttProxy(props startHttpProxyProps) error {
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(CustomMatcher),
 	)
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	err := v1.RegisterPoIServiceHandlerFromEndpoint(props.ctx, mux, props.rpcEndpoint, opts)
+	opts := []grpc.DialOption{
+    // TODO: configure security based on props
+    grpc.WithTransportCredentials(insecure.NewCredentials()),
+    // use zap logger for handlers
+    grpc.WithChainUnaryInterceptor(grpclogging.UnaryClientInterceptor(InterceptorLogger(props.logger))),
+    grpc.WithChainStreamInterceptor(grpclogging.StreamClientInterceptor(InterceptorLogger(props.logger))),
+  }
+	err := poi_v1.RegisterPoIServiceHandlerFromEndpoint(props.ctx, mux, props.rpcEndpoint, opts)
 	if err != nil {
-		props.logger.Error("failed to register http revers proxy handler")
+		props.logger.Error("failed to register http revers proxy handler for poi service")
+		return err
+	}
+	err = health_v1.RegisterHealthServiceHandlerFromEndpoint(
+		props.ctx,
+		mux,
+		props.rpcEndpoint,
+		opts,
+	)
+	if err != nil {
+		props.logger.Error("failed to register http revers proxy handler for health service")
 		return err
 	}
 	// Start HTTP server (and proxy calls to gRPC server endpoint)

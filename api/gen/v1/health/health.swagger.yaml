@@ -1,0 +1,72 @@
+swagger: "2.0"
+info:
+  title: v1/health/health.proto
+  version: version not set
+tags:
+  - name: HealthService
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /api/v1/health/readiness:
+    get:
+      summary: |-
+        Check gets the health of the specified service. If the requested service
+        is unknown, the call will fail with status NOT_FOUND. If the caller does
+        not specify a service name, the server should respond with its overall
+        health status.
+      description: |-
+        Clients should set a deadline when calling Check, and can declare the
+        server unhealthy if they do not receive a timely response.
+
+        Check implementations should be idempotent and side effect free.
+      operationId: HealthService_HealthCheck
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/healthHealthCheckResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: service
+          in: query
+          required: false
+          type: string
+      tags:
+        - HealthService
+definitions:
+  HealthCheckResponseServingStatus:
+    type: string
+    enum:
+      - SERVING_STATUS_UNSPECIFIED
+      - SERVING_STATUS_SERVING
+      - SERVING_STATUS_NOT_SERVING
+    default: SERVING_STATUS_UNSPECIFIED
+  healthHealthCheckResponse:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/HealthCheckResponseServingStatus'
+  protobufAny:
+    type: object
+    properties:
+      '@type':
+        type: string
+    additionalProperties: {}
+  rpcStatus:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/protobufAny'

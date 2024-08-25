@@ -1,4 +1,12 @@
 version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen
+      module: buf.build/grntlrduck-cloud/grpc-geo
+inputs:
+  - directory: api
 plugins:
   # protoc-gen-go needs to be installed, generate go files based on proto files
   - local: protoc-gen-go

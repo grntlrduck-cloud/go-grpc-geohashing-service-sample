@@ -11,18 +11,18 @@ import (
 	"google.golang.org/grpc/metadata"
 	status "google.golang.org/grpc/status"
 
-	v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1"
+	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
 )
 
 type PoIRpcService struct {
-	v1.UnimplementedPoIServiceServer
+	poi_v1.UnimplementedPoIServiceServer
 	logger *zap.Logger
 }
 
 func (prs *PoIRpcService) PoI(
 	ctx context.Context,
-	request *v1.PoIRequest,
-) (*v1.PoIResponse, error) {
+	request *poi_v1.PoIRequest,
+) (*poi_v1.PoIResponse, error) {
 	id, err := prs.getCorrelationId(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Header X-Correlation-Id not found")
@@ -31,11 +31,11 @@ func (prs *PoIRpcService) PoI(
 		"processing PoI rpc, returning fixture",
 		zap.String("X-Correlation-Id", id.String()),
 	)
-	return &v1.PoIResponse{
-		Poi: &v1.PoI{
+	return &poi_v1.PoIResponse{
+		Poi: &poi_v1.PoI{
 			Id:         ksuid.New().String(),
-			Coordinate: &v1.Coordinate{Lat: 48.137, Lon: 11.576},
-			Address: &v1.Address{
+			Coordinate: &poi_v1.Coordinate{Lat: 48.137, Lon: 11.576},
+			Address: &poi_v1.Address{
 				Street:       "Maximilianstrasse",
 				StreetNumber: "1b",
 				ZipCode:      "123456",
@@ -48,22 +48,22 @@ func (prs *PoIRpcService) PoI(
 
 func (prs *PoIRpcService) Proximity(
 	ctex context.Context,
-	request *v1.ProximityRequest,
-) (*v1.ProximityResponse, error) {
+	request *poi_v1.ProximityRequest,
+) (*poi_v1.ProximityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Proximity not implemented")
 }
 
 func (prs *PoIRpcService) BBox(
 	ctx context.Context,
-	request *v1.BBoxRequest,
-) (*v1.BBoxResponse, error) {
+	request *poi_v1.BBoxRequest,
+) (*poi_v1.BBoxResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BBox not implemented")
 }
 
 func (prs *PoIRpcService) Route(
 	ctx context.Context,
-	request *v1.RouteRequest,
-) (*v1.RouteResponse, error) {
+	request *poi_v1.RouteRequest,
+) (*poi_v1.RouteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
 }
 
