@@ -66,7 +66,7 @@ jobs:
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
         with:
-        registry-type: public
+          registry-type: public
       - name: Build Docker image
         run: docker build .
   synth:
