@@ -60,7 +60,7 @@ jobs:
       - name: Assume build role
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          aws-region: us-east-1 # required for public ecr
           role-to-assume: ${{ secrets.CI_BUILD_ROLE_ARN }}
       - name: Login to Amazon ECR Public Gallery
         id: login-ecr-public
