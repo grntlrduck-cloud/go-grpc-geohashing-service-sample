@@ -6,7 +6,7 @@ WORKDIR /src
 
 COPY . ./
 
-RUN apk update && apk add --no-cache make openssl
+RUN apk update && apk add --no-cache make openssl ca-certificates
 
 RUN mkdir build
 
@@ -27,6 +27,6 @@ WORKDIR /service
 
 COPY --from=build_base /src/build/ ./
 COPY --from=build_base /src/boot.yaml ./
-COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build_base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENTRYPOINT ["/service/app"]
