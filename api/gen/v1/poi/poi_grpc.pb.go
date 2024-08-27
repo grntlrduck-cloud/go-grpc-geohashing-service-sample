@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             (unknown)
-// source: v1/poi.proto
+// source: v1/poi/poi.proto
 
 package poiv1
 
@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	PoIService_PoI_FullMethodName       = "/api.v1.PoIService/PoI"
-	PoIService_Proximity_FullMethodName = "/api.v1.PoIService/Proximity"
-	PoIService_BBox_FullMethodName      = "/api.v1.PoIService/BBox"
-	PoIService_Route_FullMethodName     = "/api.v1.PoIService/Route"
+	PoIService_PoI_FullMethodName       = "/api.poi.v1.PoIService/PoI"
+	PoIService_Proximity_FullMethodName = "/api.poi.v1.PoIService/Proximity"
+	PoIService_BBox_FullMethodName      = "/api.poi.v1.PoIService/BBox"
+	PoIService_Route_FullMethodName     = "/api.poi.v1.PoIService/Route"
 )
 
 // PoIServiceClient is the client API for PoIService service.
@@ -197,7 +197,7 @@ func _PoIService_Route_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PoIService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.v1.PoIService",
+	ServiceName: "api.poi.v1.PoIService",
 	HandlerType: (*PoIServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -218,5 +218,5 @@ var PoIService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "v1/poi.proto",
+	Metadata: "v1/poi/poi.proto",
 }

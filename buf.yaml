@@ -3,6 +3,7 @@
 version: v2
 modules:
   - path: api
+    name: buf.build/grntlrduck-cloud/grpc-geo
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/grpc-ecosystem/grpc-gateway

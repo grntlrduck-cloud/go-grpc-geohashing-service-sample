@@ -40,7 +40,7 @@ paths:
         "500":
           description: Server error
           schema:
-            $ref: '#/definitions/v1ErrorResponse'
+            $ref: .api.v1.ErrorResponse
         default:
           description: An unexpected error response.
           schema:
@@ -98,7 +98,7 @@ paths:
         "500":
           description: Server error
           schema:
-            $ref: '#/definitions/v1ErrorResponse'
+            $ref: .api.v1.ErrorResponse
         default:
           description: An unexpected error response.
           schema:
@@ -138,7 +138,7 @@ paths:
         "500":
           description: Server error
           schema:
-            $ref: '#/definitions/v1ErrorResponse'
+            $ref: .api.v1.ErrorResponse
         default:
           description: An unexpected error response.
           schema:
@@ -184,7 +184,7 @@ paths:
         "500":
           description: Server error
           schema:
-            $ref: '#/definitions/v1ErrorResponse'
+            $ref: .api.v1.ErrorResponse
         default:
           description: An unexpected error response.
           schema:
@@ -210,7 +210,7 @@ paths:
       tags:
         - PoIService
 definitions:
-  apiv1BBox:
+  poiv1BBox:
     type: object
     properties:
       sw:
@@ -225,7 +225,7 @@ definitions:
           lat: 48.137154
           lon: 11.576124
         description: The WGS coordinate defining the north east corner of a bounding box.
-  apiv1PoI:
+  poiv1PoI:
     type: object
     properties:
       id:
@@ -313,7 +313,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/apiv1PoI'
+          $ref: '#/definitions/poiv1PoI'
   v1Coordinate:
     type: object
     properties:
@@ -330,35 +330,11 @@ definitions:
     required:
       - lon
       - lat
-  v1ErrorObject:
-    type: object
-    properties:
-      code:
-        type: integer
-        format: integer
-        description: Response code
-        pattern: ^[0-9]$
-      message:
-        type: string
-        description: Response message
-        pattern: ^[a-zA-Z0-9]{1, 32}$
-  v1ErrorResponse:
-    type: object
-    properties:
-      correlationId:
-        type: string
-        format: uuid
-        example: 2438ac3c-37eb-4902-adef-ed16b4431030
-        description: Unique event identifier for server requests
-        title: x-correlation-id
-        pattern: ^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$
-      error:
-        $ref: '#/definitions/v1ErrorObject'
   v1PoIResponse:
     type: object
     properties:
       poi:
-        $ref: '#/definitions/apiv1PoI'
+        $ref: '#/definitions/poiv1PoI'
   v1ProximityResponse:
     type: object
     properties:
@@ -366,7 +342,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/apiv1PoI'
+          $ref: '#/definitions/poiv1PoI'
   v1RouteResponse:
     type: object
     properties:
@@ -374,7 +350,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/apiv1PoI'
+          $ref: '#/definitions/poiv1PoI'
 securityDefinitions:
   OAuth2:
     type: oauth2

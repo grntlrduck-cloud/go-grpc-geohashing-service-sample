@@ -1,0 +1,38 @@
+// original from https://github.com/grpc/grpc-proto/blob/master/grpc/health/v1/health.proto
+// for the simple use case of this service with grpc-gateway it is just easier to implement a own health check
+syntax = "proto3";
+
+package api.v1.health;
+
+import "google/api/annotations.proto";
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    SERVING_STATUS_UNSPECIFIED= 0;
+    SERVING_STATUS_SERVING = 1;
+    SERVING_STATUS_NOT_SERVING = 2;
+  }
+  ServingStatus status = 1;
+}
+
+// Health is gRPC's mechanism for checking whether a server is able to handle
+// RPCs. Its semantics are documented in
+// https://github.com/grpc/grpc/blob/master/doc/health-checking.md.
+service HealthService {
+  // Check gets the health of the specified service. If the requested service
+  // is unknown, the call will fail with status NOT_FOUND. If the caller does
+  // not specify a service name, the server should respond with its overall
+  // health status.
+  //
+  // Clients should set a deadline when calling Check, and can declare the
+  // server unhealthy if they do not receive a timely response.
+  //
+  // Check implementations should be idempotent and side effect free.
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
+    option (google.api.http) = {get: "/api/v1/health/readiness"};
+  };
+}

@@ -1,12 +1,11 @@
 syntax = "proto3";
 
-package api.v1;
+package api.poi.v1;
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/rpc/poiv1";
 // google and gRPC gateway documentation
 // 1. helpful documentation
 // https://buf.build/grpc-ecosystem/grpc-gateway/docs/main:grpc.gateway.protoc_gen_openapiv2.options#grpc.gateway.protoc_gen_openapiv2.options
@@ -45,8 +44,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   security_definitions: {
     security: {
       key: "OAuth2"
-      value: {
-        type: TYPE_OAUTH2
+      value: {        type: TYPE_OAUTH2
         flow: FLOW_ACCESS_CODE
         authorization_url: "https://example.com/oauth/authorize" // TODO
         token_url: "https://example.com/oauth/token" // TODO
@@ -257,19 +255,6 @@ message RouteResponse {
 }
 
 message ErrorResponse {
-  string correlation_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    pattern:
-      "^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-"
-      "9A-F]{12}$"
-    title: "x-correlation-id"
-    description: "Unique event identifier for server requests"
-    format: "uuid"
-    example: "\"2438ac3c-37eb-4902-adef-ed16b4431030\""
-  }];
-  ErrorObject error = 2;
-}
-
-message ErrorObject {
   int32 code = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     pattern: "^[0-9]$"
     description: "Response code"
@@ -279,7 +264,10 @@ message ErrorObject {
     pattern: "^[a-zA-Z0-9]{1, 32}$"
     description: "Response message"
   }];
+  repeated string details = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Error details"}];
 }
+
+message ErrorObject {}
 
 service PoIService {
   rpc PoI(PoIRequest) returns (PoIResponse) {

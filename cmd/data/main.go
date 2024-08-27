@@ -14,20 +14,21 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/gocarina/gocsv"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/dynamo"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/dynamo"
 )
 
 const (
-	bucketNameParam        = "/config/go-grpc-poi-service/charging-data-bucket-name"
-	cPoIDataCSVPath        = "cpoi_data.csv"
-	cPoIDynamoItemsCSVPath = "cpoi_dynamo_items.csv"
-	cPoIIonFilePath        = "cpoi_ion_items"
+	bucketNameParam                 = "/config/go-grpc-poi-service/charging-data-bucket-name"
+	cPoIDataCSVPath                 = "cpoi_data.csv"
+	cPoIDynamoItemsCSVPath          = "cpoi_dynamo_items.csv"
+	cPoIDynamoItemsLocalTestCSVPath = "cpoi_dynamo_items_int_test.csv" // cpois to use for integration testing in CI and local
+	cPoIIonFilePath                 = "cpoi_ion_items"
 )
 
 // This program requires the dataset from kaggle to be present in the root of this project as 'cpoi_data.csv'.
 // The CSV is proecessed and mapped to fit the data model for dynamo db, saved to disk as CSV and AWS ION.
 // Finally, the files, the raw and the processed data is uploaded to the S3 bucket defined in the data-stack
-// of the infrasturcture.
+// of the infrastructure.
 // TODO: This program could be optimized by using go flags to conrtol processing, uploads, and file name cusotmization
 func main() {
 	ctx := context.Background()
@@ -56,6 +57,7 @@ func main() {
 	// write the dyanmoItems as csv to file
 	log.Print("writing dynamo items csv to files")
 	writeCSV(dynamoItems, cPoIDynamoItemsCSVPath)
+	writeCSV(dynamoItems[:100], cPoIDynamoItemsLocalTestCSVPath)
 
 	log.Print("writing ion file")
 	writeIonFile(dynamoItems, cPoIIonFilePath)
@@ -77,9 +79,10 @@ func main() {
 		bucketName,
 		dynamoItemsCsvS3,
 	)
-
+  
 	// upload the ion items
-	ionFile := loadFile(cPoIIonFilePath)
+	log.Print("uploading ion file to s3")
+  ionFile := loadFile(cPoIIonFilePath)
 	defer ionFile.Close()
 	putObject(
 		ctx,
@@ -119,12 +122,12 @@ func writeIonFile(items []*dynamo.CPoIItem, filePath string) {
 		panic(fmt.Errorf("failed to write ion file, %w", ionFileErr))
 	}
 	writer := ion.NewTextWriter(ionF)
-  defer func(w ion.Writer) {
-    e := w.Finish()
-    if e != nil {
-      panic(fmt.Errorf("failed to close file, %w", e))
-    }
-  }(writer)
+	defer func(w ion.Writer) {
+		e := w.Finish()
+		if e != nil {
+			panic(fmt.Errorf("failed to close file, %w", e))
+		}
+	}(writer)
 	encoder := ion.NewEncoder(writer)
 	for _, v := range items {
 		ion := v.IonItem()
@@ -136,10 +139,10 @@ func writeIonFile(items []*dynamo.CPoIItem, filePath string) {
 }
 
 func closeFile(f *os.File) {
-  e := f.Close()
-  if e != nil {
-    panic(fmt.Errorf("failed to close file, %w", e))
-  }
+	e := f.Close()
+	if e != nil {
+		panic(fmt.Errorf("failed to close file, %w", e))
+	}
 }
 
 func loadFile(filePath string) *os.File {
@@ -155,7 +158,7 @@ func paramStr(ctx context.Context, ssmClient *ssm.Client, paramName string) *str
 		Name: &(paramName),
 	})
 	if err != nil {
-		panic(fmt.Errorf("faile to get param, %w", err))
+		panic(fmt.Errorf("failed to get param, %w", err))
 	}
 	return param.Parameter.Value
 }

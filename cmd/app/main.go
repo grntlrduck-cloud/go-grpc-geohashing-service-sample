@@ -10,7 +10,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/rpc"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/rpc"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
 )
 
 var logger *zap.Logger
@@ -21,35 +22,36 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to initialize zap logger: %v", err)
 	}
-	logger.Info("initalized logger")
+	logger.Info("initialized logger")
 }
 
 func main() {
 	defer func() {
 		_ = logger.Sync()
 	}()
+
 	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	serverConfig := rpc.ServerConfig{RpcPort: 9091, HttpPort: 8081}
-	server, err := rpc.StartNewServer(ctx, serverConfig, logger)
+
+	serverConfig := app.ServerConfig{RpcPort: 9091, HttpPort: 8081}
+	server, err := rpc.NewServer(rpc.NewServerProps{
+		Logger: logger,
+		Ctx:    ctx,
+		Conf:   serverConfig,
+	})
 	if err != nil {
 		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/json")
 	}
 	defer server.Stop()
 
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
 	logger.Info("running and serving requests")
 	for {
 		select {
-		case <-c:
-			return
 		case <-ctx.Done():
 			return
 		default:
-			time.Sleep(100 * time.Microsecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 }
