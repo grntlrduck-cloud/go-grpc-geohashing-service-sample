@@ -25,7 +25,10 @@ func (prs *PoIRpcService) PoI(
 ) (*poi_v1.PoIResponse, error) {
 	id, err := prs.getCorrelationId(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Header X-Correlation-Id not found")
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"Header X-Correlation-Id not found or invalid",
+		)
 	}
 	prs.logger.Info(
 		"processing PoI rpc, returning fixture",
