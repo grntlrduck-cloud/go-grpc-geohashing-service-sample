@@ -18,10 +18,11 @@ import (
 )
 
 const (
-	bucketNameParam        = "/config/go-grpc-poi-service/charging-data-bucket-name"
-	cPoIDataCSVPath        = "cpoi_data.csv"
-	cPoIDynamoItemsCSVPath = "cpoi_dynamo_items.csv"
-	cPoIIonFilePath        = "cpoi_ion_items"
+	bucketNameParam                 = "/config/go-grpc-poi-service/charging-data-bucket-name"
+	cPoIDataCSVPath                 = "cpoi_data.csv"
+	cPoIDynamoItemsCSVPath          = "cpoi_dynamo_items.csv"
+	cPoIDynamoItemsLocalTestCSVPath = "cpoi_dynamo_items_int_test.csv" // cpois to use for integration testing in CI and local
+	cPoIIonFilePath                 = "cpoi_ion_items"
 )
 
 // This program requires the dataset from kaggle to be present in the root of this project as 'cpoi_data.csv'.
@@ -56,6 +57,7 @@ func main() {
 	// write the dyanmoItems as csv to file
 	log.Print("writing dynamo items csv to files")
 	writeCSV(dynamoItems, cPoIDynamoItemsCSVPath)
+	writeCSV(dynamoItems[:100], cPoIDynamoItemsLocalTestCSVPath)
 
 	log.Print("writing ion file")
 	writeIonFile(dynamoItems, cPoIIonFilePath)
@@ -77,9 +79,10 @@ func main() {
 		bucketName,
 		dynamoItemsCsvS3,
 	)
-
+  
 	// upload the ion items
-	ionFile := loadFile(cPoIIonFilePath)
+	log.Print("uploading ion file to s3")
+  ionFile := loadFile(cPoIIonFilePath)
 	defer ionFile.Close()
 	putObject(
 		ctx,
@@ -119,12 +122,12 @@ func writeIonFile(items []*dynamo.CPoIItem, filePath string) {
 		panic(fmt.Errorf("failed to write ion file, %w", ionFileErr))
 	}
 	writer := ion.NewTextWriter(ionF)
-  defer func(w ion.Writer) {
-    e := w.Finish()
-    if e != nil {
-      panic(fmt.Errorf("failed to close file, %w", e))
-    }
-  }(writer)
+	defer func(w ion.Writer) {
+		e := w.Finish()
+		if e != nil {
+			panic(fmt.Errorf("failed to close file, %w", e))
+		}
+	}(writer)
 	encoder := ion.NewEncoder(writer)
 	for _, v := range items {
 		ion := v.IonItem()
@@ -136,10 +139,10 @@ func writeIonFile(items []*dynamo.CPoIItem, filePath string) {
 }
 
 func closeFile(f *os.File) {
-  e := f.Close()
-  if e != nil {
-    panic(fmt.Errorf("failed to close file, %w", e))
-  }
+	e := f.Close()
+	if e != nil {
+		panic(fmt.Errorf("failed to close file, %w", e))
+	}
 }
 
 func loadFile(filePath string) *os.File {

@@ -7,3 +7,5 @@ cdk.out/*
 *.dot
 *.html
 *.xml
+*.csv
+*.md

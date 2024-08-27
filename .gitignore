@@ -31,3 +31,6 @@ go.work.sum
 *.html
 *.csv
 cpoi_ion_items
+_test.csv
+# keep csv with test data
+!cpoi_dynamo_items_int_test.csv
