@@ -51,7 +51,7 @@ func main() {
 		case <-ctx.Done():
 			return
 		default:
-			time.Sleep(5 * time.Millisecond)
+			time.Sleep(100 * time.Microsecond)
 		}
 	}
 }
