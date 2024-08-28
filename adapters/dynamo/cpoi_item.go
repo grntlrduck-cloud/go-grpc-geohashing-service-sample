@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/amazon-ion/ion-go/ion"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
 	"github.com/segmentio/ksuid"
 )
 
@@ -38,6 +39,11 @@ type CPoIItem struct {
 	Latitude          float64  `json:"lat"            csv:"lat"           dynamodbav:"lat"`
 	EntranceLongitude float64  `json:"entrance_lon"   csv:"entrance_lon"  dynamodbav:"entrance_lon"`
 	EntranceLatitude  float64  `json:"entrance_lat"   csv:"entrance_lat"  dynamodbav:"entrance_lat"`
+}
+
+func (c CPoIItem) toDomain() poi.PoILocation {
+  // TODO: implement
+  return poi.PoILocation{}
 }
 
 func (cp *CPoIItem) IonItem() *IonItem {
