@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -17,12 +15,7 @@ import (
 var logger *zap.Logger
 
 func init() {
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		log.Fatalf("failed to initialize zap logger: %v", err)
-	}
-	logger.Info("initialized logger")
+	logger = app.NewLogger()
 }
 
 func main() {
@@ -41,17 +34,24 @@ func main() {
 		Conf:   serverConfig,
 	})
 	if err != nil {
-		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/json")
+		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/json", zap.Error(err))
 	}
 	defer server.Stop()
 
 	logger.Info("running and serving requests")
+
+	awaitTermination(ctx)
+
+	logger.Info("shutting down")
+}
+
+func awaitTermination(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			time.Sleep(100 * time.Microsecond)
+			continue
 		}
 	}
 }
