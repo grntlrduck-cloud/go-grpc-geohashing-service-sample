@@ -9,4 +9,4 @@ cdk.out/*
 *.xml
 *.csv
 *.md
-cert/
+cert/*

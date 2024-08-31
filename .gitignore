@@ -36,4 +36,4 @@ _test.csv
 !cpoi_dynamo_items_int_test.csv
 
 # exluce local cert tests
-cer/
+cer/*
