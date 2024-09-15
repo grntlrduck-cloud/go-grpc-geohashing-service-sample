@@ -8,5 +8,5 @@ type Repository interface {
 	GetById(ctx context.Context, id string) (PoILocation, error)
 	GetByProximity(ctx context.Context, cntr Coordinates, radius float64) ([]PoILocation, error)
 	GetByBbox(ctx context.Context, sw, ne Coordinates) ([]PoILocation, error)
-	BetByRoute(ctx context.Context, path []Coordinates, radius float64) ([]PoILocation, error)
+	BetByRoute(ctx context.Context, path []Coordinates) ([]PoILocation, error)
 }

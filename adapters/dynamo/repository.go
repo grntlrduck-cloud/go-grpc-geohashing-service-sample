@@ -3,6 +3,7 @@ package dynamo
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -37,7 +38,7 @@ func (pgr *PoIGeoRepository) GetById(ctx context.Context, id string) (poi.PoILoc
 	output, getItemErr := pgr.dynamoClient.GetItem(ctx, getItemInput)
 	if getItemErr != nil {
 		pgr.logger.Error("failed to GetItem",
-			zap.String("poi_id", id),	
+			zap.String("poi_id", id),
 			zap.Error(getItemErr),
 		)
 		return poi.PoILocation{}, getItemErr
@@ -54,14 +55,31 @@ func (pgr *PoIGeoRepository) GetById(ctx context.Context, id string) (poi.PoILoc
 	return item.toDomain(), nil
 }
 
-func (pgr *PoIGeoRepository) GetByProximity(ctx context.Context, cntr poi.Coordinates, radius float64) ([]poi.PoILocation, error) {
- return []poi.PoILocation{}, errors.New("not implemented")
+func (pgr *PoIGeoRepository) GetByProximity(
+	ctx context.Context,
+	cntr poi.Coordinates,
+	radius float64,
+) ([]poi.PoILocation, error) {
+	hashes := newHashesFromRadiusCenter(cntr, radius)
+	pgr.logger.Info(fmt.Sprintf("calculated #%d geo hashes", len(hashes)))
+  pgr.logger.Info(fmt.Sprintf("first hash has min=%d and max=%d", hashes[0].min(), hashes[0].max()))
+	return []poi.PoILocation{}, errors.New("not implemented")
 }
 
-func (pgr *PoIGeoRepository) GetByBbox(ctx context.Context, path []poi.Coordinates, radius float64) ([]poi.PoILocation, error) {
-  return []poi.PoILocation{}, errors.New("not implemented")
+func (pgr *PoIGeoRepository) GetByBbox(
+	ctx context.Context,
+	sw, ne poi.Coordinates,
+) ([]poi.PoILocation, error) {
+	hashes := newHashesFromBbox(ne, sw)
+	pgr.logger.Info(fmt.Sprintf("calculated #%d geo hashes", len(hashes)))
+	return []poi.PoILocation{}, errors.New("not implemented")
 }
 
-func (pgr *PoIGeoRepository) GetByRoute(ctx context.Context, path []poi.Coordinates, radius float64) ([]poi.PoILocation, error) {
-  return []poi.PoILocation{}, errors.New("not implemented")
+func (pgr *PoIGeoRepository) GetByRoute(
+	ctx context.Context,
+	path []poi.Coordinates,
+) ([]poi.PoILocation, error) {
+  hashes := newHashesFromRoute(path)
+	pgr.logger.Info(fmt.Sprintf("calculated #%d geo hashes", len(hashes)))
+	return []poi.PoILocation{}, errors.New("not implemented")
 }

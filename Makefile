@@ -1,6 +1,6 @@
-# installs required binaries for linting and protobuf generation for local depvelopment as well as a pre commit hook to lint all files before commiting
+# installs required binaries for linting and protobuf generation for local depvelopment as well as a pre commit hook to lint all files before committing
 configure:
-	@echo "Ensure GOBIN is added to path, buf, aws-cdk, docker & docker-buildx, and protoc is installed as docuemented in README. The configure script does not set up the aforementiond tools."
+	@echo "Ensure GOBIN is added to path, buf, aws-cdk, docker & docker-buildx, and protoc is installed as docuemented in README. The configure script does not set up the aforementioned tools."
 	@echo "Installing protobuf dependencies to GOBIN..."
 	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
 	@go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
@@ -16,7 +16,6 @@ configure:
 	@cp pre-commit.sh .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
 	@echo "Done."
-
 ci:
 	go mod download
 
