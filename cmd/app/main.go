@@ -27,7 +27,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	serverConfig := app.ServerConfig{RpcPort: 9091, HttpPort: 8081}
+	serverConfig := app.ServerConfig{RpcPort: 443, HttpPort: 8443}
 	server, err := rpc.NewServer(rpc.NewServerProps{
 		Logger: logger,
 		Ctx:    ctx,
