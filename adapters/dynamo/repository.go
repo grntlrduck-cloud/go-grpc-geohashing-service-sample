@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -77,9 +78,13 @@ func (pgr *PoIGeoRepository) GetByProximity(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromRadiusCenter(cntr, radius)
-	pgr.logger.Info(fmt.Sprintf("calculated #%d geo hashes", len(hashes)))
+	pgr.logger.Info(
+		fmt.Sprintf("calculated #%d geo hashes", len(hashes)),
+		zap.String("correlation_id", correlationId.String()),
+	)
 	pgr.logger.Info(
 		fmt.Sprintf("first hash has min=%d and max=%d", hashes[0].min(), hashes[0].max()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	return []poi.PoILocation{}, errors.New("not implemented")
 }
@@ -90,7 +95,10 @@ func (pgr *PoIGeoRepository) GetByBbox(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromBbox(ne, sw)
-	pgr.logger.Info(fmt.Sprintf("calculated #%d geo hashes", len(hashes)))
+	pgr.logger.Info(
+		fmt.Sprintf("calculated #%d geo hashes", len(hashes)),
+		zap.String("correlation_id", correlationId.String()),
+	)
 	return []poi.PoILocation{}, errors.New("not implemented")
 }
 
@@ -100,6 +108,79 @@ func (pgr *PoIGeoRepository) GetByRoute(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromRoute(path)
-	pgr.logger.Info(fmt.Sprintf("calculated #%d geo hashes", len(hashes)))
-	return []poi.PoILocation{}, errors.New("not implemented")
+	queries := pgr.queryInputFromHashes(hashes)
+	// TODO: concurrently fetch for each query, handle errors, and merge results by using Wait and ErrorGroups or channels
+	pois, err := pgr.handleQuery(ctx, queries[0])
+	if err != nil {
+		return nil, fmt.Errorf("failed to query pois for route: %w", err)
+	}
+	pgr.logger.Info(
+		fmt.Sprintf("calculated #%d geo hashes and created #%d queries", len(hashes), len(queries)),
+		zap.String("correlation_id", correlationId.String()),
+	)
+	return pois, errors.New("not implemented")
+}
+
+func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.QueryInput {
+	queries := make([]*dynamodb.QueryInput, 0)
+	for _, v := range hashes {
+		keyCondition := fmt.Sprintf(
+			"%s = :pk AND %s BETWEEN :skmin AND :skmax",
+			CPoIItemGeoIndexPK,
+			CPoIItemGeoIndexSK,
+		)
+		println(v.trimmed(CPoIItemGeoHashKeyLength))
+		query := &dynamodb.QueryInput{
+			TableName:              aws.String(pgr.tableName),
+			IndexName:              aws.String(CPoIItemGeoIndexName),
+			KeyConditionExpression: aws.String(keyCondition),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":pk": &types.AttributeValueMemberN{
+					Value: strconv.FormatUint(v.trimmed(CPoIItemGeoHashKeyLength), 10),
+				},
+				":skmin": &types.AttributeValueMemberN{Value: strconv.FormatUint(v.min(), 10)},
+				":skmax": &types.AttributeValueMemberN{Value: strconv.FormatUint(v.max(), 10)},
+			},
+		}
+		queries = append(queries, query)
+	}
+	return queries
+}
+
+func (pgr *PoIGeoRepository) handleQuery(
+	ctx context.Context,
+	input *dynamodb.QueryInput,
+) ([]poi.PoILocation, error) {
+	items := make([]map[string]types.AttributeValue, 0)
+	queryResult, err := pgr.dynamoClient.QueryItem(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query PoIs: %w", err)
+	}
+	items = append(items, queryResult.Items...)
+	for queryResult.LastEvaluatedKey != nil {
+		input.ExclusiveStartKey = queryResult.LastEvaluatedKey
+		res, err := pgr.dynamoClient.QueryItem(ctx, input)
+		if err != nil {
+			return nil, fmt.Errorf("failed to call query page: %w", err)
+		}
+		items = append(items, res.Items...)
+	}
+	domain, err := mapAvs(items)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map results: %w", err)
+	}
+	return domain, nil
+}
+
+func mapAvs(avs []map[string]types.AttributeValue) ([]poi.PoILocation, error) {
+	items := new([]CPoIItem)
+	err := attributevalue.UnmarshalListOfMaps(avs, items)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map list of dynamo avs: %w", err)
+	}
+	domain := make([]poi.PoILocation, len(*items))
+	for i, v := range *items {
+		domain[i] = v.toDomain()
+	}
+	return domain, nil
 }
