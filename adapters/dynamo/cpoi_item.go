@@ -7,6 +7,8 @@ import (
 
 	"github.com/amazon-ion/ion-go/ion"
 	"github.com/segmentio/ksuid"
+
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
 )
 
 const (
@@ -38,6 +40,11 @@ type CPoIItem struct {
 	Latitude          float64  `json:"lat"            csv:"lat"           dynamodbav:"lat"`
 	EntranceLongitude float64  `json:"entrance_lon"   csv:"entrance_lon"  dynamodbav:"entrance_lon"`
 	EntranceLatitude  float64  `json:"entrance_lat"   csv:"entrance_lat"  dynamodbav:"entrance_lat"`
+}
+
+func (c CPoIItem) toDomain() poi.PoILocation {
+	// TODO: implement
+	return poi.PoILocation{}
 }
 
 func (cp *CPoIItem) IonItem() *IonItem {
@@ -103,14 +110,14 @@ func EntriesToDynamo(ctes []*ChargingCSVEntry) []*CPoIItem {
 }
 
 func (cte *ChargingCSVEntry) MapToDynamo() *CPoIItem {
-	gh := NewGeoHash(cte.Latitude, cte.Longitude)
+	gh := newGeoHash(cte.Latitude, cte.Longitude)
 	id := ksuid.New().String()
 	return &CPoIItem{
 		Pk: id,
-		GeoIndexPk: gh.Trimmed(
+		GeoIndexPk: gh.trimmed(
 			CPoIItemGeoHashKeyLength,
 		), // the trimmed geo hash representing a tile
-		GeoIndexSk:        gh.Hash(), // the full length geo hash
+		GeoIndexSk:        gh.hash(), // the full length geo hash
 		Id:                id,
 		Street:            cte.Street,
 		StreetNumber:      cte.StreetNumber,
