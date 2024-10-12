@@ -12,8 +12,20 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+)
+
+var (
+	TooLargeSearchAreaErr = errors.New("area too large for query")
+	DBQueryErr            = errors.New("failed to query table")
+)
+
+const (
+	routeHashesLimit = 100
+	bboxHashesLimit  = 20
+	proxHashesLimit  = 20
 )
 
 type PoIGeoRepository struct {
@@ -78,15 +90,22 @@ func (pgr *PoIGeoRepository) GetByProximity(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromRadiusCenter(cntr, radius)
-	pgr.logger.Info(
-		fmt.Sprintf("calculated #%d geo hashes", len(hashes)),
-		zap.String("correlation_id", correlationId.String()),
-	)
-	pgr.logger.Info(
-		fmt.Sprintf("first hash has min=%d and max=%d", hashes[0].min(), hashes[0].max()),
-		zap.String("correlation_id", correlationId.String()),
-	)
-	return []poi.PoILocation{}, errors.New("not implemented")
+	if len(hashes) > proxHashesLimit {
+		pgr.logger.Error("too many hashes calculated for proximity",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Int("num_hashes", len(hashes)),
+		)
+		return nil, TooLargeSearchAreaErr
+	}
+	res, err := pgr.parallelQueryHashes(ctx, correlationId, hashes)
+	if err != nil {
+		pgr.logger.Error("failed to query by proximity",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Error(err),
+		)
+		return nil, DBQueryErr
+	}
+	return res, nil
 }
 
 func (pgr *PoIGeoRepository) GetByBbox(
@@ -95,11 +114,22 @@ func (pgr *PoIGeoRepository) GetByBbox(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromBbox(ne, sw)
-	pgr.logger.Info(
-		fmt.Sprintf("calculated #%d geo hashes", len(hashes)),
-		zap.String("correlation_id", correlationId.String()),
-	)
-	return []poi.PoILocation{}, errors.New("not implemented")
+	if len(hashes) > bboxHashesLimit {
+		pgr.logger.Error("too many hashes calculated for bbox",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Int("num_hashes", len(hashes)),
+		)
+		return nil, TooLargeSearchAreaErr
+	}
+	res, err := pgr.parallelQueryHashes(ctx, correlationId, hashes)
+	if err != nil {
+		pgr.logger.Error("failed to query by bbox",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Error(err),
+		)
+		return nil, DBQueryErr
+	}
+	return res, nil
 }
 
 func (pgr *PoIGeoRepository) GetByRoute(
@@ -108,17 +138,95 @@ func (pgr *PoIGeoRepository) GetByRoute(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromRoute(path)
-	queries := pgr.queryInputFromHashes(hashes)
-	// TODO: concurrently fetch for each query, handle errors, and merge results by using Wait and ErrorGroups or channels
-	pois, err := pgr.handleQuery(ctx, queries[0])
-	if err != nil {
-		return nil, fmt.Errorf("failed to query pois for route: %w", err)
+	// googl s2 does not guarantee that the set MaxCells can be fulfilled
+	// an arbitrary large list of hashes might be returned
+	if len(hashes) > routeHashesLimit {
+		pgr.logger.Error("too many hashes calculated for route",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Int("num_hashes", len(hashes)),
+		)
+		return nil, TooLargeSearchAreaErr
 	}
-	pgr.logger.Info(
-		fmt.Sprintf("calculated #%d geo hashes and created #%d queries", len(hashes), len(queries)),
+	res, err := pgr.parallelQueryHashes(ctx, correlationId, hashes)
+	if err != nil {
+		pgr.logger.Error("failed to query by route",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Error(err),
+		)
+		return nil, DBQueryErr
+	}
+	return res, nil
+}
+
+func (pgr *PoIGeoRepository) parallelQueryHashes(
+	ctx context.Context,
+	correlationId uuid.UUID,
+	hashes []geoHash,
+) ([]poi.PoILocation, error) {
+	queries := pgr.queryInputFromHashes(hashes)
+	pgr.logger.Info("sending parallel requests for geo query",
 		zap.String("correlation_id", correlationId.String()),
+		zap.Int("queries", len(queries)),
 	)
-	return pois, errors.New("not implemented")
+	resC := make(chan poiQueryResult)
+	errGrp, gctx := errgroup.WithContext(ctx)
+	errGrp.SetLimit(10)
+	for _, v := range queries {
+		errGrp.Go(func() error {
+			qres := pgr.query(gctx, v)
+			if qres.err != nil {
+				return qres.err
+			}
+			select {
+			case resC <- qres:
+			case <-gctx.Done():
+				return gctx.Err()
+			}
+			return nil
+		})
+	}
+	go func() {
+		_ = errGrp.Wait()
+		close(resC)
+	}()
+	var pois []poi.PoILocation
+	for r := range resC {
+		pois = append(pois, r.pois...)
+	}
+	if err := errGrp.Wait(); err != nil {
+		return nil, fmt.Errorf("one or more concurrent dynamoDb queries failed: %w", err)
+	}
+	return pois, nil
+}
+
+type poiQueryResult struct {
+	pois []poi.PoILocation
+	err  error
+}
+
+func (pgr *PoIGeoRepository) query(
+	ctx context.Context,
+	input *dynamodb.QueryInput,
+) poiQueryResult {
+	items := make([]map[string]types.AttributeValue, 0)
+	queryResult, err := pgr.dynamoClient.QueryItem(ctx, input)
+	if err != nil {
+		return poiQueryResult{nil, fmt.Errorf("failed to query PoIs: %w", err)}
+	}
+	items = append(items, queryResult.Items...)
+	for queryResult.LastEvaluatedKey != nil {
+		input.ExclusiveStartKey = queryResult.LastEvaluatedKey
+		res, err := pgr.dynamoClient.QueryItem(ctx, input)
+		if err != nil {
+			return poiQueryResult{nil, fmt.Errorf("failed to call query page: %w", err)}
+		}
+		items = append(items, res.Items...)
+	}
+	domain, err := mapAvs(items)
+	if err != nil {
+		return poiQueryResult{nil, fmt.Errorf("failed to map results: %w", err)}
+	}
+	return poiQueryResult{domain, nil}
 }
 
 func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.QueryInput {
@@ -145,31 +253,6 @@ func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.
 		queries = append(queries, query)
 	}
 	return queries
-}
-
-func (pgr *PoIGeoRepository) handleQuery(
-	ctx context.Context,
-	input *dynamodb.QueryInput,
-) ([]poi.PoILocation, error) {
-	items := make([]map[string]types.AttributeValue, 0)
-	queryResult, err := pgr.dynamoClient.QueryItem(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query PoIs: %w", err)
-	}
-	items = append(items, queryResult.Items...)
-	for queryResult.LastEvaluatedKey != nil {
-		input.ExclusiveStartKey = queryResult.LastEvaluatedKey
-		res, err := pgr.dynamoClient.QueryItem(ctx, input)
-		if err != nil {
-			return nil, fmt.Errorf("failed to call query page: %w", err)
-		}
-		items = append(items, res.Items...)
-	}
-	domain, err := mapAvs(items)
-	if err != nil {
-		return nil, fmt.Errorf("failed to map results: %w", err)
-	}
-	return domain, nil
 }
 
 func mapAvs(avs []map[string]types.AttributeValue) ([]poi.PoILocation, error) {

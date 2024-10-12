@@ -88,7 +88,7 @@ func newHashesFromRoute(path []poi.Coordinates) []geoHash {
 	coverer := s2.RegionCoverer{
 		MinLevel: 9,  // 14 km * 19 km
 		MaxLevel: 16, // 108 m 148 m
-		MaxCells: 30,
+		MaxCells: 50,
 		LevelMod: 1,
 	}
 	covering := coverer.Covering(polyline)
