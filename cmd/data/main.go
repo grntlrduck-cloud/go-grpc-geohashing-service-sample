@@ -79,10 +79,10 @@ func main() {
 		bucketName,
 		dynamoItemsCsvS3,
 	)
-  
+
 	// upload the ion items
 	log.Print("uploading ion file to s3")
-  ionFile := loadFile(cPoIIonFilePath)
+	ionFile := loadFile(cPoIIonFilePath)
 	defer ionFile.Close()
 	putObject(
 		ctx,
