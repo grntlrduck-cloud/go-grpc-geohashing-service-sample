@@ -2,30 +2,27 @@ package dynamo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
+	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
 )
 
-var (
-	TooLargeSearchAreaErr = errors.New("area too large for query")
-	DBQueryErr            = errors.New("failed to query table")
-)
-
 const (
-	routeHashesLimit = 100
-	bboxHashesLimit  = 20
-	proxHashesLimit  = 20
+	routeHashesLimit   = 100
+	bboxHashesLimit    = 20
+	proxHashesLimit    = 20
+	dynamoMaxBatchSize = 25
 )
 
 type PoIGeoRepository struct {
@@ -39,32 +36,110 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 	pois []poi.PoILocation,
 	correlationId uuid.UUID,
 ) error {
-	return errors.New("not implemented")
+	// map domain model to dynamo items and marshall to AttributeValues
+	// and assemble list of WriteRequests
+	rqsts := make([]types.WriteRequest, len(pois))
+	for i, v := range pois {
+		item := newItemFromDomain(v)
+		av, err := attributevalue.MarshalMap(&item)
+		if err != nil {
+			return poi.DBEntityMappingErr
+		}
+		rqsts[i] = types.WriteRequest{PutRequest: &types.PutRequest{Item: av}}
+	}
+	numChunks := (len(pois) + dynamoMaxBatchSize - 1) / dynamoMaxBatchSize
+	chunks := make([][]types.WriteRequest, numChunks)
+
+	// create chunks with max 25 items
+	for dynamoMaxBatchSize < len(rqsts) {
+		rqsts, chunks = rqsts[dynamoMaxBatchSize:], append(
+			chunks,
+			rqsts[0:dynamoMaxBatchSize:dynamoMaxBatchSize],
+		)
+	}
+	chunks = append(chunks, rqsts)
+
+	// upset chunks
+	var errs []error
+	for _, c := range chunks {
+		input := &dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]types.WriteRequest{pgr.tableName: c},
+		}
+		_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
+		if err != nil {
+			// just  retry once after 10 ms sleep
+			// don't do that in real world production scenario
+			// implement exponential backoff instead
+			pgr.logger.Warn(
+				"retrying batch PutItem",
+				zap.String("correlation_id", correlationId.String()),
+			)
+			time.Sleep(time.Millisecond * 10)
+			_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
+			if err != nil {
+				pgr.logger.Error(
+					"failed to perform batch PutItem",
+					zap.String("correlation_id", correlationId.String()),
+				)
+				errs = append(errs, err)
+			}
+		}
+	}
+	if len(errs) > 0 {
+		pgr.logger.Error("batch upsert incomplete",
+			zap.Error(errs[0]),
+			zap.String("correlation_id", correlationId.String()),
+			zap.Int("num_failed_batches", len(errs)),
+		)
+		return poi.DBBatchUpserErr
+	}
+	return nil
 }
 
 func (pgr *PoIGeoRepository) Upsert(
 	ctx context.Context,
-	poi poi.PoILocation,
+	domain poi.PoILocation,
 	correlationId uuid.UUID,
 ) error {
-	return errors.New("not implemented")
+	item := newItemFromDomain(domain)
+	avs, err := attributevalue.MarshalMap(&item)
+	if err != nil {
+		pgr.logger.Error("unable to marshall item to DynamoDB AttributeValues",
+			zap.Error(err),
+			zap.String("correlation_id", correlationId.String()),
+		)
+		return poi.DBEntityMappingErr
+	}
+	putItemInput := &dynamodb.PutItemInput{
+		Item:      avs,
+		TableName: &pgr.tableName,
+	}
+	_, err = pgr.dynamoClient.PutItem(ctx, putItemInput)
+	if err != nil {
+		pgr.logger.Error("failed to PutItem",
+			zap.Error(err),
+			zap.String("correlation_id", correlationId.String()),
+		)
+		return poi.DBUpsertErr
+	}
+	return nil
 }
 
 func (pgr *PoIGeoRepository) GetById(
 	ctx context.Context,
-	id string,
+	id ksuid.KSUID,
 	correlationId uuid.UUID,
 ) (poi.PoILocation, error) {
 	getItemInput := &dynamodb.GetItemInput{
 		TableName: aws.String(pgr.tableName),
 		Key: map[string]types.AttributeValue{
-			CPoIItemPK: &types.AttributeValueMemberS{Value: id},
+			CPoIItemPK: &types.AttributeValueMemberS{Value: id.String()},
 		},
 	}
 	output, err := pgr.dynamoClient.GetItem(ctx, getItemInput)
 	if err != nil {
 		pgr.logger.Error("failed to GetItem",
-			zap.String("poi_id", id),
+			zap.String("poi_id", id.String()),
 			zap.String("correlation_id", correlationId.String()),
 			zap.Error(err),
 		)
@@ -74,13 +149,16 @@ func (pgr *PoIGeoRepository) GetById(
 	err = attributevalue.UnmarshalMap(output.Item, item)
 	if err != nil {
 		pgr.logger.Error("failed to unmarshal GetItem output",
-			zap.String("poi_id", id),
+			zap.String("poi_id", id.String()),
 			zap.String("correlation_id", correlationId.String()),
 			zap.Error(err),
 		)
 		return poi.PoILocation{}, err
 	}
-	return item.toDomain(), nil
+	if item.Pk == "" {
+		return poi.PoILocation{}, poi.LocationNotFound
+	}
+	return item.Domain()
 }
 
 func (pgr *PoIGeoRepository) GetByProximity(
@@ -95,7 +173,7 @@ func (pgr *PoIGeoRepository) GetByProximity(
 			zap.String("correlation_id", correlationId.String()),
 			zap.Int("num_hashes", len(hashes)),
 		)
-		return nil, TooLargeSearchAreaErr
+		return nil, poi.TooLargeSearchAreaErr
 	}
 	res, err := pgr.parallelQueryHashes(ctx, correlationId, hashes)
 	if err != nil {
@@ -103,7 +181,7 @@ func (pgr *PoIGeoRepository) GetByProximity(
 			zap.String("correlation_id", correlationId.String()),
 			zap.Error(err),
 		)
-		return nil, DBQueryErr
+		return nil, poi.DBQueryErr
 	}
 	return res, nil
 }
@@ -119,7 +197,7 @@ func (pgr *PoIGeoRepository) GetByBbox(
 			zap.String("correlation_id", correlationId.String()),
 			zap.Int("num_hashes", len(hashes)),
 		)
-		return nil, TooLargeSearchAreaErr
+		return nil, poi.TooLargeSearchAreaErr
 	}
 	res, err := pgr.parallelQueryHashes(ctx, correlationId, hashes)
 	if err != nil {
@@ -127,7 +205,7 @@ func (pgr *PoIGeoRepository) GetByBbox(
 			zap.String("correlation_id", correlationId.String()),
 			zap.Error(err),
 		)
-		return nil, DBQueryErr
+		return nil, poi.DBQueryErr
 	}
 	return res, nil
 }
@@ -138,14 +216,14 @@ func (pgr *PoIGeoRepository) GetByRoute(
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
 	hashes := newHashesFromRoute(path)
-	// googl s2 does not guarantee that the set MaxCells can be fulfilled
+	// google s2 does not guarantee that the set MaxCells can be fulfilled
 	// an arbitrary large list of hashes might be returned
 	if len(hashes) > routeHashesLimit {
 		pgr.logger.Error("too many hashes calculated for route",
 			zap.String("correlation_id", correlationId.String()),
 			zap.Int("num_hashes", len(hashes)),
 		)
-		return nil, TooLargeSearchAreaErr
+		return nil, poi.TooLargeSearchAreaErr
 	}
 	res, err := pgr.parallelQueryHashes(ctx, correlationId, hashes)
 	if err != nil {
@@ -153,7 +231,7 @@ func (pgr *PoIGeoRepository) GetByRoute(
 			zap.String("correlation_id", correlationId.String()),
 			zap.Error(err),
 		)
-		return nil, DBQueryErr
+		return nil, poi.DBQueryErr
 	}
 	return res, nil
 }
@@ -263,7 +341,11 @@ func mapAvs(avs []map[string]types.AttributeValue) ([]poi.PoILocation, error) {
 	}
 	domain := make([]poi.PoILocation, len(*items))
 	for i, v := range *items {
-		domain[i] = v.toDomain()
+		d, err := v.Domain()
+		if err != nil {
+			return nil, fmt.Errorf("failed to attribute values to domain model: %w", err)
+		}
+		domain[i] = d
 	}
 	return domain, nil
 }

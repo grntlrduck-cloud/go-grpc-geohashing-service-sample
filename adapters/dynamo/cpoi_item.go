@@ -42,9 +42,53 @@ type CPoIItem struct {
 	EntranceLatitude  float64  `json:"entrance_lat"   csv:"entrance_lat"  dynamodbav:"entrance_lat"`
 }
 
-func (c CPoIItem) toDomain() poi.PoILocation {
-	// TODO: implement
-	return poi.PoILocation{}
+func (cp *CPoIItem) Domain() (poi.PoILocation, error) {
+	id, err := ksuid.Parse(cp.Id)
+	if err != nil {
+		return poi.PoILocation{}, fmt.Errorf("failed to pares Pk of item to ksuid: %w", err)
+	}
+	return poi.PoILocation{
+		Id: id,
+		Location: poi.Coordinates{
+			Latitude:  cp.Latitude,
+			Longitude: cp.Longitude,
+		},
+		Address: poi.Address{
+			Street:       cp.Street,
+			StreetNumber: cp.StreetNumber,
+			ZipCode:      cp.ZipCode,
+			City:         cp.City,
+			CountryCode:  cp.CountryCode,
+		},
+		LocationEntrance: poi.Coordinates{
+			Latitude:  cp.Latitude,
+			Longitude: cp.Longitude,
+		},
+		Features: cp.Features,
+	}, nil
+}
+
+func newItemFromDomain(poi poi.PoILocation) CPoIItem {
+	gh := newGeoHash(poi.Location.Latitude, poi.Location.Longitude)
+	id := poi.Id.String()
+	return CPoIItem{
+		Pk: id,
+		GeoIndexPk: gh.trimmed(
+			CPoIItemGeoHashKeyLength,
+		), // the trimmed geo hash representing a tile
+		GeoIndexSk:        gh.hash(), // the full length geo hash
+		Id:                id,
+		Street:            poi.Address.Street,
+		StreetNumber:      poi.Address.StreetNumber,
+		ZipCode:           poi.Address.ZipCode,
+		City:              poi.Address.City,
+		CountryCode:       poi.Address.CountryCode,
+		Longitude:         poi.Location.Longitude,
+		Latitude:          poi.Location.Latitude,
+		EntranceLongitude: poi.LocationEntrance.Longitude,
+		EntranceLatitude:  poi.LocationEntrance.Latitude,
+		Features:          poi.Features,
+	}
 }
 
 func (cp *CPoIItem) IonItem() *IonItem {

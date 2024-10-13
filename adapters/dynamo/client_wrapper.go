@@ -21,6 +21,14 @@ type ClientWrapper struct {
 	dynamoClient *dynamodb.Client
 }
 
+func (client *ClientWrapper) BatchPutItem(
+	ctx context.Context,
+	input *dynamodb.BatchWriteItemInput,
+) (*dynamodb.BatchWriteItemOutput, error) {
+	output, err := client.dynamoClient.BatchWriteItem(ctx, input)
+	return output, err
+}
+
 func (client *ClientWrapper) PutItem(
 	ctx context.Context,
 	input *dynamodb.PutItemInput,
