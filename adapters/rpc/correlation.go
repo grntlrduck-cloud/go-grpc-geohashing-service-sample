@@ -30,19 +30,11 @@ func correlationIdMatcher(key string) (string, bool) {
 func getCorrelationId(ctx context.Context) (*uuid.UUID, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, errors.New("failed to extract metadata in service")
+		return nil, errors.New("failed to extract metadata")
 	}
-	// handle request is from REST client
+	// handle request is from REST and gRPC client
 	match := md.Get(correlationHeader)
-	if len(match) > 0 {
-		id, err := uuid.Parse(match[0])
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse uuid form correlation header: %w", err)
-		}
-		return &id, nil
-	}
-	// handle request is from grpc client
-	match = md.Get(gCorrelationMD)
+	match = append(match, md.Get(gCorrelationMD)...)
 	if len(match) > 0 {
 		id, err := uuid.Parse(match[0])
 		if err != nil {
