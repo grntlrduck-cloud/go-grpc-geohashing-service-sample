@@ -68,7 +68,6 @@ func (s *Server) Stop() {
 func NewServer(props NewServerProps) (*Server, error) {
 	grpcServerEndpoint := fmt.Sprintf(":%d", props.Conf.RpcPort)
 	httpProxyEndpoint := fmt.Sprintf(":%d", props.Conf.HttpPort)
-	// TODO: func WithForwardResponseOption to add correlation id to response"
 	// start rpc server and add service
 	res := startRpcServer(props.Logger, grpcServerEndpoint)
 	if res.err != nil {
@@ -129,7 +128,8 @@ func startRpcServer(logger *zap.Logger, endpoint string) *startRpcServerResult {
 func startHttpProxy(props startHttpProxyProps) error {
 	props.logger.Info("starting HTTP reverse proxy with RPC handler")
 	mux := runtime.NewServeMux(
-		runtime.WithIncomingHeaderMatcher(CorrelationIdMatcher),
+		runtime.WithIncomingHeaderMatcher(correlationIdMatcher),
+		runtime.WithForwardResponseOption(correlationIdResponseModifier),
 	)
 	opts := []grpc.DialOption{
 		// TODO: configure security based on props

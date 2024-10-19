@@ -5,7 +5,9 @@ import (
 
 	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	status "google.golang.org/grpc/status"
 
 	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
@@ -20,17 +22,18 @@ func (prs *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
-	id, err := GetCorrelationId(ctx)
+	id, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
-			"Header X-Correlation-Id not found or invalid",
+			"correlationId is required",
 		)
 	}
 	prs.logger.Info(
 		"processing PoI rpc, returning fixture",
-		zap.String("X-Correlation-Id", id.String()),
+		zap.String(correlationHeader, id.String()),
 	)
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, id.String()))
 	return &poi_v1.PoIResponse{
 		Poi: &poi_v1.PoI{
 			Id:         ksuid.New().String(),
