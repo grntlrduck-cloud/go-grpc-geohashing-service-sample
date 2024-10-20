@@ -2,11 +2,10 @@ package rpc
 
 import (
 	"context"
-	"errors"
 
-	"github.com/google/uuid"
 	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	status "google.golang.org/grpc/status"
@@ -23,17 +22,18 @@ func (prs *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
-	id, err := prs.getCorrelationId(ctx)
+	id, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
-			"Header X-Correlation-Id not found or invalid",
+			"correlationId is required",
 		)
 	}
 	prs.logger.Info(
 		"processing PoI rpc, returning fixture",
-		zap.String("X-Correlation-Id", id.String()),
+		zap.String(correlationHeader, id.String()),
 	)
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, id.String()))
 	return &poi_v1.PoIResponse{
 		Poi: &poi_v1.PoI{
 			Id:         ksuid.New().String(),
@@ -68,23 +68,4 @@ func (prs *PoIRpcService) Route(
 	request *poi_v1.RouteRequest,
 ) (*poi_v1.RouteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
-}
-
-func (prs *PoIRpcService) getCorrelationId(ctx context.Context) (*uuid.UUID, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		prs.logger.Error("failed to get metadata from ctx")
-		return nil, errors.New("failed to extract metadata in service")
-	}
-	match := md.Get("X-Correlation-Id")
-	if len(match) > 0 {
-		id, err := uuid.Parse(match[0])
-		if err != nil {
-			prs.logger.Warn("failed to parse uuid form correlation header")
-			return nil, err
-		}
-		return &id, nil
-	}
-	prs.logger.Warn("no correlationId set")
-	return nil, errors.New("correlationId not in headers")
 }
