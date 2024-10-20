@@ -27,14 +27,18 @@ func main() {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	serverConfig := app.ServerConfig{RpcPort: 443, HttpPort: 8443}
+	bootConfig, err := app.NewBootConfig()
+	if err != nil {
+		logger.Panic("failed to start application. unable to load boot config", zap.Error(err))
+	}
+
 	server, err := rpc.NewServer(rpc.NewServerProps{
 		Logger: logger,
 		Ctx:    ctx,
-		Conf:   serverConfig,
+		Conf:   bootConfig.Grpc,
 	})
 	if err != nil {
-		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/json", zap.Error(err))
+		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/JSON", zap.Error(err))
 	}
 	defer server.Stop()
 
