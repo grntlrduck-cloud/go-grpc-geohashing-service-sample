@@ -41,7 +41,7 @@ WORKDIR /service
 EXPOSE 443 8443
 
 COPY --from=build_base /src/build/ ./
-COPY --from=build_base /src/boot.yaml ./
+COPY --from=build_base /src/config/ ./config/
 COPY --from=build_base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENTRYPOINT ["/service/app"]

@@ -28,7 +28,7 @@ type Server struct {
 type NewServerProps struct {
 	Logger *zap.Logger
 	Ctx    context.Context
-	Conf   app.ServerConfig
+	Conf   app.GrpcConfig
 }
 
 type startHttpProxyProps struct {
@@ -45,15 +45,6 @@ type startRpcServerResult struct {
 	err       error
 }
 
-type ServerStartFailureErr struct {
-	error
-	msg string
-}
-
-func (se ServerStartFailureErr) Error() string {
-	return fmt.Sprintf("%s: %v", se.msg, se.error)
-}
-
 func (s *Server) Stop() {
 	s.hrs.healthy(false)
 	s.logger.Info("set health endpoint to NOT_SERVING")
@@ -66,12 +57,12 @@ func (s *Server) Stop() {
 }
 
 func NewServer(props NewServerProps) (*Server, error) {
-	grpcServerEndpoint := fmt.Sprintf(":%d", props.Conf.RpcPort)
-	httpProxyEndpoint := fmt.Sprintf(":%d", props.Conf.HttpPort)
+	grpcServerEndpoint := fmt.Sprintf(":%d", props.Conf.Server.Port)
+	httpProxyEndpoint := fmt.Sprintf(":%d", props.Conf.Proxy.Port)
 	// start rpc server and add service
 	res := startRpcServer(props.Logger, grpcServerEndpoint)
 	if res.err != nil {
-		return nil, ServerStartFailureErr{res.err, "fatal, rpc server start error"}
+		return nil, fmt.Errorf("failed to start rpc server: %w", res.err)
 	}
 
 	// start http proxy
@@ -83,7 +74,7 @@ func NewServer(props NewServerProps) (*Server, error) {
 	})
 	if err != nil {
 		res.rpcServer.GracefulStop()
-		return nil, ServerStartFailureErr{err, "fatal, failed to start proxy. server shut down"}
+		return nil, fmt.Errorf("failed to start reverse rpc proxy: %w", err)
 	}
 	props.Logger.Info("setting endpoints to SERVING")
 	res.hrs.healthy(true)
