@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.146.0
 	github.com/aws/aws-sdk-go-v2 v1.30.4
 	github.com/aws/aws-sdk-go-v2/config v1.27.31
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.15.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.34.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.58.0
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.1
@@ -22,6 +23,7 @@ require (
 	github.com/onsi/gomega v1.33.1
 	github.com/segmentio/ksuid v1.0.4
 	go.uber.org/zap v1.27.0
+	golang.org/x/sync v0.7.0
 	golang.org/x/vuln v1.1.3
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
 	google.golang.org/grpc v1.65.0
@@ -33,7 +35,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.30 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.15.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.16 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.16 // indirect
@@ -70,7 +71,6 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/telemetry v0.0.0-20240724210143-b54ba84a8489 // indirect
 	golang.org/x/term v0.22.0 // indirect
