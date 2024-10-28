@@ -27,7 +27,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	bootConfig, err := app.NewBootConfig()
+	bootConfig, err := app.LoadBootConfig()
 	if err != nil {
 		logger.Panic("failed to start application. unable to load boot config", zap.Error(err))
 	}

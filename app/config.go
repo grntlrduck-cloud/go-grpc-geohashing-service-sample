@@ -54,7 +54,9 @@ type DynamoDbConfig struct {
 	PoiTableName string `yaml:"poi_table_name"`
 }
 
-func NewBootConfig() (*BootConfig, error) {
+func LoadBootConfig() (*BootConfig, error) {
+	wd, _ := os.Getwd()
+	println(wd)
 	defaultBootFile := fmt.Sprintf("%s/%s.yaml", bootConfigPath, bootFilePrefix)
 	defaultBootConfig, err := loadExpandProfile(defaultBootFile)
 	if err != nil {
