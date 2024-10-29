@@ -10,6 +10,7 @@ grpc:
     enabled: false
     cert_path: "cert/grpc-cert.pem"
     key_path: "cert/grpc-key.pem"
+    ca_path: "cert/ca-cert.pem"
 
 aws:
   config:

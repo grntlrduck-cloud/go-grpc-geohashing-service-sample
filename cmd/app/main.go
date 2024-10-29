@@ -32,16 +32,28 @@ func main() {
 		logger.Panic("failed to start application. unable to load boot config", zap.Error(err))
 	}
 
-	server, err := rpc.NewServer(rpc.NewServerProps{
-		Logger: logger,
-		Ctx:    ctx,
-		Conf:   bootConfig.Grpc,
-	})
+	server, err := rpc.NewServer(
+		rpc.WithContext(ctx),
+		rpc.WithRpcLogger(logger),
+		rpc.WithGrpcPort(bootConfig.Grpc.Server.Port),
+		rpc.WithHttpPort(bootConfig.Grpc.Proxy.Port),
+		rpc.WithSslConfig(
+			bootConfig.Grpc.Ssl.CertPath,
+			bootConfig.Grpc.Ssl.KeyPath,
+			bootConfig.Grpc.Ssl.CaPath,
+		),
+		rpc.WithSslEnabled(bootConfig.Grpc.Ssl.Enabled),
+		rpc.WithHealthService(&rpc.HealthRpcService{}),
+		rpc.WithRegisterRpcService(rpc.NewPoIRpcService(logger)),
+	)
 	if err != nil {
-		logger.Panic("failed to start rRPC server and reverse proxy for HTTP/JSON", zap.Error(err))
+		logger.Panic("failed to creat gRPC server", zap.Error(err))
 	}
 	defer server.Stop()
-
+	err = server.Start()
+	if err != nil {
+		logger.Panic("failed to start gRPC Server and proxy gateway", zap.Error(err))
+	}
 	logger.Info("running and serving requests")
 
 	awaitTermination(ctx)

@@ -31,13 +31,14 @@ type GrpcConfig struct {
 }
 
 type PortConfig struct {
-	Port int `yaml:"port"`
+	Port int32 `yaml:"port"`
 }
 
 type SslConfig struct {
 	Enabled  bool   `yaml:"enabled"`
 	CertPath string `yaml:"cert_path"`
 	KeyPath  string `yaml:"key_path"`
+	CaPath   string `yaml:"ca_path"`
 }
 
 type AwsConfig struct {

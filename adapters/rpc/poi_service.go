@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -18,7 +19,13 @@ type PoIRpcService struct {
 	logger *zap.Logger
 }
 
-func (prs *PoIRpcService) PoI(
+func NewPoIRpcService(logger *zap.Logger) *PoIRpcService {
+	return &PoIRpcService{
+		logger: logger,
+	}
+}
+
+func (p *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
@@ -29,7 +36,7 @@ func (prs *PoIRpcService) PoI(
 			"correlationId is required",
 		)
 	}
-	prs.logger.Info(
+	p.logger.Info(
 		"processing PoI rpc, returning fixture",
 		zap.String(correlationHeader, id.String()),
 	)
@@ -56,16 +63,34 @@ func (prs *PoIRpcService) Proximity(
 	return nil, status.Errorf(codes.Unimplemented, "method Proximity not implemented")
 }
 
-func (prs *PoIRpcService) BBox(
+func (p *PoIRpcService) BBox(
 	ctx context.Context,
 	request *poi_v1.BBoxRequest,
 ) (*poi_v1.BBoxResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BBox not implemented")
 }
 
-func (prs *PoIRpcService) Route(
+func (p *PoIRpcService) Route(
 	ctx context.Context,
 	request *poi_v1.RouteRequest,
 ) (*poi_v1.RouteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
+}
+
+func (p *PoIRpcService) Register(server *grpc.Server) {
+	poi_v1.RegisterPoIServiceServer(server, p)
+}
+
+func (p *PoIRpcService) RegisterProxy(
+	ctx context.Context,
+	mux *runtime.ServeMux,
+	endpoint string,
+	opts []grpc.DialOption,
+) (err error) {
+	return poi_v1.RegisterPoIServiceHandlerFromEndpoint(
+		ctx,
+		mux,
+		endpoint,
+		opts,
+	)
 }
