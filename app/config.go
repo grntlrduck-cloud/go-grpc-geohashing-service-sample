@@ -63,7 +63,6 @@ func LoadBootConfig() (*BootConfig, error) {
 	}
 
 	bootProfileActive := strings.ToLower(os.Getenv("BOOT_PROFILE_ACTIVE"))
-	println(bootProfileActive)
 	if bootProfileActive != "" {
 		profileBootFile := fmt.Sprintf(
 			"%s/%s-%s.yaml",
