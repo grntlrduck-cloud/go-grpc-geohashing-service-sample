@@ -14,7 +14,7 @@ var (
 	LocationNotFound      = errors.New("location does not exist")
 	DBEntityMappingErr    = errors.New("failed to map too location entity")
 	DBUpsertErr           = errors.New("failed to upsert entity")
-	DBBatchUpserErr       = errors.New("failed to upsert batch")
+	DBBatchUpsertErr      = errors.New("failed to upsert batch")
 )
 
 type Repository interface {

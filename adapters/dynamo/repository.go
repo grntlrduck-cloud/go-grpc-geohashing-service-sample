@@ -26,9 +26,25 @@ const (
 )
 
 type PoIGeoRepository struct {
-	dynamoClient *ClientWrapper
-	logger       *zap.Logger
-	tableName    string
+	dynamoClient    *ClientWrapper
+	logger          *zap.Logger
+	tableName       string
+	createInitTable bool
+}
+
+func NewPoIGeoRepository(
+	client *ClientWrapper,
+	logger *zap.Logger,
+	tableName string,
+	createInitTable bool,
+) *PoIGeoRepository {
+	// TODO: apply with options pattern here as well
+	return &PoIGeoRepository{
+		dynamoClient:    client,
+		logger:          logger,
+		tableName:       tableName,
+		createInitTable: createInitTable,
+	}
 }
 
 func (pgr *PoIGeoRepository) UpsertBatch(
@@ -59,7 +75,7 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 	}
 	chunks = append(chunks, rqsts)
 
-	// upset chunks
+	// upsert chunks
 	var errs []error
 	for _, c := range chunks {
 		input := &dynamodb.BatchWriteItemInput{
@@ -91,7 +107,7 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 			zap.String("correlation_id", correlationId.String()),
 			zap.Int("num_failed_batches", len(errs)),
 		)
-		return poi.DBBatchUpserErr
+		return poi.DBBatchUpsertErr
 	}
 	return nil
 }

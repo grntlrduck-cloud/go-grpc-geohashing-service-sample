@@ -12,16 +12,19 @@ import (
 	status "google.golang.org/grpc/status"
 
 	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
 )
 
 type PoIRpcService struct {
 	poi_v1.UnimplementedPoIServiceServer
-	logger *zap.Logger
+	logger          *zap.Logger
+	locationService *poi.LocationService
 }
 
-func NewPoIRpcService(logger *zap.Logger) *PoIRpcService {
+func NewPoIRpcService(logger *zap.Logger, locationService *poi.LocationService) *PoIRpcService {
 	return &PoIRpcService{
-		logger: logger,
+		logger:          logger,
+		locationService: locationService,
 	}
 }
 
@@ -29,31 +32,35 @@ func (p *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
-	id, err := getCorrelationId(ctx)
+	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
-			"correlationId is required",
+			"invalid request, X-Correlation-Id header is required",
 		)
 	}
+	kId, err := ksuid.Parse(request.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid location id")
+	}
+
 	p.logger.Info(
-		"processing PoI rpc, returning fixture",
-		zap.String(correlationHeader, id.String()),
+		"processing PoI rpc",
+		zap.String("id", request.Id),
+		zap.String(correlationHeader, correlationId.String()),
 	)
-	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, id.String()))
-	return &poi_v1.PoIResponse{
-		Poi: &poi_v1.PoI{
-			Id:         ksuid.New().String(),
-			Coordinate: &poi_v1.Coordinate{Lat: 48.137, Lon: 11.576},
-			Address: &poi_v1.Address{
-				Street:       "Maximilianstrasse",
-				StreetNumber: "1b",
-				ZipCode:      "123456",
-				City:         "Munich",
-				Country:      "DEU",
-			},
-		},
-	}, nil
+	location, err := p.locationService.Info(ctx, kId, correlationId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "server error")
+	}
+	if location.Id == ksuid.Max {
+		return nil, status.Errorf(codes.NotFound, "location not found")
+	}
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
+	response := poi_v1.PoIResponse{
+		Poi: domainToProto(location),
+	}
+	return &response, nil
 }
 
 func (prs *PoIRpcService) Proximity(
@@ -93,4 +100,22 @@ func (p *PoIRpcService) RegisterProxy(
 		endpoint,
 		opts,
 	)
+}
+
+func domainToProto(location poi.PoILocation) *poi_v1.PoI {
+	return &poi_v1.PoI{
+		Id: location.Id.String(),
+		Coordinate: &poi_v1.Coordinate{
+			Lat: location.Location.Latitude,
+			Lon: location.Location.Longitude,
+		},
+		Address: &poi_v1.Address{
+			Street:       location.Address.Street,
+			StreetNumber: location.Address.StreetNumber,
+			ZipCode:      location.Address.ZipCode,
+			City:         location.Address.City,
+			Country:      location.Address.CountryCode,
+		},
+		Features: location.Features,
+	}
 }
