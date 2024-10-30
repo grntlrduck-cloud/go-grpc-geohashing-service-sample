@@ -2,165 +2,312 @@ package rpc
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	grpclogging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	health_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/health"
-	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
 )
 
+const (
+	defaultGrpcPort = 8081
+	defaultHttpPort = 9081
+)
+
 type Server struct {
-	prs       *PoIRpcService
-	hrs       *HealthRpcService
-	rpcServer *grpc.Server
-	logger    *zap.Logger
+	healthService            HealthService
+	rpcServer                *grpc.Server
+	logger                   *zap.Logger
+	services                 []Service
+	ctx                      context.Context
+	grpcPort                 int32
+	httpPort                 int32
+	sslEnabled               bool
+	sslCertPath              string
+	sslKeyPath               string
+	sslCaPath                string
+	grpcTlsConfig            credentials.TransportCredentials
+	httpProxyTlsConfig       credentials.TransportCredentials
+	albDeregistrationSeconds int64
 }
 
-type NewServerProps struct {
-	Logger *zap.Logger
-	Ctx    context.Context
-	Conf   app.ServerConfig
-}
+type ServerOption func(s *Server)
 
-type startHttpProxyProps struct {
-	logger       *zap.Logger
-	ctx          context.Context
-	rpcEndpoint  string
-	httpEndpoint string
-}
-
-type startRpcServerResult struct {
-	rpcServer *grpc.Server
-	hrs       *HealthRpcService
-	prs       *PoIRpcService
-	err       error
-}
-
-type ServerStartFailureErr struct {
-	error
-	msg string
-}
-
-func (se ServerStartFailureErr) Error() string {
-	return fmt.Sprintf("%s: %v", se.msg, se.error)
-}
-
-func (s *Server) Stop() {
-	s.hrs.healthy(false)
-	s.logger.Info("set health endpoint to NOT_SERVING")
-
-	// sleep to stop ALB from sending requests to this instance
-	time.Sleep(1 * time.Second)
-
-	s.rpcServer.GracefulStop()
-	s.logger.Info("stopped gRPC server gracefully")
-}
-
-func NewServer(props NewServerProps) (*Server, error) {
-	grpcServerEndpoint := fmt.Sprintf(":%d", props.Conf.RpcPort)
-	httpProxyEndpoint := fmt.Sprintf(":%d", props.Conf.HttpPort)
-	// start rpc server and add service
-	res := startRpcServer(props.Logger, grpcServerEndpoint)
-	if res.err != nil {
-		return nil, ServerStartFailureErr{res.err, "fatal, rpc server start error"}
+func WithGrpcPort(port int32) ServerOption {
+	return func(s *Server) {
+		s.grpcPort = port
 	}
+}
 
-	// start http proxy
-	err := startHttpProxy(startHttpProxyProps{
-		logger:       props.Logger,
-		ctx:          props.Ctx,
-		rpcEndpoint:  grpcServerEndpoint,
-		httpEndpoint: httpProxyEndpoint,
-	})
+func WithHttpPort(port int32) ServerOption {
+	return func(s *Server) {
+		s.httpPort = port
+	}
+}
+
+func WithContext(ctx context.Context) ServerOption {
+	return func(s *Server) {
+		s.ctx = ctx
+	}
+}
+
+func WithSslEnabled(sslEnabled bool) ServerOption {
+	return func(s *Server) {
+		s.sslEnabled = sslEnabled
+	}
+}
+
+func WithRpcLogger(logger *zap.Logger) ServerOption {
+	return func(s *Server) {
+		s.logger = logger
+	}
+}
+
+func WithSslConfig(certPath, keyPath, caPath string) ServerOption {
+	return func(s *Server) {
+		s.sslCertPath = certPath
+		s.sslKeyPath = keyPath
+		s.sslCaPath = caPath
+	}
+}
+
+func WithRegisterRpcService(service Service) ServerOption {
+	return func(s *Server) {
+		if service != nil {
+			s.services = append(s.services, service)
+		}
+	}
+}
+
+func WithHealthService(healthService HealthService) ServerOption {
+	return func(s *Server) {
+		if healthService != nil {
+			s.healthService = healthService
+		}
+	}
+}
+
+func WithAlbDegistrationDelay(seconds int64) ServerOption {
+	return func(s *Server) {
+		if seconds > 0 {
+			s.albDeregistrationSeconds = seconds
+		}
+	}
+}
+
+func NewServer(opts ...ServerOption) (*Server, error) {
+	// apply defaults to server
+	server := &Server{
+		grpcPort:                 defaultGrpcPort,
+		httpPort:                 defaultHttpPort,
+		ctx:                      context.Background(),
+		albDeregistrationSeconds: 1,
+		services:                 make([]Service, 0),
+	}
+	// apply the options to the server with given overrides and configurations
+	for _, opt := range opts {
+		opt(server)
+	}
+	if server.logger == nil {
+		server.logger = app.NewDevLogger()
+	}
+	if server.healthService == nil {
+		return nil, errors.New(
+			"fatal, no health service registered. Use WithHealthService option to register health rpc",
+		)
+	}
+	if server.sslEnabled && (server.sslKeyPath == "" || server.sslCertPath == "") {
+		return nil, errors.New(
+			"fatal, ssl is enabled but cert and key are not configured. Use WithSslCertConfig option to configure ssl",
+		)
+	}
+	if server.sslEnabled {
+		err := server.loadTlsConfig()
+		if err != nil {
+			return nil, fmt.Errorf("fatal, failed to load tls config: %w", err)
+		}
+	}
+	if len(server.services) == 0 {
+		server.logger.Warn(
+			"no services registered for server. Use WithRegisterRpcService option to register services",
+		)
+	}
+	return server, nil
+}
+
+func (s *Server) loadTlsConfig() error {
+	s.logger.Info("loading tls config for server")
+	ca, err := os.ReadFile(s.sslCaPath)
 	if err != nil {
-		res.rpcServer.GracefulStop()
-		return nil, ServerStartFailureErr{err, "fatal, failed to start proxy. server shut down"}
+		return fmt.Errorf("umnable to load ca, given path might be incorrect: %w", err)
 	}
-	props.Logger.Info("setting endpoints to SERVING")
-	res.hrs.healthy(true)
+	cp := x509.NewCertPool()
+	if !cp.AppendCertsFromPEM(ca) {
+		return fmt.Errorf("failed to add server CA's certificate to pool of proxy client")
+	}
 
-	props.Logger.Info("finished initializing server")
-	return &Server{hrs: res.hrs, prs: res.prs, rpcServer: res.rpcServer, logger: props.Logger}, nil
+	cert, err := tls.LoadX509KeyPair(s.sslCertPath, s.sslKeyPath)
+	if err != nil {
+		return err
+	}
+
+	s.grpcTlsConfig = credentials.NewTLS(
+		&tls.Config{
+			Certificates: []tls.Certificate{cert},
+			ClientAuth:   tls.NoClientCert,
+			MinVersion:   tls.VersionTLS12,
+		},
+	)
+	s.httpProxyTlsConfig = credentials.NewTLS(
+		&tls.Config{
+			RootCAs:    cp,
+			MinVersion: tls.VersionTLS12,
+		},
+	)
+	return nil
 }
 
-func startRpcServer(logger *zap.Logger, endpoint string) *startRpcServerResult {
-	logger.Info("starting gRPC server")
+func (s *Server) Start() error {
+	// explicit ensure we start the service unhealthy
+	s.healthService.SetHealth(false)
+	err := s.startRpcServer()
+	if err != nil {
+		return fmt.Errorf("failed to start rpc server: %w", err)
+	}
+
+	err = s.startHttpProxy()
+	if err != nil {
+		s.rpcServer.GracefulStop()
+		return fmt.Errorf("failed to start reverse rpc proxy: %w", err)
+	}
+
+	s.logger.Info("setting endpoints to SERVING")
+	s.healthService.SetHealth(true)
+
+	s.logger.Info("finished initializing server")
+	return nil
+}
+
+func (s *Server) startRpcServer() error {
+	endpoint := fmt.Sprintf(":%d", s.grpcPort)
+	s.logger.Info("starting gRPC server")
 	lis, err := net.Listen("tcp", endpoint)
 	if err != nil {
-		return &startRpcServerResult{
-			nil,
-			nil,
-			nil,
-			fmt.Errorf("failed to listern tcp port %s: %w", endpoint, err),
-		}
+		return fmt.Errorf(
+			"failed to listern tcp port %d, port might already be in use: %w",
+			s.grpcPort,
+			err,
+		)
 	}
-	server := grpc.NewServer(
+	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
-			grpclogging.UnaryServerInterceptor(InterceptorLogger(logger)),
+			grpclogging.UnaryServerInterceptor(InterceptorLogger(s.logger)),
 		),
 		grpc.ChainStreamInterceptor(
-			grpclogging.StreamServerInterceptor(InterceptorLogger(logger)),
+			grpclogging.StreamServerInterceptor(InterceptorLogger(s.logger)),
 		),
-	)
-	hrs := &HealthRpcService{}
-	health_v1.RegisterHealthServiceServer(server, hrs)
-	hrs.healthy(false)
-	prs := &PoIRpcService{logger: logger}
-	poi_v1.RegisterPoIServiceServer(server, prs)
+	}
+	if s.sslEnabled {
+		opts = append(opts, grpc.Creds(s.grpcTlsConfig))
+	} else {
+		s.logger.Warn("running grpc server without tls!")
+	}
+
+	s.rpcServer = grpc.NewServer(opts...)
+
+	for _, service := range s.services {
+		service.Register(s.rpcServer)
+	}
+
 	go func() {
-		servErr := server.Serve(lis)
-		if servErr != nil {
-			logger.Panic("failed to start rpc server", zap.Error(servErr))
+		err := s.rpcServer.Serve(lis)
+		if err != nil {
+			s.logger.Panic(
+				fmt.Sprintf("failed to serve rpc server with tcp listener on port %d", s.grpcPort),
+				zap.Error(err),
+			)
 		}
 	}()
-	return &startRpcServerResult{server, hrs, prs, nil}
+	return nil
 }
 
-func startHttpProxy(props startHttpProxyProps) error {
-	props.logger.Info("starting HTTP reverse proxy with RPC handler")
+func (s *Server) startHttpProxy() error {
+	httpEndpoint := fmt.Sprintf(":%d", s.httpPort)
+	grpcEndpoint := fmt.Sprintf(":%d", s.grpcPort)
+	s.logger.Info("starting HTTP reverse proxy with RPC handler")
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(correlationIdMatcher),
 		runtime.WithForwardResponseOption(correlationIdResponseModifier),
 	)
 	opts := []grpc.DialOption{
-		// TODO: configure security based on props
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		// use zap logger for handlers
 		grpc.WithChainUnaryInterceptor(
-			grpclogging.UnaryClientInterceptor(InterceptorLogger(props.logger)),
+			grpclogging.UnaryClientInterceptor(InterceptorLogger(s.logger)),
 		),
 		grpc.WithChainStreamInterceptor(
-			grpclogging.StreamClientInterceptor(InterceptorLogger(props.logger)),
+			grpclogging.StreamClientInterceptor(InterceptorLogger(s.logger)),
 		),
 	}
-	err := poi_v1.RegisterPoIServiceHandlerFromEndpoint(props.ctx, mux, props.rpcEndpoint, opts)
-	if err != nil {
-		return fmt.Errorf("failed to register poi handler: %w", err)
+	if s.sslEnabled {
+		s.logger.Info("configuring client tls credentials")
+		opts = append(opts, grpc.WithTransportCredentials(s.httpProxyTlsConfig))
+	} else {
+		s.logger.Warn("dial options insecure")
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	err = health_v1.RegisterHealthServiceHandlerFromEndpoint(
-		props.ctx,
-		mux,
-		props.rpcEndpoint,
-		opts,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to register health handler: %w", err)
+
+	for _, service := range s.services {
+		err := service.RegisterProxy(s.ctx, mux, grpcEndpoint, opts)
+		if err != nil {
+			return fmt.Errorf(
+				"unable to register service proxy handler on port %d: %w",
+				s.httpPort,
+				err,
+			)
+		}
 	}
+	err := s.healthService.RegisterProxy(s.ctx, mux, grpcEndpoint, opts)
+	if err != nil {
+		return fmt.Errorf("failed to register health service proxy handler: %w", err)
+	}
+
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
 	go func() {
-		err = http.ListenAndServe(props.httpEndpoint, mux)
-		if err != nil {
-			props.logger.Panic("failed to start http server", zap.Error(err))
+		if s.sslEnabled {
+			s.logger.Info("starting http server")
+			err = http.ListenAndServeTLS(httpEndpoint, s.sslCertPath, s.sslKeyPath, mux)
+			if err != nil {
+				s.logger.Panic("failed to start http server with TLS configured", zap.Error(err))
+			}
+		} else {
+			s.logger.Warn("start http server without TLS!")
+			err = http.ListenAndServe(httpEndpoint, mux)
+			if err != nil {
+				s.logger.Panic("failed to start http server", zap.Error(err))
+			}
 		}
 	}()
 	return nil
+}
+
+func (s *Server) Stop() {
+	s.healthService.SetHealth(false)
+	s.logger.Info("set health endpoint to NOT_SERVING")
+
+	// sleep to await stop ALB from sending requests to this instance
+	time.Sleep(time.Duration(s.albDeregistrationSeconds) * time.Second)
+
+	s.rpcServer.GracefulStop()
+	s.logger.Info("stopped gRPC server gracefully")
 }

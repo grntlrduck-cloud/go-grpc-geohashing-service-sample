@@ -3,6 +3,7 @@ module github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample
 go 1.23.0
 
 require (
+	dario.cat/mergo v1.0.1
 	github.com/amazon-ion/ion-go v1.5.0
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.146.0
 	github.com/aws/aws-sdk-go-v2 v1.30.4
@@ -28,6 +29,7 @@ require (
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
+	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/gotestsum v1.12.0
 )
 
@@ -76,5 +78,4 @@ require (
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -14,10 +14,10 @@ RUN mkdir -p build/cert
 # the client traffic TLS context is ALB terminated
 # those self signed cert should never be used for anything else, use trusted certs instead!
 # create priavte key and ca cert
-RUN openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout build/cert/ca-key.pem -out build/cert/ca-cert.pem \
+RUN openssl req -x509 -sha256 -newkey rsa:4096 -days 3650 -nodes -keyout build/cert/ca-key.pem -out build/cert/ca-cert.pem \
   -subj "/C=DE/ST=Bavaria/L=Munich/O=grntlrduck.cloud/CN=*.grntlr-duck.cloud"
 # create server key and cert
-RUN openssl req -nodes -newkey rsa:4096 -keyout build/cert/grpc-key.pem -out build/cert/grpc-req.pem \
+RUN openssl req -nodes -sha256 -newkey rsa:4096 -keyout build/cert/grpc-key.pem -out build/cert/grpc-req.pem \
   -subj "/C=DE/ST=Bavaria/L=Munich/O=grntlrduck.cloud/CN=${APP_NAME}.grntlr-duck.cloud"
 # create extras file be able to dial in to local host
 RUN echo "subjectAltName=DNS:*grntlr-duck.cloud,DNS:localhost,IP:0.0.0.0,IP:127.0.0.1" > build/cert/extFile.conf
@@ -41,7 +41,7 @@ WORKDIR /service
 EXPOSE 443 8443
 
 COPY --from=build_base /src/build/ ./
-COPY --from=build_base /src/boot.yaml ./
+COPY --from=build_base /src/config/ ./config/
 COPY --from=build_base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENTRYPOINT ["/service/app"]

@@ -1,0 +1,20 @@
+app:
+  name: ${APP_NAME}
+
+grpc:
+  server:
+    port: 443
+  proxy:
+    port: 8443
+  ssl:
+    enabled: false
+    cert_path: "cert/grpc-cert.pem"
+    key_path: "cert/grpc-key.pem"
+    ca_path: "cert/ca-cert.pem"
+
+aws:
+  config:
+    region: eu-west-1
+    account: ${ACCOUNT_ID}
+  dynamodb:
+    poi_table_name: ${POI_TABLE_NAME}
