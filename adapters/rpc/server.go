@@ -110,7 +110,6 @@ func WithAlbDegistrationDelay(seconds int64) ServerOption {
 func NewServer(opts ...ServerOption) (*Server, error) {
 	// apply defaults to server
 	server := &Server{
-		logger:                   app.NewDevLogger(),
 		grpcPort:                 defaultGrpcPort,
 		httpPort:                 defaultHttpPort,
 		ctx:                      context.Background(),
@@ -120,6 +119,9 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	// apply the options to the server with given overrides and configurations
 	for _, opt := range opts {
 		opt(server)
+	}
+	if server.logger == nil {
+		server.logger = app.NewDevLogger()
 	}
 	if server.healthService == nil {
 		return nil, errors.New(

@@ -56,8 +56,6 @@ type DynamoDbConfig struct {
 }
 
 func LoadBootConfig() (*BootConfig, error) {
-	wd, _ := os.Getwd()
-	println(wd)
 	defaultBootFile := fmt.Sprintf("%s/%s.yaml", bootConfigPath, bootFilePrefix)
 	defaultBootConfig, err := loadExpandProfile(defaultBootFile)
 	if err != nil {
@@ -65,6 +63,7 @@ func LoadBootConfig() (*BootConfig, error) {
 	}
 
 	bootProfileActive := strings.ToLower(os.Getenv("BOOT_PROFILE_ACTIVE"))
+	println(bootProfileActive)
 	if bootProfileActive != "" {
 		profileBootFile := fmt.Sprintf(
 			"%s/%s-%s.yaml",

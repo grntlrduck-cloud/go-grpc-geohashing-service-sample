@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestApplication(t *testing.T) {
+func TestApp(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Application Suite")
+	RunSpecs(t, "app config suite")
 }
