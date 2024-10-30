@@ -1,0 +1,12 @@
+grpc:
+  ssl:
+    enabled: true
+
+aws:
+  dynamodb:
+    endpoint_override:
+      enabled: true
+      host: ${DYNAMOLOCAL_HOST}
+      port: ${DYNAMOLOCAL_HOST}
+    create_init_table: true
+    poi_table_name: poi_table_local

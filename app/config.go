@@ -52,7 +52,15 @@ type BasicConfig struct {
 }
 
 type DynamoDbConfig struct {
-	PoiTableName string `yaml:"poi_table_name"`
+	PoiTableName     string           `yaml:"poi_table_name"`
+	EndpointOverride EndpointOverride `yaml:"endpoint_override"`
+	CreateInitTable  bool             `yaml:"create_init_table"`
+}
+
+type EndpointOverride struct {
+	Enabled bool   `yaml:"enabled"`
+	Host    string `yaml:"host"`
+	Port    string `yaml:"port"`
 }
 
 func LoadBootConfig() (*BootConfig, error) {
