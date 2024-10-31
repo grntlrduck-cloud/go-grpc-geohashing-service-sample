@@ -99,12 +99,14 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 			err,
 		)
 	}
-	repo := dynamo.NewPoIGeoRepository(
-		dyanmoClient,
-		a.logger,
-		a.bootConfig.Aws.DynamoDb.PoiTableName,
-		a.bootConfig.Aws.DynamoDb.CreateInitTable,
+	repo, err := dynamo.NewPoIGeoRepository(
+		dynamo.WithDynamoClientWrapper(dyanmoClient),
+		dynamo.WithTableName(a.bootConfig.Aws.DynamoDb.PoiTableName),
+		dynamo.WithCreateAndInitTable(a.bootConfig.Aws.DynamoDb.CreateInitTable),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Repository: %w", err)
+	}
 	return repo, nil
 }
 

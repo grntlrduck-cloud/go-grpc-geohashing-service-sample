@@ -1,3 +1,4 @@
+.git/*
 cdk.out/*
 .DS_STORE
 .github/*
@@ -10,3 +11,4 @@ cdk.out/*
 *.csv
 *.md
 cert/*
+config/db/local/cpoi_dynamo_items_int_test.csv

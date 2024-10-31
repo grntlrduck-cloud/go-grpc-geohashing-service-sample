@@ -56,6 +56,7 @@ func (p *PoIRpcService) PoI(
 	if location.Id == ksuid.Max {
 		return nil, status.Errorf(codes.NotFound, "location not found")
 	}
+
 	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
 	response := poi_v1.PoIResponse{
 		Poi: domainToProto(location),

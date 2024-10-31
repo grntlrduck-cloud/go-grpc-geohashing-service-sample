@@ -2,7 +2,6 @@ package dynamo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -92,8 +91,8 @@ func (client *ClientWrapper) CreateTable(
 	ctx context.Context,
 	input *dynamodb.CreateTableInput,
 ) (*dynamodb.CreateTableOutput, error) {
-	// TODO: implement to enable local setup with docker compose
-	return nil, errors.New("not implemented")
+	output, err := client.dynamoClient.CreateTable(ctx, input)
+	return output, err
 }
 
 func NewClientWrapper(opts ...ClientOptions) (*ClientWrapper, error) {

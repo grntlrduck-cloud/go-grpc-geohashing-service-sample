@@ -3,6 +3,7 @@ package dynamo
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -10,11 +11,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/gocarina/gocsv"
 	"github.com/google/uuid"
 	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
 )
 
@@ -23,6 +26,7 @@ const (
 	bboxHashesLimit    = 20
 	proxHashesLimit    = 20
 	dynamoMaxBatchSize = 25
+	testInitDataPath   = "config/db/local/cpoi_dynamo_items_int_test.csv"
 )
 
 type PoIGeoRepository struct {
@@ -32,19 +36,59 @@ type PoIGeoRepository struct {
 	createInitTable bool
 }
 
-func NewPoIGeoRepository(
-	client *ClientWrapper,
-	logger *zap.Logger,
-	tableName string,
-	createInitTable bool,
-) *PoIGeoRepository {
-	// TODO: apply with options pattern here as well
-	return &PoIGeoRepository{
-		dynamoClient:    client,
-		logger:          logger,
-		tableName:       tableName,
-		createInitTable: createInitTable,
+type PoIGeoRepositoryOptions func(p *PoIGeoRepository)
+
+func WithDynamoClientWrapper(client *ClientWrapper) PoIGeoRepositoryOptions {
+	return func(p *PoIGeoRepository) {
+		p.dynamoClient = client
 	}
+}
+
+func WithLogger(logger *zap.Logger) PoIGeoRepositoryOptions {
+	return func(p *PoIGeoRepository) {
+		p.logger = logger
+	}
+}
+
+func WithTableName(tableName string) PoIGeoRepositoryOptions {
+	return func(p *PoIGeoRepository) {
+		p.tableName = tableName
+	}
+}
+
+func WithCreateAndInitTable(createAndInitTable bool) PoIGeoRepositoryOptions {
+	return func(p *PoIGeoRepository) {
+		p.createInitTable = createAndInitTable
+	}
+}
+
+func NewPoIGeoRepository(opts ...PoIGeoRepositoryOptions) (*PoIGeoRepository, error) {
+	repo := &PoIGeoRepository{
+		tableName: "NOT_DEFINED",
+	}
+	for _, opt := range opts {
+		opt(repo)
+	}
+	if repo.logger == nil {
+		repo.logger = app.NewDevLogger()
+	}
+	if repo.dynamoClient == nil {
+		cl, err := NewClientWrapper()
+		if err != nil {
+			return nil, fmt.Errorf("dyanmo client was nil but failed to initialize: %w", err)
+		}
+		repo.dynamoClient = cl
+	}
+	if repo.createInitTable {
+		err := repo.createTableAndLoadData()
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to set up table with test data from csv for local testing: %w",
+				err,
+			)
+		}
+	}
+	return repo, nil
 }
 
 func (pgr *PoIGeoRepository) UpsertBatch(
@@ -347,6 +391,86 @@ func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.
 		queries = append(queries, query)
 	}
 	return queries
+}
+
+func (pgr *PoIGeoRepository) createTableAndLoadData() error {
+	pgr.logger.Warn("table will be created and initialized with initial data!")
+	err := pgr.createInitPoiTable()
+	if err != nil {
+		return fmt.Errorf("failed to initialize table for local testing: %w", err)
+	}
+	err = pgr.loadInitData()
+	if err != nil {
+		return fmt.Errorf("failed to load initial data into table for testing: %w", err)
+	}
+	return nil
+}
+
+func (pgr *PoIGeoRepository) createInitPoiTable() error {
+	input := dynamodb.CreateTableInput{
+		TableName: aws.String(pgr.tableName),
+		KeySchema: []types.KeySchemaElement{
+			{AttributeName: aws.String(CPoIItemPK), KeyType: types.KeyTypeHash},
+		},
+		AttributeDefinitions: []types.AttributeDefinition{
+			{AttributeName: aws.String(CPoIItemPK), AttributeType: types.ScalarAttributeTypeS},
+			{
+				AttributeName: aws.String(CPoIItemGeoIndexPK),
+				AttributeType: types.ScalarAttributeTypeN,
+			},
+			{
+				AttributeName: aws.String(CPoIItemGeoIndexSK),
+				AttributeType: types.ScalarAttributeTypeN,
+			},
+		},
+		GlobalSecondaryIndexes: []types.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String(CPoIItemGeoIndexName),
+				KeySchema: []types.KeySchemaElement{
+					{AttributeName: aws.String(CPoIItemGeoIndexPK), KeyType: types.KeyTypeHash},
+					{AttributeName: aws.String(CPoIItemGeoIndexSK), KeyType: types.KeyTypeRange},
+				},
+				Projection: &types.Projection{ProjectionType: types.ProjectionTypeAll},
+				ProvisionedThroughput: &types.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(10),
+					WriteCapacityUnits: aws.Int64(10),
+				},
+			},
+		},
+		ProvisionedThroughput: &types.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(10),
+			WriteCapacityUnits: aws.Int64(10),
+		},
+	}
+	_, err := pgr.dynamoClient.CreateTable(context.Background(), &input)
+	if err != nil {
+		return fmt.Errorf("failed to perform create table request: %w", err)
+	}
+	return nil
+}
+
+func (pgr *PoIGeoRepository) loadInitData() error {
+	csv, err := os.Open(testInitDataPath)
+	if err != nil {
+		return fmt.Errorf("failed to load csv from file: %w", err)
+	}
+	entries := []*CPoIItem{}
+	if err := gocsv.UnmarshalFile(csv, &entries); err != nil {
+		return fmt.Errorf("failed to map rows to struct, %w", err)
+	}
+	locations := make([]poi.PoILocation, len(entries))
+	for i, v := range entries {
+		d, err := v.Domain()
+		if err != nil {
+			return fmt.Errorf("failed to map test data to domain struct: %w", err)
+		}
+		locations[i] = d
+	}
+	err = pgr.UpsertBatch(context.Background(), locations, uuid.New())
+	if err != nil {
+		return fmt.Errorf("failed to perform batch upsert: %w", err)
+	}
+	return nil
 }
 
 func mapAvs(avs []map[string]types.AttributeValue) ([]poi.PoILocation, error) {
