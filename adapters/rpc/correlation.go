@@ -27,10 +27,10 @@ func correlationIdMatcher(key string) (string, bool) {
 	}
 }
 
-func getCorrelationId(ctx context.Context) (*uuid.UUID, error) {
+func getCorrelationId(ctx context.Context) (uuid.UUID, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, errors.New("failed to extract metadata")
+		return uuid.Max, errors.New("failed to extract metadata")
 	}
 	// handle request is from REST and gRPC client
 	match := md.Get(correlationHeader)
@@ -38,11 +38,11 @@ func getCorrelationId(ctx context.Context) (*uuid.UUID, error) {
 	if len(match) > 0 {
 		id, err := uuid.Parse(match[0])
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse uuid form correlation header: %w", err)
+			return uuid.Max, fmt.Errorf("failed to parse uuid form correlation header: %w", err)
 		}
-		return &id, nil
+		return id, nil
 	}
-	return nil, errors.New("correlationId not in request metadata/headers")
+	return uuid.Max, errors.New("correlationId not in request metadata/headers")
 }
 
 func correlationIdResponseModifier(

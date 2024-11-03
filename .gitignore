@@ -33,7 +33,7 @@ go.work.sum
 cpoi_ion_items
 _test.csv
 # keep csv with test data
-!cpoi_dynamo_items_int_test.csv
+!config/db/local/cpoi_dynamo_items_int_test.csv
 
 # exluce local cert tests
 cert/*
