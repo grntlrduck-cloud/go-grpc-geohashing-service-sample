@@ -103,6 +103,7 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 		dynamo.WithDynamoClientWrapper(dyanmoClient),
 		dynamo.WithTableName(a.bootConfig.Aws.DynamoDb.PoiTableName),
 		dynamo.WithCreateAndInitTable(a.bootConfig.Aws.DynamoDb.CreateInitTable),
+		dynamo.WithLogger(a.logger),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Repository: %w", err)

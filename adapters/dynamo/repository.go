@@ -96,49 +96,50 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 	pois []poi.PoILocation,
 	correlationId uuid.UUID,
 ) error {
+	if len(pois) == 0 {
+		pgr.logger.Warn(
+			"skipping batch upsert because pois is empty slice",
+			zap.String("correlation_id", correlationId.String()),
+		)
+		return nil
+	}
 	// map domain model to dynamo items and marshall to AttributeValues
 	// and assemble list of WriteRequests
-	rqsts := make([]types.WriteRequest, len(pois))
-	for i, v := range pois {
-		item := newItemFromDomain(v)
-		av, err := attributevalue.MarshalMap(&item)
-		if err != nil {
-			return poi.DBEntityMappingErr
-		}
-		rqsts[i] = types.WriteRequest{PutRequest: &types.PutRequest{Item: av}}
-	}
-	numChunks := (len(pois) + dynamoMaxBatchSize - 1) / dynamoMaxBatchSize
-	chunks := make([][]types.WriteRequest, numChunks)
-
-	// create chunks with max 25 items
-	for dynamoMaxBatchSize < len(rqsts) {
-		rqsts, chunks = rqsts[dynamoMaxBatchSize:], append(
-			chunks,
-			rqsts[0:dynamoMaxBatchSize:dynamoMaxBatchSize],
+	chunks, err := createBatchRequests(pois)
+	if err != nil {
+		pgr.logger.Error(
+			"failed to create batch requests",
+			zap.Error(err),
+			zap.String("correlation_id", correlationId.String()),
 		)
+		return poi.DBEntityMappingErr
 	}
-	chunks = append(chunks, rqsts)
 
 	// upsert chunks
 	var errs []error
-	for _, c := range chunks {
+	for i, c := range chunks {
+		if len(c) == 0 {
+			pgr.logger.Warn("skipping to upsert chunk since it is empty",
+				zap.Int("batch_num", i),
+				zap.Int("total_num_batches", len(chunks)),
+				zap.Int("num_items", len(c)),
+				zap.String("correlation_id", correlationId.String()),
+			)
+			continue
+		}
 		input := &dynamodb.BatchWriteItemInput{
 			RequestItems: map[string][]types.WriteRequest{pgr.tableName: c},
 		}
 		_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 		if err != nil {
-			// just  retry once after 10 ms sleep
-			// don't do that in real world production scenario
-			// implement exponential backoff instead
-			pgr.logger.Warn(
-				"retrying batch PutItem",
-				zap.String("correlation_id", correlationId.String()),
-			)
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(100 * time.Millisecond)
 			_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 			if err != nil {
 				pgr.logger.Error(
-					"failed to perform batch PutItem",
+					"failed to perform batch PutItem after retry",
+					zap.Int("batch_num", i),
+					zap.Int("total_num_batches", len(chunks)),
+					zap.Int("num_items", len(c)),
 					zap.String("correlation_id", correlationId.String()),
 				)
 				errs = append(errs, err)
@@ -399,10 +400,16 @@ func (pgr *PoIGeoRepository) createTableAndLoadData() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize table for local testing: %w", err)
 	}
+	pgr.logger.Info("created table successfully")
+
+	time.Sleep(100 * time.Millisecond)
+
+	pgr.logger.Info("upserting test data")
 	err = pgr.loadInitData()
 	if err != nil {
 		return fmt.Errorf("failed to load initial data into table for testing: %w", err)
 	}
+	pgr.logger.Info("successfully created table and loaded test data")
 	return nil
 }
 
@@ -447,6 +454,30 @@ func (pgr *PoIGeoRepository) createInitPoiTable() error {
 		return fmt.Errorf("failed to perform create table request: %w", err)
 	}
 	return nil
+}
+
+func createBatchRequests(pois []poi.PoILocation) ([][]types.WriteRequest, error) {
+	rqsts := make([]types.WriteRequest, len(pois))
+	for i, v := range pois {
+		item := newItemFromDomain(v)
+		av, err := attributevalue.MarshalMap(&item)
+		if err != nil {
+			return nil, fmt.Errorf("failed to markshall item: %w", err)
+		}
+		rqsts[i] = types.WriteRequest{PutRequest: &types.PutRequest{Item: av}}
+	}
+	numChunks := (len(pois) + dynamoMaxBatchSize - 1) / dynamoMaxBatchSize
+	chunks := make([][]types.WriteRequest, 0, numChunks)
+
+	// create chunks with max 25 items
+	for dynamoMaxBatchSize < len(rqsts) {
+		rqsts, chunks = rqsts[dynamoMaxBatchSize:], append(
+			chunks,
+			rqsts[0:dynamoMaxBatchSize:dynamoMaxBatchSize],
+		)
+	}
+	chunks = append(chunks, rqsts)
+	return chunks, nil
 }
 
 func (pgr *PoIGeoRepository) loadInitData() error {
