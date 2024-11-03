@@ -15,6 +15,14 @@ import (
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
 )
 
+var (
+	missingCorrelationIdStatus = status.Errorf(
+		codes.InvalidArgument,
+		"invalid request, X-Correlation-Id header is required",
+	)
+	severErrStatus = status.Errorf(codes.Internal, "server error")
+)
+
 type PoIRpcService struct {
 	poi_v1.UnimplementedPoIServiceServer
 	logger          *zap.Logger
@@ -34,10 +42,7 @@ func (p *PoIRpcService) PoI(
 ) (*poi_v1.PoIResponse, error) {
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"invalid request, X-Correlation-Id header is required",
-		)
+		return nil, missingCorrelationIdStatus
 	}
 	kId, err := ksuid.Parse(request.Id)
 	if err != nil {
@@ -51,7 +56,7 @@ func (p *PoIRpcService) PoI(
 	)
 	location, err := p.locationService.Info(ctx, kId, correlationId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "server error")
+		return nil, severErrStatus
 	}
 	if location.Id == ksuid.Max {
 		return nil, status.Errorf(codes.NotFound, "location not found")
@@ -59,30 +64,111 @@ func (p *PoIRpcService) PoI(
 
 	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
 	response := poi_v1.PoIResponse{
-		Poi: domainToProto(location),
+		Poi: poiToProto(location),
 	}
+	p.logger.Info(
+		"returning response for PoI rpc",
+		zap.String("id", request.Id),
+		zap.String(correlationHeader, correlationId.String()),
+	)
 	return &response, nil
 }
 
-func (prs *PoIRpcService) Proximity(
-	ctex context.Context,
+func (p *PoIRpcService) Proximity(
+	ctx context.Context,
 	request *poi_v1.ProximityRequest,
 ) (*poi_v1.ProximityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Proximity not implemented")
+	correlationId, err := getCorrelationId(ctx)
+	if err != nil {
+		return nil, missingCorrelationIdStatus
+	}
+	cntr := poi.Coordinates{
+		Latitude:  request.Center.Lat,
+		Longitude: request.Center.Lon,
+	}
+	p.logger.Info(
+		"processing Proximity rpc",
+		zap.String(correlationHeader, correlationId.String()),
+	)
+	locations, err := p.locationService.Proximity(ctx, cntr, correlationId)
+	if err != nil {
+		return nil, severErrStatus
+	}
+	proto := locationsToProto(locations)
+	p.logger.Info(
+		"returning response for Proximity RPC",
+		zap.Int("num_locartions", len(proto)),
+		zap.String(correlationHeader, correlationId.String()),
+	)
+	resp := poi_v1.ProximityResponse{
+		Items: proto,
+	}
+	return &resp, nil
 }
 
 func (p *PoIRpcService) BBox(
 	ctx context.Context,
 	request *poi_v1.BBoxRequest,
 ) (*poi_v1.BBoxResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BBox not implemented")
+	correlationId, err := getCorrelationId(ctx)
+	if err != nil {
+		return nil, missingCorrelationIdStatus
+	}
+	sw := poi.Coordinates{
+		Latitude:  request.Bbox.Sw.Lat,
+		Longitude: request.Bbox.Sw.Lon,
+	}
+	ne := poi.Coordinates{
+		Latitude:  request.Bbox.Ne.Lat,
+		Longitude: request.Bbox.Ne.Lon,
+	}
+	p.logger.Info(
+		"processing BBox rpc",
+		zap.String(correlationHeader, correlationId.String()),
+	)
+	locations, err := p.locationService.Bbox(ctx, sw, ne, correlationId)
+	if err != nil {
+		return nil, severErrStatus
+	}
+	proto := locationsToProto(locations)
+	p.logger.Info(
+		"returning response for BBox RPC",
+		zap.Int("num_locartions", len(proto)),
+		zap.String(correlationHeader, correlationId.String()),
+	)
+	resp := poi_v1.BBoxResponse{
+		Items: proto,
+	}
+	return &resp, nil
 }
 
 func (p *PoIRpcService) Route(
 	ctx context.Context,
 	request *poi_v1.RouteRequest,
 ) (*poi_v1.RouteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
+	correlationId, err := getCorrelationId(ctx)
+	if err != nil {
+		return nil, missingCorrelationIdStatus
+	}
+	path := coordinatesPathFromProto(request.Route)
+	p.logger.Info(
+		"processing Route rpc",
+		zap.String(correlationHeader, correlationId.String()),
+	)
+	locations, err := p.locationService.Route(ctx, path, correlationId)
+	if err != nil {
+		return nil, severErrStatus
+	}
+	proto := locationsToProto(locations)
+	p.logger.Info(
+		"returning response for Route RPC",
+		zap.Int("num_locartions", len(proto)),
+		zap.String(correlationHeader, correlationId.String()),
+	)
+	resp := poi_v1.RouteResponse{
+		Items: proto,
+	}
+	return &resp, nil
 }
 
 func (p *PoIRpcService) Register(server *grpc.Server) {
@@ -103,20 +189,39 @@ func (p *PoIRpcService) RegisterProxy(
 	)
 }
 
-func domainToProto(location poi.PoILocation) *poi_v1.PoI {
+func locationsToProto(l []poi.PoILocation) []*poi_v1.PoI {
+	pois := make([]*poi_v1.PoI, len(l))
+	for i, v := range l {
+		pois[i] = poiToProto(v)
+	}
+	return pois
+}
+
+func poiToProto(p poi.PoILocation) *poi_v1.PoI {
 	return &poi_v1.PoI{
-		Id: location.Id.String(),
+		Id: p.Id.String(),
 		Coordinate: &poi_v1.Coordinate{
-			Lat: location.Location.Latitude,
-			Lon: location.Location.Longitude,
+			Lat: p.Location.Latitude,
+			Lon: p.Location.Longitude,
 		},
 		Address: &poi_v1.Address{
-			Street:       location.Address.Street,
-			StreetNumber: location.Address.StreetNumber,
-			ZipCode:      location.Address.ZipCode,
-			City:         location.Address.City,
-			Country:      location.Address.CountryCode,
+			Street:       p.Address.Street,
+			StreetNumber: p.Address.StreetNumber,
+			ZipCode:      p.Address.ZipCode,
+			City:         p.Address.City,
+			Country:      p.Address.CountryCode,
 		},
-		Features: location.Features,
+		Features: p.Features,
 	}
+}
+
+func coordinatesPathFromProto(c []*poi_v1.Coordinate) []poi.Coordinates {
+	path := make([]poi.Coordinates, len(c))
+	for i, v := range c {
+		path[i] = poi.Coordinates{
+			Latitude:  v.Lat,
+			Longitude: v.Lon,
+		}
+	}
+	return path
 }

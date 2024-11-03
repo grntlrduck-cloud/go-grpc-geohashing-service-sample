@@ -30,7 +30,7 @@ const (
 )
 
 type PoIGeoRepository struct {
-	dynamoClient    *ClientWrapper
+	dynamoClient    DbClient
 	logger          *zap.Logger
 	tableName       string
 	createInitTable bool
