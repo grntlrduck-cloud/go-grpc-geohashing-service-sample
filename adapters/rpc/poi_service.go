@@ -133,7 +133,7 @@ func (p *PoIRpcService) BBox(
 	proto := locationsToProto(locations)
 	p.logger.Info(
 		"returning response for BBox RPC",
-		zap.Int("num_locartions", len(proto)),
+		zap.Int("num_locations", len(proto)),
 		zap.String(correlationHeader, correlationId.String()),
 	)
 	resp := poi_v1.BBoxResponse{
@@ -162,7 +162,7 @@ func (p *PoIRpcService) Route(
 	proto := locationsToProto(locations)
 	p.logger.Info(
 		"returning response for Route RPC",
-		zap.Int("num_locartions", len(proto)),
+		zap.Int("num_locations", len(proto)),
 		zap.String(correlationHeader, correlationId.String()),
 	)
 	resp := poi_v1.RouteResponse{
