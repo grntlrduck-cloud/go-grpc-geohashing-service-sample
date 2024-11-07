@@ -162,7 +162,7 @@ func (pgr *PoIGeoRepository) Upsert(
 	domain poi.PoILocation,
 	correlationId uuid.UUID,
 ) error {
-	item := newItemFromDomain(domain)
+	item := NewItemFromDomain(domain)
 	avs, err := attributevalue.MarshalMap(&item)
 	if err != nil {
 		pgr.logger.Error("unable to marshall item to DynamoDB AttributeValues",
@@ -459,7 +459,7 @@ func (pgr *PoIGeoRepository) createInitPoiTable() error {
 func createBatchRequests(pois []poi.PoILocation) ([][]types.WriteRequest, error) {
 	rqsts := make([]types.WriteRequest, len(pois))
 	for i, v := range pois {
-		item := newItemFromDomain(v)
+		item := NewItemFromDomain(v)
 		av, err := attributevalue.MarshalMap(&item)
 		if err != nil {
 			return nil, fmt.Errorf("failed to markshall item: %w", err)

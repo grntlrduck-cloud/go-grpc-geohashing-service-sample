@@ -61,14 +61,14 @@ func (cp *CPoIItem) Domain() (poi.PoILocation, error) {
 			CountryCode:  cp.CountryCode,
 		},
 		LocationEntrance: poi.Coordinates{
-			Latitude:  cp.Latitude,
-			Longitude: cp.Longitude,
+			Latitude:  cp.EntranceLatitude,
+			Longitude: cp.EntranceLongitude,
 		},
 		Features: cp.Features,
 	}, nil
 }
 
-func newItemFromDomain(poi poi.PoILocation) CPoIItem {
+func NewItemFromDomain(poi poi.PoILocation) CPoIItem {
 	gh := newGeoHash(poi.Location.Latitude, poi.Location.Longitude)
 	id := poi.Id.String()
 	return CPoIItem{
