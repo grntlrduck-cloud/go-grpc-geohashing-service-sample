@@ -52,12 +52,6 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			Expect(err).To(Not(HaveOccurred()))
 			assertDomainToEqual(actual, expectedDomain)
 		})
-		It("is parseable to Domain and back", func() {
-			domain, err := poiItem.Domain()
-			Expect(err).To(Not(HaveOccurred()))
-			actual := dynamo.NewItemFromDomain(domain)
-			assertItemToEqual(actual, poiItem)
-		})
 	})
 
 	When("item has invalid id", func() {
@@ -82,6 +76,99 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			Expect(err).To(HaveOccurred())
 		})
 	})
+
+	When("domain is paresed to CPoIItem", func() {
+		domain := poi.PoILocation{
+			Id: ksuid.New(),
+			Address: poi.Address{
+				Street:       "IDK",
+				StreetNumber: "13b",
+				ZipCode:      "123456",
+				City:         "No City",
+				CountryCode:  "USA",
+			},
+			Location: poi.Coordinates{
+				Latitude:  14.5,
+				Longitude: 15.4,
+			},
+			LocationEntrance: poi.Coordinates{
+				Latitude:  14.5,
+				Longitude: 15.4,
+			},
+			Features: []string{"blub"},
+		}
+		It("is valid location", func() {
+			expected := dynamo.CPoIItem{
+				Id:                domain.Id.String(),
+				Pk:                domain.Id.String(),
+				Longitude:         domain.Location.Longitude,
+				Latitude:          domain.Location.Latitude,
+				EntranceLongitude: domain.LocationEntrance.Longitude,
+				EntranceLatitude:  domain.LocationEntrance.Latitude,
+				GeoIndexPk:        1231,
+				GeoIndexSk:        1231347589921125375,
+				Street:            domain.Address.Street,
+				StreetNumber:      domain.Address.StreetNumber,
+				ZipCode:           domain.Address.ZipCode,
+				City:              domain.Address.City,
+				CountryCode:       domain.Address.CountryCode,
+				Features:          domain.Features,
+			}
+			actual := dynamo.NewItemFromDomain(domain)
+			assertItemToEqualWithoutId(actual, expected)
+			Expect(actual.Id).To(Equal(expected.Id))
+			Expect(actual.Pk).To(Equal(expected.Pk))
+		})
+	})
+
+	When("csv entries are paresed to CPoIItem", func() {
+		csvEntries := []*dynamo.ChargingCSVEntry{
+			{
+				ChargingType:         "Schnellladeeinreichtung",
+				Power:                250.0,
+				NumberOfChargePoints: 3,
+				PlugType1:            "AC CCS COMBO1",
+				PlugType2:            "DC CSS COMBO2",
+				PlugType3:            "DC CSS COMBO2",
+				City:                 "Munich",
+				ZipCode:              "123456",
+				Street:               "Strasse",
+				StreetNumber:         "12a",
+				Longitude:            15.4,
+				Latitude:             14.5,
+			},
+		}
+		It("mapped correctly", func() {
+			expected := []*dynamo.CPoIItem{
+				{
+					Id:                ksuid.Nil.String(),
+					Pk:                ksuid.Nil.String(),
+					Longitude:         15.4,
+					Latitude:          14.5,
+					EntranceLongitude: 15.4,
+					EntranceLatitude:  14.5,
+					GeoIndexPk:        1231,
+					GeoIndexSk:        1231347589921125375,
+					Street:            "Strasse",
+					StreetNumber:      "12a",
+					ZipCode:           "123456",
+					City:              "Munich",
+					CountryCode:       "DEU",
+					Features: []string{
+						"3_CHARGEPOINTS",
+						"250_KW_CHARGING",
+						"AC_CHARGING",
+						"DC_CHARGING",
+					},
+				},
+			}
+
+			actual := dynamo.EntriesToDynamo(csvEntries)
+
+			Expect(len(actual)).To(Equal(len(expected)))
+			assertItemToEqualWithoutId(*expected[0], *actual[0])
+		})
+	})
 })
 
 func assertDomainToEqual(actual, expected poi.PoILocation) {
@@ -102,7 +189,7 @@ func assertDomainToEqual(actual, expected poi.PoILocation) {
 	Expect(actual.Id).To(Equal(expected.Id))
 }
 
-func assertItemToEqual(actual, expected dynamo.CPoIItem) {
+func assertItemToEqualWithoutId(actual, expected dynamo.CPoIItem) {
 	Expect(actual.EntranceLatitude).Should(
 		BeNumerically("~", expected.EntranceLatitude),
 	)
@@ -116,10 +203,11 @@ func assertItemToEqual(actual, expected dynamo.CPoIItem) {
 		BeNumerically("~", expected.Longitude),
 	)
 	Expect(actual.Street).To(Equal(expected.Street))
-	Expect(actual.City).To(Equal(expected.City))
 	Expect(actual.StreetNumber).To(Equal(expected.StreetNumber))
+	Expect(actual.City).To(Equal(expected.City))
 	Expect(actual.ZipCode).To(Equal(expected.ZipCode))
+	Expect(actual.GeoIndexPk).To(Equal(expected.GeoIndexPk))
+	Expect(actual.GeoIndexSk).To(Equal(expected.GeoIndexSk))
 	Expect(actual.CountryCode).To(Equal(expected.CountryCode))
 	Expect(actual.Features).To(Equal(expected.Features))
-	Expect(actual.Id).To(Equal(expected.Id))
 }

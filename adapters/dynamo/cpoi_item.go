@@ -181,7 +181,7 @@ func (cte *ChargingCSVEntry) features() []string {
 	features[0] = fmt.Sprintf("%d_CHARGEPOINTS", cte.NumberOfChargePoints)
 	features[1] = fmt.Sprintf("%d_KW_CHARGING", int32(cte.Power))
 	if cte.hasAcCharging() {
-		features = append(features, "AC_CHAGRING")
+		features = append(features, "AC_CHARGING")
 	}
 	if cte.hasDcCharging() {
 		features = append(features, "DC_CHARGING")
