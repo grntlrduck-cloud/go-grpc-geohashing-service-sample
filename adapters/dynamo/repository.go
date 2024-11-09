@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	routeHashesLimit   = 100
-	bboxHashesLimit    = 20
-	proxHashesLimit    = 20
+	routeHashesLimit   = 120
+	bboxHashesLimit    = 30
+	proxHashesLimit    = 30
 	dynamoMaxBatchSize = 25
 	testInitDataPath   = "config/db/local/cpoi_dynamo_items_int_test.csv"
 )
@@ -307,21 +307,26 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 		zap.String("correlation_id", correlationId.String()),
 		zap.Int("queries", len(queries)),
 	)
-	resC := make(chan poiQueryResult)
+	resC := make(chan poiQueryResult, 15)
 	errGrp, gctx := errgroup.WithContext(ctx)
-	errGrp.SetLimit(10)
+	errGrp.SetLimit(15)
 	for _, v := range queries {
 		errGrp.Go(func() error {
 			qres := pgr.query(gctx, v)
-			if qres.err != nil {
-				return qres.err
+			for {
+				select {
+				case resC <- qres:
+					if qres.err != nil {
+						return qres.err
+					}
+					return nil
+				case <-gctx.Done():
+					return gctx.Err()
+				default:
+					time.Sleep(100 * time.Nanosecond)
+					continue
+				}
 			}
-			select {
-			case resC <- qres:
-			case <-gctx.Done():
-				return gctx.Err()
-			}
-			return nil
 		})
 	}
 	go func() {
@@ -330,11 +335,23 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 	}()
 	var pois []poi.PoILocation
 	for r := range resC {
-		pois = append(pois, r.pois...)
+		if len(r.pois) > 0 {
+			pgr.logger.Debug(
+				"appending pois from parallel query results",
+				zap.Int("num_results", len(r.pois)),
+				zap.String("correlation_id", correlationId.String()),
+			)
+			pois = append(pois, r.pois...)
+		}
 	}
 	if err := errGrp.Wait(); err != nil {
 		return nil, fmt.Errorf("one or more concurrent dynamoDb queries failed: %w", err)
 	}
+	pgr.logger.Info(
+		"returning geo query results",
+		zap.Int("num_pois_found", len(pois)),
+		zap.String("correlation_id", correlationId.String()),
+	)
 	return pois, nil
 }
 
@@ -376,7 +393,6 @@ func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.
 			CPoIItemGeoIndexPK,
 			CPoIItemGeoIndexSK,
 		)
-		println(v.trimmed(CPoIItemGeoHashKeyLength))
 		query := &dynamodb.QueryInput{
 			TableName:              aws.String(pgr.tableName),
 			IndexName:              aws.String(CPoIItemGeoIndexName),

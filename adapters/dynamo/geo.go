@@ -25,8 +25,8 @@ func (h geoHash) trimmed(length uint8) uint64 {
 		return uint64(h.hashId)
 	}
 	stringHash := strconv.FormatUint(uint64(h.hashId), 10)
-	v, _ := strconv.ParseInt(stringHash[:length], 10, 64)
-	return uint64(v)
+	v, _ := strconv.ParseUint(stringHash[:length], 10, 64)
+	return v
 }
 
 func (h geoHash) min() uint64 {
@@ -87,7 +87,7 @@ func newHashesFromRoute(path []poi.Coordinates) []geoHash {
 	// http://s2geometry.io/resources/s2cell_statistics.html
 	coverer := s2.RegionCoverer{
 		MinLevel: 9,  // 14 km * 19 km
-		MaxLevel: 16, // 108 m 148 m
+		MaxLevel: 16, // 108 m * 148 m
 		MaxCells: 50,
 		LevelMod: 1,
 	}

@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -27,24 +28,20 @@ func WithApplicationContext(ctx context.Context) ApplicationOpts {
 	}
 }
 
-func WithApplicationLogger(logger *zap.Logger) ApplicationOpts {
-	return func(a *ApplicationRunner) {
-		a.logger = logger
-	}
-}
-
 func WithBootConfigOverride(conf *app.BootConfig) ApplicationOpts {
 	return func(a *ApplicationRunner) {
 		a.bootConfig = conf
 	}
 }
 
-func NewApplicationRunner(opts ...ApplicationOpts) (*ApplicationRunner, error) {
+func NewApplicationRunner(opts ...ApplicationOpts) *ApplicationRunner {
 	conf, err := app.LoadBootConfig()
 	if err != nil {
-		return nil, fmt.Errorf(
-			"unable to create application since boot config can not be loaded, please check boot.yaml location is as expected and permissions to read the file are given: %w",
-			err,
+		panic(
+			fmt.Errorf(
+				"unable to create application since boot config can not be loaded, please check boot.yaml location is as expected and permissions to read the file are given: %w",
+				err,
+			),
 		)
 	}
 	a := &ApplicationRunner{
@@ -54,12 +51,14 @@ func NewApplicationRunner(opts ...ApplicationOpts) (*ApplicationRunner, error) {
 	for _, opt := range opts {
 		opt(a)
 	}
-	if a.logger == nil {
+	if strings.ToLower(a.bootConfig.Logging.Level) == "prod" {
+		a.logger = app.NewLogger()
+	} else {
 		a.logger = app.NewDevLogger()
 	}
 	repo, err := a.createRepo()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create repo: %w", err)
+		panic(fmt.Errorf("unable to create repo: %w", err))
 	}
 	domainService := poi.NewLocationService(repo, a.logger)
 	serverOpts := a.getSevrerBaseOptions()
@@ -70,13 +69,14 @@ func NewApplicationRunner(opts ...ApplicationOpts) (*ApplicationRunner, error) {
 	)
 	server, err := rpc.NewServer(serverOpts...)
 	if err != nil {
-		return nil, fmt.Errorf(
+		panic(fmt.Errorf(
 			"failed to create application, unable to create server from boot config: %w",
 			err,
+		),
 		)
 	}
 	a.server = server
-	return a, nil
+	return a
 }
 
 func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
@@ -127,6 +127,9 @@ func (a *ApplicationRunner) getSevrerBaseOptions() []rpc.ServerOption {
 }
 
 func (a *ApplicationRunner) Run() {
+	defer func(a *ApplicationRunner) {
+		_ = a.logger.Sync()
+	}(a)
 	defer a.server.Stop()
 	err := a.server.Start()
 	if err != nil {
@@ -134,6 +137,7 @@ func (a *ApplicationRunner) Run() {
 	}
 	a.logger.Info("application running")
 	a.awaitTermination()
+	a.logger.Info("application shut down")
 }
 
 func (a *ApplicationRunner) awaitTermination() {
