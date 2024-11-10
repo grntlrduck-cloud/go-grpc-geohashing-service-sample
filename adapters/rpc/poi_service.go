@@ -55,7 +55,7 @@ func (p *PoIRpcService) PoI(
 	p.logger.Info(
 		"processing PoI rpc",
 		zap.String("id", request.Id),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	location, err := p.locationService.Info(ctx, kId, correlationId)
 	if err != nil {
@@ -72,7 +72,7 @@ func (p *PoIRpcService) PoI(
 	p.logger.Info(
 		"returning response for PoI rpc",
 		zap.String("id", request.Id),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	return &response, nil
 }

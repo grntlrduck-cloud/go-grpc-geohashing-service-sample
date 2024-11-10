@@ -114,7 +114,6 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 		)
 		return poi.DBEntityMappingErr
 	}
-
 	// upsert chunks
 	var errs []error
 	for i, c := range chunks {
@@ -132,7 +131,7 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 		}
 		_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 		if err != nil {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 			_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 			if err != nil {
 				pgr.logger.Error(
@@ -307,7 +306,7 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 		zap.String("correlation_id", correlationId.String()),
 		zap.Int("queries", len(queries)),
 	)
-	resC := make(chan poiQueryResult, len(queries)/3)
+	resC := make(chan poiQueryResult, len(queries)/2)
 	errGrp, gctx := errgroup.WithContext(ctx)
 	errGrp.SetLimit(len(queries) / 3)
 	for _, v := range queries {
