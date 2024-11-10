@@ -1,6 +1,7 @@
 package dynamo_test
 
 import (
+	"github.com/amazon-ion/ion-go/ion"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/segmentio/ksuid"
@@ -105,7 +106,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 				Latitude:          domain.Location.Latitude,
 				EntranceLongitude: domain.LocationEntrance.Longitude,
 				EntranceLatitude:  domain.LocationEntrance.Latitude,
-				GeoIndexPk:        1231,
+				GeoIndexPk:        1231351868039364608,
 				GeoIndexSk:        1231347589921125375,
 				Street:            domain.Address.Street,
 				StreetNumber:      domain.Address.StreetNumber,
@@ -147,7 +148,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 					Latitude:          14.5,
 					EntranceLongitude: 15.4,
 					EntranceLatitude:  14.5,
-					GeoIndexPk:        1231,
+					GeoIndexPk:        1231351868039364608,
 					GeoIndexSk:        1231347589921125375,
 					Street:            "Strasse",
 					StreetNumber:      "12a",
@@ -167,6 +168,48 @@ var _ = Describe("Given charging location CPoIItem", func() {
 
 			Expect(len(actual)).To(Equal(len(expected)))
 			assertItemToEqualWithoutId(*expected[0], *actual[0])
+		})
+	})
+
+	When("mapped to DynamoDB Ion item", func() {
+		pk := ksuid.New()
+		poiItem := dynamo.CPoIItem{
+			Pk:                pk.String(),
+			GeoIndexPk:        1234,
+			GeoIndexSk:        123456789012,
+			Id:                pk.String(),
+			Street:            "Some Street",
+			StreetNumber:      "12b",
+			ZipCode:           "123456",
+			City:              "New York",
+			CountryCode:       "DEU",
+			Features:          []string{"1", "2"},
+			Longitude:         12.5,
+			Latitude:          15.5,
+			EntranceLongitude: 12.53,
+			EntranceLatitude:  15.52,
+		}
+		expectedIonCp := dynamo.CPoIIonItem{
+			Pk:                pk.String(),
+			GeoIndexPk:        *ion.NewDecimalInt(1234),
+			GeoIndexSk:        *ion.NewDecimalInt(123456789012),
+			Id:                pk.String(),
+			Street:            "Some Street",
+			StreetNumber:      "12b",
+			ZipCode:           "123456",
+			City:              "New York",
+			CountryCode:       "DEU",
+			Features:          []string{"1", "2"},
+			Longitude:         *ion.MustParseDecimal("12.5"),
+			Latitude:          *ion.MustParseDecimal("15.5"),
+			EntranceLongitude: *ion.MustParseDecimal("12.53"),
+			EntranceLatitude:  *ion.MustParseDecimal("15.52"),
+		}
+		expectedIonItem := dynamo.IonItem{expectedIonCp}
+
+		It("is correct", func() {
+			actual := poiItem.IonItem()
+			Expect(*actual).To(Equal(expectedIonItem))
 		})
 	})
 })

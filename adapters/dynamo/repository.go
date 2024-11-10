@@ -23,8 +23,8 @@ import (
 
 const (
 	routeHashesLimit   = 120
-	bboxHashesLimit    = 30
-	proxHashesLimit    = 30
+	bboxHashesLimit    = 60
+	proxHashesLimit    = 60
 	dynamoMaxBatchSize = 25
 	testInitDataPath   = "config/db/local/cpoi_dynamo_items_int_test.csv"
 )
@@ -307,18 +307,21 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 		zap.String("correlation_id", correlationId.String()),
 		zap.Int("queries", len(queries)),
 	)
-	resC := make(chan poiQueryResult, 15)
+	resC := make(chan poiQueryResult, len(queries)/3)
 	errGrp, gctx := errgroup.WithContext(ctx)
-	errGrp.SetLimit(15)
+	errGrp.SetLimit(len(queries) / 3)
 	for _, v := range queries {
 		errGrp.Go(func() error {
 			qres := pgr.query(gctx, v)
+			if qres.err != nil {
+				return qres.err
+			}
+			if len(qres.pois) == 0 {
+				return nil
+			}
 			for {
 				select {
 				case resC <- qres:
-					if qres.err != nil {
-						return qres.err
-					}
 					return nil
 				case <-gctx.Done():
 					return gctx.Err()
@@ -335,14 +338,12 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 	}()
 	var pois []poi.PoILocation
 	for r := range resC {
-		if len(r.pois) > 0 {
-			pgr.logger.Debug(
-				"appending pois from parallel query results",
-				zap.Int("num_results", len(r.pois)),
-				zap.String("correlation_id", correlationId.String()),
-			)
-			pois = append(pois, r.pois...)
-		}
+		pgr.logger.Debug(
+			"appending pois from parallel query results",
+			zap.Int("num_results", len(r.pois)),
+			zap.String("correlation_id", correlationId.String()),
+		)
+		pois = append(pois, r.pois...)
 	}
 	if err := errGrp.Wait(); err != nil {
 		return nil, fmt.Errorf("one or more concurrent dynamoDb queries failed: %w", err)
@@ -399,7 +400,7 @@ func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.
 			KeyConditionExpression: aws.String(keyCondition),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":pk": &types.AttributeValueMemberN{
-					Value: strconv.FormatUint(v.trimmed(CPoIItemGeoHashKeyLength), 10),
+					Value: strconv.FormatUint(v.trimmed(CPoIItemCellLevel), 10),
 				},
 				":skmin": &types.AttributeValueMemberN{Value: strconv.FormatUint(v.min(), 10)},
 				":skmax": &types.AttributeValueMemberN{Value: strconv.FormatUint(v.max(), 10)},

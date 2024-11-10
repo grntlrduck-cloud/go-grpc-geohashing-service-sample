@@ -20,7 +20,7 @@ var (
 		codes.InvalidArgument,
 		"invalid request, X-Correlation-Id header is required",
 	)
-	severErrStatus = status.Errorf(codes.Internal, "server error")
+	severErrStatus = status.Errorf(codes.Internal, "server error, failed to process request")
 )
 
 type PoIRpcService struct {

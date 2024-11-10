@@ -12,14 +12,14 @@ import (
 )
 
 const (
-	CPoIItemPK               = "pk"
-	CPoIItemGeoIndexName     = "gsi1_geo"
-	CPoIItemGeoIndexPK       = "gsi1_geo_pk"
-	CPoIItemGeoIndexSK       = "gsi1_geo_sk"
-	CPoIItemGeoHashKeyLength = 4
-	countryCodeDeu           = "DEU"
-	ac                       = "AC"
-	dc                       = "DC"
+	CPoIItemPK           = "pk"
+	CPoIItemGeoIndexName = "gsi1_geo"
+	CPoIItemGeoIndexPK   = "gsi1_geo_pk"
+	CPoIItemGeoIndexSK   = "gsi1_geo_sk"
+	CPoIItemCellLevel    = 9 //  edge length of min 27 km and max 38 km http://s2geometry.io/resources/s2cell_statistics.html
+	countryCodeDeu       = "DEU"
+	ac                   = "AC"
+	dc                   = "DC"
 )
 
 // The CPoIItem is a flattened representation of the domain with a primary key (hashkey) to get a cPoI by its id
@@ -74,8 +74,8 @@ func NewItemFromDomain(poi poi.PoILocation) CPoIItem {
 	return CPoIItem{
 		Pk: id,
 		GeoIndexPk: gh.trimmed(
-			CPoIItemGeoHashKeyLength,
-		), // the trimmed geo hash representing a tile
+			CPoIItemCellLevel,
+		), // the trimmed geo hash adjusted to the level
 		GeoIndexSk:        gh.hash(), // the full length geo hash
 		Id:                id,
 		Street:            poi.Address.Street,
@@ -159,7 +159,7 @@ func (cte *ChargingCSVEntry) MapToDynamo() *CPoIItem {
 	return &CPoIItem{
 		Pk: id,
 		GeoIndexPk: gh.trimmed(
-			CPoIItemGeoHashKeyLength,
+			CPoIItemCellLevel,
 		), // the trimmed geo hash representing a tile
 		GeoIndexSk:        gh.hash(), // the full length geo hash
 		Id:                id,
