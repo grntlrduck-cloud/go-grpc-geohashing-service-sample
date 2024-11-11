@@ -11,4 +11,7 @@ freeze:
 	pip3 freeze > requirements.txt
 
 start:
-	pip3 -m notebook
+	jupyter notebook
+
+activate:
+	source venv/bin/activate
