@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/core"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/core"
 )
 
 func main() {

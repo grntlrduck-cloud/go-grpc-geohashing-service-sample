@@ -8,7 +8,7 @@ import (
 	"github.com/amazon-ion/ion-go/ion"
 	"github.com/segmentio/ksuid"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 const (

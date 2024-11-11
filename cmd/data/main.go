@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/gocarina/gocsv"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/dynamo"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/adapters/dynamo"
 )
 
 const (

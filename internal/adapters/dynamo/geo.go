@@ -4,7 +4,7 @@ import (
 	"github.com/golang/geo/s1"
 	"github.com/golang/geo/s2"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 const earthRadiusMeter = 6371000.0
@@ -78,8 +78,8 @@ func newHashesFromRoute(path []poi.Coordinates) []geoHash {
 	}
 	polyline := s2.PolylineFromLatLngs(latLngs)
 	coverer := s2.RegionCoverer{
-		MinLevel: 9,
-		MaxLevel: 16,
+		MinLevel: 6,
+		MaxLevel: 12,
 		MaxCells: 100,
 		LevelMod: 1,
 	}

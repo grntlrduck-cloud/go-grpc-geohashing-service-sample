@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/app"
 )
 
 const (

@@ -12,7 +12,7 @@ import (
 	status "google.golang.org/grpc/status"
 
 	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 var (

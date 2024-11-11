@@ -7,10 +7,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/dynamo"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/rpc"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/adapters/dynamo"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/adapters/rpc"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/app"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 type ApplicationRunner struct {

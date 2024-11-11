@@ -17,8 +17,8 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/app"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 const (

@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/segmentio/ksuid"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/adapters/dynamo"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/adapters/dynamo"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 var _ = Describe("Given charging location CPoIItem", func() {
