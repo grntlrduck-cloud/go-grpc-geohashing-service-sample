@@ -12,7 +12,7 @@ import (
 	status "google.golang.org/grpc/status"
 
 	poi_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 		codes.InvalidArgument,
 		"invalid request, X-Correlation-Id header is required",
 	)
-	severErrStatus = status.Errorf(codes.Internal, "server error")
+	severErrStatus = status.Errorf(codes.Internal, "server error, failed to process request")
 )
 
 type PoIRpcService struct {
@@ -40,19 +40,22 @@ func (p *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
+	if request == nil || request.Id == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "missing argument id")
+	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, missingCorrelationIdStatus
 	}
 	kId, err := ksuid.Parse(request.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid location id")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid location id format")
 	}
 
 	p.logger.Info(
 		"processing PoI rpc",
 		zap.String("id", request.Id),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	location, err := p.locationService.Info(ctx, kId, correlationId)
 	if err != nil {
@@ -69,7 +72,7 @@ func (p *PoIRpcService) PoI(
 	p.logger.Info(
 		"returning response for PoI rpc",
 		zap.String("id", request.Id),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	return &response, nil
 }
@@ -78,6 +81,12 @@ func (p *PoIRpcService) Proximity(
 	ctx context.Context,
 	request *poi_v1.ProximityRequest,
 ) (*poi_v1.ProximityResponse, error) {
+	if request == nil || request.Center == nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"center must be given to perform proximity search",
+		)
+	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, missingCorrelationIdStatus
@@ -88,7 +97,7 @@ func (p *PoIRpcService) Proximity(
 	}
 	p.logger.Info(
 		"processing Proximity rpc",
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	locations, err := p.locationService.Proximity(ctx, cntr, correlationId)
 	if err != nil {
@@ -97,8 +106,8 @@ func (p *PoIRpcService) Proximity(
 	proto := locationsToProto(locations)
 	p.logger.Info(
 		"returning response for Proximity RPC",
-		zap.Int("num_locartions", len(proto)),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.Int("num_locations", len(proto)),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	resp := poi_v1.ProximityResponse{
 		Items: proto,
@@ -110,6 +119,9 @@ func (p *PoIRpcService) BBox(
 	ctx context.Context,
 	request *poi_v1.BBoxRequest,
 ) (*poi_v1.BBoxResponse, error) {
+	if request == nil || request.Bbox == nil || request.Bbox.Sw == nil || request.Bbox.Ne == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "bounding box coordinates must be defined")
+	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, missingCorrelationIdStatus
@@ -124,7 +136,7 @@ func (p *PoIRpcService) BBox(
 	}
 	p.logger.Info(
 		"processing BBox rpc",
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	locations, err := p.locationService.Bbox(ctx, sw, ne, correlationId)
 	if err != nil {
@@ -133,8 +145,8 @@ func (p *PoIRpcService) BBox(
 	proto := locationsToProto(locations)
 	p.logger.Info(
 		"returning response for BBox RPC",
-		zap.Int("num_locartions", len(proto)),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.Int("num_locations", len(proto)),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	resp := poi_v1.BBoxResponse{
 		Items: proto,
@@ -146,6 +158,12 @@ func (p *PoIRpcService) Route(
 	ctx context.Context,
 	request *poi_v1.RouteRequest,
 ) (*poi_v1.RouteResponse, error) {
+	if request == nil || request.Route == nil || len(request.Route) < 2 {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"a route og at least two coordinates must be provided",
+		)
+	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
 		return nil, missingCorrelationIdStatus
@@ -153,7 +171,7 @@ func (p *PoIRpcService) Route(
 	path := coordinatesPathFromProto(request.Route)
 	p.logger.Info(
 		"processing Route rpc",
-		zap.String(correlationHeader, correlationId.String()),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	locations, err := p.locationService.Route(ctx, path, correlationId)
 	if err != nil {
@@ -162,8 +180,8 @@ func (p *PoIRpcService) Route(
 	proto := locationsToProto(locations)
 	p.logger.Info(
 		"returning response for Route RPC",
-		zap.Int("num_locartions", len(proto)),
-		zap.String(correlationHeader, correlationId.String()),
+		zap.Int("num_locations", len(proto)),
+		zap.String("correlation_id", correlationId.String()),
 	)
 	resp := poi_v1.RouteResponse{
 		Items: proto,

@@ -1,4 +1,3 @@
-version: "3"
 services:
   dynamodb:
     image: public.ecr.aws/aws-dynamodb-local/aws-dynamodb-local:latest
@@ -34,3 +33,4 @@ services:
       dynamodb:
         condition: service_healthy
         restart: true
+    restart: always

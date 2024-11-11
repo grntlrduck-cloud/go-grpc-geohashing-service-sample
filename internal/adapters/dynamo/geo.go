@@ -1,12 +1,10 @@
 package dynamo
 
 import (
-	"strconv"
-
 	"github.com/golang/geo/s1"
 	"github.com/golang/geo/s2"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 const earthRadiusMeter = 6371000.0
@@ -20,13 +18,12 @@ func (h geoHash) hash() uint64 {
 	return uint64(h.hashId)
 }
 
-func (h geoHash) trimmed(length uint8) uint64 {
-	if length < 1 || length > 12 {
+func (h geoHash) trimmed(level int) uint64 {
+	if level < 0 || level > 30 {
 		return uint64(h.hashId)
 	}
-	stringHash := strconv.FormatUint(uint64(h.hashId), 10)
-	v, _ := strconv.ParseInt(stringHash[:length], 10, 64)
-	return uint64(v)
+	parent := s2.CellIDFromFacePosLevel(h.hashId.Face(), h.hashId.Pos(), level)
+	return uint64(parent)
 }
 
 func (h geoHash) min() uint64 {
@@ -51,9 +48,9 @@ func newHashesFromRadiusCenter(c poi.Coordinates, radius float64) []geoHash {
 	// so that if a user zooms there are still enough PoI centered
 	// http://s2geometry.io/resources/s2cell_statistics.html
 	coverer := s2.RegionCoverer{
-		MinLevel: 8,  // 27 km * 38 km
-		MaxLevel: 12, // 1699 m * 2 km
-		MaxCells: 10,
+		MinLevel: 9,
+		MaxLevel: 13,
+		MaxCells: 15,
 		LevelMod: 1,
 	}
 	covering := coverer.Covering(region)
@@ -64,12 +61,10 @@ func newHashesFromBbox(ne, sw poi.Coordinates) []geoHash {
 	bounder := s2.NewRectBounder()
 	bounder.AddPoint(pointFromCords(ne))
 	bounder.AddPoint(pointFromCords(sw))
-	// for bboxes we also want to 'over search'
-	// http://s2geometry.io/resources/s2cell_statistics.html
 	coverer := s2.RegionCoverer{
-		MinLevel: 8,  // 27 km * 39 km
-		MaxLevel: 12, // 1699 km * 2 km
-		MaxCells: 10,
+		MinLevel: 9,
+		MaxLevel: 13,
+		MaxCells: 15,
 		LevelMod: 1,
 	}
 	covering := coverer.Covering(bounder.RectBound())
@@ -82,13 +77,10 @@ func newHashesFromRoute(path []poi.Coordinates) []geoHash {
 		latLngs = append(latLngs, s2.LatLngFromDegrees(p.Latitude, p.Longitude))
 	}
 	polyline := s2.PolylineFromLatLngs(latLngs)
-	// to construct a smooth and tight coverage of cells along a plolyline
-	// we set the levels to get fine grained compartments for the covering
-	// http://s2geometry.io/resources/s2cell_statistics.html
 	coverer := s2.RegionCoverer{
-		MinLevel: 9,  // 14 km * 19 km
-		MaxLevel: 16, // 108 m 148 m
-		MaxCells: 50,
+		MinLevel: 6,
+		MaxLevel: 12,
+		MaxCells: 100,
 		LevelMod: 1,
 	}
 	covering := coverer.Covering(polyline)

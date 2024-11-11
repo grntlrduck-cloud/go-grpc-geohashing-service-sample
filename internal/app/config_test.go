@@ -6,14 +6,14 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/app"
 )
 
 // run in serial to avoid flakieness right away
 var _ = Describe("Given application run as in container", Serial, func() {
 	// application expects the configs available under ./config
 	// but the test suit sets current working dir to PROJECT_ROOT/app, hence we need to walk up once
-	err := os.Chdir("..")
+	err := os.Chdir("../..")
 	Expect(err).To(Not(HaveOccurred()))
 
 	When("boot profile is prod", func() {

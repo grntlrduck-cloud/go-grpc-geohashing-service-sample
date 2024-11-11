@@ -18,3 +18,6 @@ aws:
     account: ${ACCOUNT_ID}
   dynamodb:
     poi_table_name: ${POI_TABLE_NAME}
+
+logging:
+  level: "dev"

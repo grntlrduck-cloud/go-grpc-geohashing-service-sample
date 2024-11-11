@@ -58,3 +58,6 @@ run_build_container:
 	docker build -t go-grpgeo:local .
 	docker run -p 443:443 -p 8443:8443 go-grpgeo:local
 
+compose_local:
+	docker compose up --build --remove-orphans
+

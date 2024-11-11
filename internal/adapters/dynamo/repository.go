@@ -17,14 +17,14 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/app"
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/app"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 const (
-	routeHashesLimit   = 100
-	bboxHashesLimit    = 20
-	proxHashesLimit    = 20
+	routeHashesLimit   = 120
+	bboxHashesLimit    = 60
+	proxHashesLimit    = 60
 	dynamoMaxBatchSize = 25
 	testInitDataPath   = "config/db/local/cpoi_dynamo_items_int_test.csv"
 )
@@ -114,7 +114,6 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 		)
 		return poi.DBEntityMappingErr
 	}
-
 	// upsert chunks
 	var errs []error
 	for i, c := range chunks {
@@ -132,7 +131,7 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 		}
 		_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 		if err != nil {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 			_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 			if err != nil {
 				pgr.logger.Error(
@@ -162,7 +161,7 @@ func (pgr *PoIGeoRepository) Upsert(
 	domain poi.PoILocation,
 	correlationId uuid.UUID,
 ) error {
-	item := newItemFromDomain(domain)
+	item := NewItemFromDomain(domain)
 	avs, err := attributevalue.MarshalMap(&item)
 	if err != nil {
 		pgr.logger.Error("unable to marshall item to DynamoDB AttributeValues",
@@ -307,21 +306,29 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 		zap.String("correlation_id", correlationId.String()),
 		zap.Int("queries", len(queries)),
 	)
-	resC := make(chan poiQueryResult)
+	resC := make(chan poiQueryResult, len(queries)/2)
 	errGrp, gctx := errgroup.WithContext(ctx)
-	errGrp.SetLimit(10)
+	errGrp.SetLimit(len(queries) / 3)
 	for _, v := range queries {
 		errGrp.Go(func() error {
 			qres := pgr.query(gctx, v)
 			if qres.err != nil {
 				return qres.err
 			}
-			select {
-			case resC <- qres:
-			case <-gctx.Done():
-				return gctx.Err()
+			if len(qres.pois) == 0 {
+				return nil
 			}
-			return nil
+			for {
+				select {
+				case resC <- qres:
+					return nil
+				case <-gctx.Done():
+					return gctx.Err()
+				default:
+					time.Sleep(100 * time.Nanosecond)
+					continue
+				}
+			}
 		})
 	}
 	go func() {
@@ -330,11 +337,21 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 	}()
 	var pois []poi.PoILocation
 	for r := range resC {
+		pgr.logger.Debug(
+			"appending pois from parallel query results",
+			zap.Int("num_results", len(r.pois)),
+			zap.String("correlation_id", correlationId.String()),
+		)
 		pois = append(pois, r.pois...)
 	}
 	if err := errGrp.Wait(); err != nil {
 		return nil, fmt.Errorf("one or more concurrent dynamoDb queries failed: %w", err)
 	}
+	pgr.logger.Info(
+		"returning geo query results",
+		zap.Int("num_pois_found", len(pois)),
+		zap.String("correlation_id", correlationId.String()),
+	)
 	return pois, nil
 }
 
@@ -376,14 +393,13 @@ func (pgr *PoIGeoRepository) queryInputFromHashes(hashes []geoHash) []*dynamodb.
 			CPoIItemGeoIndexPK,
 			CPoIItemGeoIndexSK,
 		)
-		println(v.trimmed(CPoIItemGeoHashKeyLength))
 		query := &dynamodb.QueryInput{
 			TableName:              aws.String(pgr.tableName),
 			IndexName:              aws.String(CPoIItemGeoIndexName),
 			KeyConditionExpression: aws.String(keyCondition),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":pk": &types.AttributeValueMemberN{
-					Value: strconv.FormatUint(v.trimmed(CPoIItemGeoHashKeyLength), 10),
+					Value: strconv.FormatUint(v.trimmed(CPoIItemCellLevel), 10),
 				},
 				":skmin": &types.AttributeValueMemberN{Value: strconv.FormatUint(v.min(), 10)},
 				":skmax": &types.AttributeValueMemberN{Value: strconv.FormatUint(v.max(), 10)},
@@ -459,7 +475,7 @@ func (pgr *PoIGeoRepository) createInitPoiTable() error {
 func createBatchRequests(pois []poi.PoILocation) ([][]types.WriteRequest, error) {
 	rqsts := make([]types.WriteRequest, len(pois))
 	for i, v := range pois {
-		item := newItemFromDomain(v)
+		item := NewItemFromDomain(v)
 		av, err := attributevalue.MarshalMap(&item)
 		if err != nil {
 			return nil, fmt.Errorf("failed to markshall item: %w", err)

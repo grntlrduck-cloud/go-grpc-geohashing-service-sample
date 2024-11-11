@@ -8,18 +8,18 @@ import (
 	"github.com/amazon-ion/ion-go/ion"
 	"github.com/segmentio/ksuid"
 
-	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/domain/poi"
+	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/internal/domain/poi"
 )
 
 const (
-	CPoIItemPK               = "pk"
-	CPoIItemGeoIndexName     = "gsi1_geo"
-	CPoIItemGeoIndexPK       = "gsi1_geo_pk"
-	CPoIItemGeoIndexSK       = "gsi1_geo_sk"
-	CPoIItemGeoHashKeyLength = 4
-	countryCodeDeu           = "DEU"
-	ac                       = "AC"
-	dc                       = "DC"
+	CPoIItemPK           = "pk"
+	CPoIItemGeoIndexName = "gsi1_geo"
+	CPoIItemGeoIndexPK   = "gsi1_geo_pk"
+	CPoIItemGeoIndexSK   = "gsi1_geo_sk"
+	CPoIItemCellLevel    = 9 //  edge length of min 27 km and max 38 km http://s2geometry.io/resources/s2cell_statistics.html
+	countryCodeDeu       = "DEU"
+	ac                   = "AC"
+	dc                   = "DC"
 )
 
 // The CPoIItem is a flattened representation of the domain with a primary key (hashkey) to get a cPoI by its id
@@ -61,21 +61,21 @@ func (cp *CPoIItem) Domain() (poi.PoILocation, error) {
 			CountryCode:  cp.CountryCode,
 		},
 		LocationEntrance: poi.Coordinates{
-			Latitude:  cp.Latitude,
-			Longitude: cp.Longitude,
+			Latitude:  cp.EntranceLatitude,
+			Longitude: cp.EntranceLongitude,
 		},
 		Features: cp.Features,
 	}, nil
 }
 
-func newItemFromDomain(poi poi.PoILocation) CPoIItem {
+func NewItemFromDomain(poi poi.PoILocation) CPoIItem {
 	gh := newGeoHash(poi.Location.Latitude, poi.Location.Longitude)
 	id := poi.Id.String()
 	return CPoIItem{
 		Pk: id,
 		GeoIndexPk: gh.trimmed(
-			CPoIItemGeoHashKeyLength,
-		), // the trimmed geo hash representing a tile
+			CPoIItemCellLevel,
+		), // the trimmed geo hash adjusted to the level
 		GeoIndexSk:        gh.hash(), // the full length geo hash
 		Id:                id,
 		Street:            poi.Address.Street,
@@ -159,7 +159,7 @@ func (cte *ChargingCSVEntry) MapToDynamo() *CPoIItem {
 	return &CPoIItem{
 		Pk: id,
 		GeoIndexPk: gh.trimmed(
-			CPoIItemGeoHashKeyLength,
+			CPoIItemCellLevel,
 		), // the trimmed geo hash representing a tile
 		GeoIndexSk:        gh.hash(), // the full length geo hash
 		Id:                id,
@@ -181,7 +181,7 @@ func (cte *ChargingCSVEntry) features() []string {
 	features[0] = fmt.Sprintf("%d_CHARGEPOINTS", cte.NumberOfChargePoints)
 	features[1] = fmt.Sprintf("%d_KW_CHARGING", int32(cte.Power))
 	if cte.hasAcCharging() {
-		features = append(features, "AC_CHAGRING")
+		features = append(features, "AC_CHARGING")
 	}
 	if cte.hasDcCharging() {
 		features = append(features, "DC_CHARGING")

@@ -1,3 +1,6 @@
 grpc:
   ssl:
     enabled: true
+
+logging:
+  level: "prod"

@@ -15,9 +15,10 @@ const (
 )
 
 type BootConfig struct {
-	App  AppConfig  `yaml:"app"`
-	Grpc GrpcConfig `yaml:"grpc"`
-	Aws  AwsConfig  `yaml:"aws"`
+	App     AppConfig     `yaml:"app"`
+	Grpc    GrpcConfig    `yaml:"grpc"`
+	Aws     AwsConfig     `yaml:"aws"`
+	Logging LoggingConfig `yaml:"logging"`
 }
 
 type AppConfig struct {
@@ -61,6 +62,10 @@ type EndpointOverride struct {
 	Enabled bool   `yaml:"enabled"`
 	Host    string `yaml:"host"`
 	Port    string `yaml:"port"`
+}
+
+type LoggingConfig struct {
+	Level string `yaml:"level"`
 }
 
 func LoadBootConfig() (*BootConfig, error) {
