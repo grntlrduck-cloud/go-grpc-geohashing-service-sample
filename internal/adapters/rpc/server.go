@@ -230,6 +230,7 @@ func (s *Server) startRpcServer() error {
 	for _, service := range s.services {
 		service.Register(s.rpcServer)
 	}
+	s.healthService.Register(s.rpcServer)
 
 	go func() {
 		err := s.rpcServer.Serve(lis)

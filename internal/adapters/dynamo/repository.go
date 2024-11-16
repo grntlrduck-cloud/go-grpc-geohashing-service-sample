@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	routeHashesLimit   = 120
-	bboxHashesLimit    = 60
-	proxHashesLimit    = 60
-	dynamoMaxBatchSize = 25
-	testInitDataPath   = "config/db/local/cpoi_dynamo_items_int_test.csv"
+	routeHashesLimit     = 120
+	bboxHashesLimit      = 60
+	proxHashesLimit      = 60
+	dynamoMaxBatchSize   = 25
+	maxConcurrentQueries = 10 // Configurable max concurrent queries
+	testInitDataPath     = "config/db/local/cpoi_dynamo_items_int_test.csv"
 )
 
 type PoIGeoRepository struct {
@@ -306,36 +307,51 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 		zap.String("correlation_id", correlationId.String()),
 		zap.Int("queries", len(queries)),
 	)
-	resC := make(chan poiQueryResult, len(queries)/2)
+
+	// Use buffered channel with exact size needed
+	resC := make(chan poiQueryResult, len(queries))
 	errGrp, gctx := errgroup.WithContext(ctx)
-	errGrp.SetLimit(len(queries) / 3)
-	for _, v := range queries {
+
+	// Set reasonable concurrency limit
+	workers := min(len(queries), maxConcurrentQueries)
+	errGrp.SetLimit(workers)
+
+	// Launch workers
+	for i := range queries {
+		query := queries[i] // Create new variable to avoid closure issues
 		errGrp.Go(func() error {
-			qres := pgr.query(gctx, v)
+			qres := pgr.query(gctx, query)
 			if qres.err != nil {
+				pgr.logger.Error("query failed",
+					zap.Error(qres.err),
+					zap.String("correlation_id", correlationId.String()),
+				)
 				return qres.err
 			}
 			if len(qres.pois) == 0 {
 				return nil
 			}
-			for {
-				select {
-				case resC <- qres:
-					return nil
-				case <-gctx.Done():
-					return gctx.Err()
-				default:
-					time.Sleep(100 * time.Nanosecond)
-					continue
-				}
+
+			// Try to send results with timeout
+			select {
+			case resC <- qres:
+				return nil
+			case <-gctx.Done():
+				return gctx.Err()
+			case <-time.After(5 * time.Second):
+				return fmt.Errorf("timeout sending results to channel")
 			}
 		})
 	}
+
+	// Close results channel when all workers complete
 	go func() {
 		_ = errGrp.Wait()
 		close(resC)
 	}()
-	var pois []poi.PoILocation
+
+	// Collect results with pre-allocated slice
+	pois := make([]poi.PoILocation, 0, len(queries)*2) // Estimate capacity
 	for r := range resC {
 		pgr.logger.Debug(
 			"appending pois from parallel query results",
@@ -344,14 +360,12 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 		)
 		pois = append(pois, r.pois...)
 	}
+
+	// Check for worker errors
 	if err := errGrp.Wait(); err != nil {
-		return nil, fmt.Errorf("one or more concurrent dynamoDb queries failed: %w", err)
+		return nil, fmt.Errorf("parallel query failed: %w", err)
 	}
-	pgr.logger.Info(
-		"returning geo query results",
-		zap.Int("num_pois_found", len(pois)),
-		zap.String("correlation_id", correlationId.String()),
-	)
+
 	return pois, nil
 }
 

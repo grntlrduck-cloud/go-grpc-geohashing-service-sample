@@ -9,7 +9,7 @@ consumes:
 produces:
   - application/json
 paths:
-  /api/v1/health/readiness:
+  /api/v1/health/liveness:
     get:
       summary: |-
         Check gets the health of the specified service. If the requested service

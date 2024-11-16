@@ -33,6 +33,6 @@ service HealthService {
   //
   // Check implementations should be idempotent and side effect free.
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
-    option (google.api.http) = {get: "/api/v1/health/readiness"};
+    option (google.api.http) = {get: "/api/v1/health/liveness"};
   };
 }
