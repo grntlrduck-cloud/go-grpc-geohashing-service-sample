@@ -270,7 +270,6 @@ func (p *PoIRpcService) Route(
 	logger.Info(
 		"processing Route rpc",
 	)
-
 	// process request
 	path := coordinatesPathFromProto(request.Route)
 	locations, err := p.locationService.Route(ctx, path, logger)
