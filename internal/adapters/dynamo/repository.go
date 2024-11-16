@@ -162,7 +162,14 @@ func (pgr *PoIGeoRepository) Upsert(
 	domain poi.PoILocation,
 	correlationId uuid.UUID,
 ) error {
-	item := NewItemFromDomain(domain)
+	item, err := NewItemFromDomain(domain)
+	if err != nil {
+		pgr.logger.Warn("invalid coordinate for proximity search",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Error(err),
+		)
+		return fmt.Errorf("unable to upsert location: %w", err)
+	}
 	avs, err := attributevalue.MarshalMap(&item)
 	if err != nil {
 		pgr.logger.Error("unable to marshall item to DynamoDB AttributeValues",
@@ -228,7 +235,10 @@ func (pgr *PoIGeoRepository) GetByProximity(
 	radius float64,
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
-	hashes := newHashesFromRadiusCenter(cntr, radius)
+	hashes, err := newHashesFromRadiusCenter(cntr, radius, nil)
+	if err != nil {
+		return nil, poi.InvalidSearchCoordinatesErr
+	}
 	if len(hashes) > proxHashesLimit {
 		pgr.logger.Error("too many hashes calculated for proximity",
 			zap.String("correlation_id", correlationId.String()),
@@ -252,7 +262,14 @@ func (pgr *PoIGeoRepository) GetByBbox(
 	sw, ne poi.Coordinates,
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
-	hashes := newHashesFromBbox(ne, sw)
+	hashes, err := newHashesFromBbox(ne, sw, nil)
+	if err != nil {
+		pgr.logger.Warn("invalid coordinates for bounding box",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Error(err),
+		)
+		return nil, poi.InvalidSearchCoordinatesErr
+	}
 	if len(hashes) > bboxHashesLimit {
 		pgr.logger.Error("too many hashes calculated for bbox",
 			zap.String("correlation_id", correlationId.String()),
@@ -276,7 +293,14 @@ func (pgr *PoIGeoRepository) GetByRoute(
 	path []poi.Coordinates,
 	correlationId uuid.UUID,
 ) ([]poi.PoILocation, error) {
-	hashes := newHashesFromRoute(path)
+	hashes, err := newHashesFromRoute(path, nil)
+	if err != nil {
+		pgr.logger.Warn("invalid coordinates in provided coordinate path",
+			zap.String("correlation_id", correlationId.String()),
+			zap.Error(err),
+		)
+		return nil, poi.InvalidSearchCoordinatesErr
+	}
 	// google s2 does not guarantee that the set MaxCells can be fulfilled
 	// an arbitrary large list of hashes might be returned
 	if len(hashes) > routeHashesLimit {
@@ -489,7 +513,10 @@ func (pgr *PoIGeoRepository) createInitPoiTable() error {
 func createBatchRequests(pois []poi.PoILocation) ([][]types.WriteRequest, error) {
 	rqsts := make([]types.WriteRequest, len(pois))
 	for i, v := range pois {
-		item := NewItemFromDomain(v)
+		item, err := NewItemFromDomain(v)
+		if err != nil {
+			return nil, fmt.Errorf("unable to map item to domain: %w", err)
+		}
 		av, err := attributevalue.MarshalMap(&item)
 		if err != nil {
 			return nil, fmt.Errorf("failed to markshall item: %w", err)

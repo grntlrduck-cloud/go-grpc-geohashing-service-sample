@@ -68,10 +68,13 @@ func (cp *CPoIItem) Domain() (poi.PoILocation, error) {
 	}, nil
 }
 
-func NewItemFromDomain(poi poi.PoILocation) CPoIItem {
-	gh := newGeoHash(poi.Location.Latitude, poi.Location.Longitude)
+func NewItemFromDomain(poi poi.PoILocation) (*CPoIItem, error) {
+	gh, err := newGeoHash(poi.Location.Latitude, poi.Location.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create geo hash: %w", err)
+	}
 	id := poi.Id.String()
-	return CPoIItem{
+	return &CPoIItem{
 		Pk: id,
 		GeoIndexPk: gh.trimmed(
 			CPoIItemCellLevel,
@@ -88,7 +91,7 @@ func NewItemFromDomain(poi poi.PoILocation) CPoIItem {
 		EntranceLongitude: poi.LocationEntrance.Longitude,
 		EntranceLatitude:  poi.LocationEntrance.Latitude,
 		Features:          poi.Features,
-	}
+	}, nil
 }
 
 func (cp *CPoIItem) IonItem() *IonItem {
@@ -140,11 +143,15 @@ type ChargingCSVEntry struct {
 
 func EntriesToDynamo(ctes []*ChargingCSVEntry) []*CPoIItem {
 	dynamoItems := make([]*CPoIItem, len(ctes))
-	c := make(chan *CPoIItem, 12)
+	c := make(chan *CPoIItem, 10)
 	defer close(c)
 	for _, cte := range ctes {
 		go func() {
-			c <- cte.MapToDynamo()
+			item, err := cte.MapToDynamo()
+			if err != nil {
+				panic("unable to map items")
+			}
+			c <- item
 		}()
 	}
 	for i := range len(ctes) {
@@ -153,8 +160,11 @@ func EntriesToDynamo(ctes []*ChargingCSVEntry) []*CPoIItem {
 	return dynamoItems
 }
 
-func (cte *ChargingCSVEntry) MapToDynamo() *CPoIItem {
-	gh := newGeoHash(cte.Latitude, cte.Longitude)
+func (cte *ChargingCSVEntry) MapToDynamo() (*CPoIItem, error) {
+	gh, err := newGeoHash(cte.Latitude, cte.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create geohash: %w", err)
+	}
 	id := ksuid.New().String()
 	return &CPoIItem{
 		Pk: id,
@@ -173,7 +183,7 @@ func (cte *ChargingCSVEntry) MapToDynamo() *CPoIItem {
 		EntranceLongitude: cte.Longitude,
 		EntranceLatitude:  cte.Latitude,
 		Features:          cte.features(),
-	}
+	}, nil
 }
 
 func (cte *ChargingCSVEntry) features() []string {

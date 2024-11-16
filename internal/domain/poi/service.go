@@ -64,13 +64,6 @@ func (ls *LocationService) Proximity(
 		correlationId,
 	)
 	if err != nil {
-		ls.logger.Error(
-			"repository proximity query failed",
-			zap.Float64("lon", cntr.Longitude),
-			zap.Float64("lat", cntr.Latitude),
-			zap.String("correlation_id", correlationId.String()),
-			zap.Error(err),
-		)
 		return nil, fmt.Errorf("unable to fulfill proximity query: %w", err)
 	}
 	return locations, nil
@@ -91,15 +84,6 @@ func (ls *LocationService) Bbox(
 	)
 	locations, err := ls.repo.GetByBbox(ctx, sw, ne, correlationId)
 	if err != nil {
-		ls.logger.Error(
-			"repository bbox query failed",
-			zap.Float64("sw_lat", sw.Latitude),
-			zap.Float64("sw_lon", sw.Longitude),
-			zap.Float64("ne_lat", ne.Latitude),
-			zap.Float64("ne_lon", ne.Longitude),
-			zap.String("correlation_id", correlationId.String()),
-			zap.Error(err),
-		)
 		return nil, fmt.Errorf("unable to fulfill bbox search for area: %w", err)
 	}
 	return locations, nil
@@ -117,12 +101,6 @@ func (ls *LocationService) Route(
 	)
 	locations, err := ls.repo.GetByRoute(ctx, wgsPath, correlationId)
 	if err != nil {
-		ls.logger.Error(
-			"repository route query failed",
-			zap.Int("num_coordinates", len(wgsPath)),
-			zap.String("correlation_id", correlationId.String()),
-			zap.Error(err),
-		)
 		return nil, fmt.Errorf("unable to fulfill route search: %w", err)
 	}
 	return locations, nil

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/segmentio/ksuid"
@@ -20,6 +21,11 @@ var (
 		codes.InvalidArgument,
 		"invalid request, X-Correlation-Id header is required",
 	)
+	invalidGeoParamsStatus = status.Errorf(
+		codes.InvalidArgument,
+		"invalid geo search arguments, ensure correct coordinates and the number of parameters required",
+	)
+
 	severErrStatus = status.Errorf(codes.Internal, "server error, failed to process request")
 )
 
@@ -100,7 +106,11 @@ func (p *PoIRpcService) Proximity(
 		zap.String("correlation_id", correlationId.String()),
 	)
 	locations, err := p.locationService.Proximity(ctx, cntr, correlationId)
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
+		return nil, invalidGeoParamsStatus
+	}
 	if err != nil {
+		p.logger.Error("unable to handle request", zap.Error(err))
 		return nil, severErrStatus
 	}
 	proto := locationsToProto(locations)
@@ -139,7 +149,11 @@ func (p *PoIRpcService) BBox(
 		zap.String("correlation_id", correlationId.String()),
 	)
 	locations, err := p.locationService.Bbox(ctx, sw, ne, correlationId)
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
+		return nil, invalidGeoParamsStatus
+	}
 	if err != nil {
+		p.logger.Error("unable to handle request", zap.Error(err))
 		return nil, severErrStatus
 	}
 	proto := locationsToProto(locations)
@@ -174,7 +188,11 @@ func (p *PoIRpcService) Route(
 		zap.String("correlation_id", correlationId.String()),
 	)
 	locations, err := p.locationService.Route(ctx, path, correlationId)
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
+		return nil, invalidGeoParamsStatus
+	}
 	if err != nil {
+		p.logger.Error("unable to handle request", zap.Error(err))
 		return nil, severErrStatus
 	}
 	proto := locationsToProto(locations)

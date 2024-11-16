@@ -9,12 +9,13 @@ import (
 )
 
 var (
-	TooLargeSearchAreaErr = errors.New("area too large for query")
-	DBQueryErr            = errors.New("failed to query table")
-	LocationNotFound      = errors.New("location does not exist")
-	DBEntityMappingErr    = errors.New("failed to map too location entity")
-	DBUpsertErr           = errors.New("failed to upsert entity")
-	DBBatchUpsertErr      = errors.New("failed to upsert batch")
+	TooLargeSearchAreaErr       = errors.New("area too large for query")
+	DBQueryErr                  = errors.New("failed to query table")
+	LocationNotFound            = errors.New("location does not exist")
+	DBEntityMappingErr          = errors.New("failed to map too location entity")
+	DBUpsertErr                 = errors.New("failed to upsert entity")
+	DBBatchUpsertErr            = errors.New("failed to upsert batch")
+	InvalidSearchCoordinatesErr = errors.New("invalid geo search parameters: invalid coordinates")
 )
 
 type Repository interface {
