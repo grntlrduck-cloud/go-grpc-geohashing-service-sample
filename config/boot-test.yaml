@@ -2,6 +2,12 @@ app:
   name: grpc-chagring-location-service-local
   env: test
 
+grpc:
+  server:
+    port: 7443
+  proxy:
+    port: 8443
+
 logging:
   env: "test"
   host: localhost

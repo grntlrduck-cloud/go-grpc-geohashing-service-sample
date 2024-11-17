@@ -27,7 +27,7 @@ func NewHealthRpcClient() *HealthRpcClient {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
-	client, err := grpc.NewClient("localhost:443", dialOpts...)
+	client, err := grpc.NewClient("localhost:7443", dialOpts...)
 	Expect(err).To(Not(HaveOccurred()))
 	healthClient := health.NewHealthServiceClient(client)
 	Expect(healthClient).To(Not(BeNil()))
