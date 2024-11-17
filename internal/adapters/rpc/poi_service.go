@@ -54,7 +54,6 @@ func (p *PoIRpcService) PoI(
 	if ctx.Err() != nil {
 		return nil, requestCenceledStatus
 	}
-	// validate request
 	if request == nil || request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument: id")
 	}
@@ -96,7 +95,6 @@ func (p *PoIRpcService) PoI(
 		logger.Error("failed to get poi by id", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
-
 	response := poi_v1.PoIResponse{
 		Poi: poiToProto(location),
 	}
@@ -270,6 +268,7 @@ func (p *PoIRpcService) Route(
 	logger.Info(
 		"processing Route rpc",
 	)
+
 	// process request
 	path := coordinatesPathFromProto(request.Route)
 	locations, err := p.locationService.Route(ctx, path, logger)
