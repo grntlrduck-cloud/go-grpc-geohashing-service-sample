@@ -58,7 +58,11 @@ var _ = Describe("given application", Ordered, func() {
 
 		It("application is healthy", func() {
 			healthClient := test.NewHealthRpcClient(runner.BootConfig().Grpc.Server.Port)
+<<<<<<< HEAD
 			resp := healthClient.CheckHealth()
+=======
+			resp := healthClient.AssertCheckHealth()
+>>>>>>> 26ef4c3 (chore: irgnore certain modules for coverage, prepare integration tests for rpc.)
 			Expect(resp.GetStatus()).To(Equal(health.HealthCheckResponse_SERVING_STATUS_SERVING))
 		})
 		It("application is is terminated on context cancel", func() {
