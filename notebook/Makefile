@@ -1,17 +1,8 @@
 
-setup:
+configure:
 	python3 -m venv ./venv
-	source venv/bin/activate
-	pip3 install -r requirements.txt
-
-install:
-	pip3 install -r requirements.txt
-
-freeze:
-	pip3 freeze > requirements.txt
+	. venv/bin/activate && pip install -r requirements.txt
 
 start:
-	jupyter notebook
+	. venv/bin/activate && jupyter notebook
 
-activate:
-	source venv/bin/activate
