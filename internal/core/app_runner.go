@@ -18,6 +18,7 @@ type ApplicationRunner struct {
 	logger     *zap.Logger
 	bootConfig *app.BootConfig
 	server     *rpc.Server
+	running    bool
 }
 
 type ApplicationOpts func(*ApplicationRunner)
@@ -126,6 +127,10 @@ func (a *ApplicationRunner) getSevrerBaseOptions() []rpc.ServerOption {
 	}
 }
 
+func (a *ApplicationRunner) Running() bool {
+	return a.running
+}
+
 func (a *ApplicationRunner) Run() {
 	defer func(a *ApplicationRunner) {
 		_ = a.logger.Sync()
@@ -136,7 +141,9 @@ func (a *ApplicationRunner) Run() {
 		a.logger.Panic("application run failed, unable to start grpc server", zap.Error(err))
 	}
 	a.logger.Info("application running")
+	a.running = true
 	a.awaitTermination()
+	a.running = false
 	a.logger.Info("application shut down")
 }
 

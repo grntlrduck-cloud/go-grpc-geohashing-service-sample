@@ -1,0 +1,23 @@
+app:
+  name: grpc-chagring-location-service-local
+  env: test
+
+logging:
+  env: "test"
+  host: localhost
+  app_name: grpc-chagring-location-service-test
+  region: "andromeda-north-1"
+  account: "123456789012"
+  team_name: my-team
+
+aws:
+  config:
+    region: "andromeda-north-1"
+    account: "123456789012"
+  dynamodb:
+    endpoint_override:
+      enabled: true
+      host: ${DYNAMOLOCAL_HOST}
+      port: ${DYNAMOLOCAL_PORT}
+    create_init_table: true
+    poi_table_name: poi_table_test
