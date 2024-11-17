@@ -131,6 +131,10 @@ func (a *ApplicationRunner) Running() bool {
 	return a.running
 }
 
+func (a *ApplicationRunner) BootConfig() *app.BootConfig {
+	return a.bootConfig
+}
+
 func (a *ApplicationRunner) Run() {
 	defer func(a *ApplicationRunner) {
 		_ = a.logger.Sync()

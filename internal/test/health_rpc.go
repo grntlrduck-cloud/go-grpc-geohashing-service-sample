@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"fmt"
 
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
@@ -20,14 +21,16 @@ func (h HealthRpcClient) AssertCheckHealth() *health.HealthCheckResponse {
 		&health.HealthCheckRequest{Service: ""},
 	)
 	Expect(err).To(Not(HaveOccurred()))
+	Expect(resp).To(Not(BeNil()))
 	return resp
 }
 
-func NewHealthRpcClient() *HealthRpcClient {
+func NewHealthRpcClient(port int32) *HealthRpcClient {
+	adr := fmt.Sprintf("localhost:%d", port)
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
-	client, err := grpc.NewClient("localhost:7443", dialOpts...)
+	client, err := grpc.NewClient(adr, dialOpts...)
 	Expect(err).To(Not(HaveOccurred()))
 	healthClient := health.NewHealthServiceClient(client)
 	Expect(healthClient).To(Not(BeNil()))

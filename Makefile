@@ -35,6 +35,8 @@ dia:
 
 test_report:
 	go run --mod=mod gotest.tools/gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
+	grep -v -E -f .covignore cover.out > coverage.filtered.out
+	mv coverage.filtered.out cover.out
 	go tool cover -html=cover.out -o coverage.html
 	go run --mod=mod github.com/boumenot/gocover-cobertura <cover.out > coverage.xml
 
