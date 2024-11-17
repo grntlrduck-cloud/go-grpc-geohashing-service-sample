@@ -14,7 +14,6 @@ import (
 const (
 	correlationHeader = "X-Correlation-Id"
 	gCorrelationMD    = "Grpc-Metadata-X-Correlation-Id"
-	gContentType      = "Grpc-Metadata-Content-Type"
 	noTrace           = "NO_TRACE"
 )
 
@@ -57,7 +56,6 @@ func correlationIdResponseModifier(
 		w.Header().Set(correlationHeader, noTrace)
 	}
 	// remove unwanted metadata
-	delete(w.Header(), gContentType)
 	delete(w.Header(), gCorrelationMD)
 	return nil
 }

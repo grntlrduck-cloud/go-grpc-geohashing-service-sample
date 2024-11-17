@@ -121,7 +121,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		opt(server)
 	}
 	if server.logger == nil {
-		server.logger = app.NewDevLogger()
+		server.logger = app.NewDevLogger(nil)
 	}
 	if server.healthService == nil {
 		return nil, errors.New(

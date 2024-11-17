@@ -23,6 +23,7 @@ type BootConfig struct {
 
 type AppConfig struct {
 	Name string `yaml:"name"`
+	Env  string `yaml:"env"`
 }
 
 type GrpcConfig struct {
@@ -65,7 +66,13 @@ type EndpointOverride struct {
 }
 
 type LoggingConfig struct {
-	Level string `yaml:"level"`
+	Level    string `yaml:"level"`
+	Env      string `yaml:"env"`
+	Host     string `yaml:"host"`
+	AppName  string `yaml:"app_name"`
+	Region   string `yaml:"region"`
+	Account  string `yaml:"account"`
+	TeamName string `yaml:"team_name"`
 }
 
 func LoadBootConfig() (*BootConfig, error) {

@@ -10,3 +10,6 @@ aws:
       port: ${DYNAMOLOCAL_PORT}
     create_init_table: true
     poi_table_name: poi_table_local
+
+logging:
+  level: "prod"

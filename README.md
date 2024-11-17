@@ -113,7 +113,7 @@ make vuln_scan
 - `go mod tidy` remove unused go modules
 - `go mod download` install go modules
 - `go get -u ./...` update all dependencies recursive
-- `ginkgo bootstrap` boostrap ginkgo test suit into current dir
+- `ginkgo bootstrap` bootstrap ginkgo test suit into current dir
 
 ## Helpful Resources
 

@@ -1,5 +1,7 @@
 app:
   name: ${APP_NAME}
+  env: ${APP_ENV}
+  profile: ${BOOT_PROFILE_ACTIVE}
 
 grpc:
   server:
@@ -14,10 +16,16 @@ grpc:
 
 aws:
   config:
-    region: eu-west-1
+    region: ${AWS_REGION}
     account: ${ACCOUNT_ID}
   dynamodb:
     poi_table_name: ${POI_TABLE_NAME}
 
 logging:
   level: "dev"
+  env: "${APP_ENV}"
+  host: ${HOSTNAME}
+  app_name: ${APP_NAME}
+  region: eu-west-1
+  account: ${ACCOUNT_ID}
+  team_name: my-team

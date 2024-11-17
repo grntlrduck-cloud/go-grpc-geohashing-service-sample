@@ -30,8 +30,8 @@ var defaultAreaCoverer = s2.RegionCoverer{
 
 // default for Route search
 var defaultPolylineCoverer = s2.RegionCoverer{
-	MinLevel: 10, // fine grainer
-	MaxLevel: 15,
+	MinLevel: 9,
+	MaxLevel: 15,  // fine grainer
 	MaxCells: 100, // needs to cover longer area
 	LevelMod: 1,
 }

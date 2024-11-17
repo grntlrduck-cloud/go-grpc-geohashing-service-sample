@@ -30,9 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PoIServiceClient interface {
 	PoI(ctx context.Context, in *PoIRequest, opts ...grpc.CallOption) (*PoIResponse, error)
-	Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*ProximityResponse, error)
-	BBox(ctx context.Context, in *BBoxRequest, opts ...grpc.CallOption) (*BBoxResponse, error)
-	Route(ctx context.Context, in *RouteRequest, opts ...grpc.CallOption) (*RouteResponse, error)
+	Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*PoISearchResponse, error)
+	BBox(ctx context.Context, in *BBoxRequest, opts ...grpc.CallOption) (*PoISearchResponse, error)
+	Route(ctx context.Context, in *RouteRequest, opts ...grpc.CallOption) (*PoISearchResponse, error)
 }
 
 type poIServiceClient struct {
@@ -53,9 +53,9 @@ func (c *poIServiceClient) PoI(ctx context.Context, in *PoIRequest, opts ...grpc
 	return out, nil
 }
 
-func (c *poIServiceClient) Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*ProximityResponse, error) {
+func (c *poIServiceClient) Proximity(ctx context.Context, in *ProximityRequest, opts ...grpc.CallOption) (*PoISearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ProximityResponse)
+	out := new(PoISearchResponse)
 	err := c.cc.Invoke(ctx, PoIService_Proximity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -63,9 +63,9 @@ func (c *poIServiceClient) Proximity(ctx context.Context, in *ProximityRequest, 
 	return out, nil
 }
 
-func (c *poIServiceClient) BBox(ctx context.Context, in *BBoxRequest, opts ...grpc.CallOption) (*BBoxResponse, error) {
+func (c *poIServiceClient) BBox(ctx context.Context, in *BBoxRequest, opts ...grpc.CallOption) (*PoISearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BBoxResponse)
+	out := new(PoISearchResponse)
 	err := c.cc.Invoke(ctx, PoIService_BBox_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -73,9 +73,9 @@ func (c *poIServiceClient) BBox(ctx context.Context, in *BBoxRequest, opts ...gr
 	return out, nil
 }
 
-func (c *poIServiceClient) Route(ctx context.Context, in *RouteRequest, opts ...grpc.CallOption) (*RouteResponse, error) {
+func (c *poIServiceClient) Route(ctx context.Context, in *RouteRequest, opts ...grpc.CallOption) (*PoISearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RouteResponse)
+	out := new(PoISearchResponse)
 	err := c.cc.Invoke(ctx, PoIService_Route_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -88,9 +88,9 @@ func (c *poIServiceClient) Route(ctx context.Context, in *RouteRequest, opts ...
 // for forward compatibility
 type PoIServiceServer interface {
 	PoI(context.Context, *PoIRequest) (*PoIResponse, error)
-	Proximity(context.Context, *ProximityRequest) (*ProximityResponse, error)
-	BBox(context.Context, *BBoxRequest) (*BBoxResponse, error)
-	Route(context.Context, *RouteRequest) (*RouteResponse, error)
+	Proximity(context.Context, *ProximityRequest) (*PoISearchResponse, error)
+	BBox(context.Context, *BBoxRequest) (*PoISearchResponse, error)
+	Route(context.Context, *RouteRequest) (*PoISearchResponse, error)
 }
 
 // UnimplementedPoIServiceServer should be embedded to have forward compatible implementations.
@@ -100,13 +100,13 @@ type UnimplementedPoIServiceServer struct {
 func (UnimplementedPoIServiceServer) PoI(context.Context, *PoIRequest) (*PoIResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PoI not implemented")
 }
-func (UnimplementedPoIServiceServer) Proximity(context.Context, *ProximityRequest) (*ProximityResponse, error) {
+func (UnimplementedPoIServiceServer) Proximity(context.Context, *ProximityRequest) (*PoISearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Proximity not implemented")
 }
-func (UnimplementedPoIServiceServer) BBox(context.Context, *BBoxRequest) (*BBoxResponse, error) {
+func (UnimplementedPoIServiceServer) BBox(context.Context, *BBoxRequest) (*PoISearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BBox not implemented")
 }
-func (UnimplementedPoIServiceServer) Route(context.Context, *RouteRequest) (*RouteResponse, error) {
+func (UnimplementedPoIServiceServer) Route(context.Context, *RouteRequest) (*PoISearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Route not implemented")
 }
 

@@ -27,7 +27,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/v1BBoxResponse'
+            $ref: '#/definitions/v1PoISearchResponse'
         "401":
           description: Returned when user is forbidden to access resource.
           schema: {}
@@ -125,7 +125,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/v1ProximityResponse'
+            $ref: '#/definitions/v1PoISearchResponse'
         "401":
           description: Returned when user is forbidden to access resource.
           schema: {}
@@ -156,6 +156,13 @@ paths:
           required: true
           type: number
           format: double
+        - name: radiusMeters
+          description: The search radius in meters to perform a prxomity search. The radius is limmitted due to performance constraints and responsivness of the application
+          in: query
+          required: false
+          type: number
+          format: double
+          default: "50000"
         - name: X-Correlation-Id
           description: Unique event identifier for server requests
           in: header
@@ -171,7 +178,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/v1RouteResponse'
+            $ref: '#/definitions/v1PoISearchResponse'
         "401":
           description: Returned when user is forbidden to access resource.
           schema: {}
@@ -306,14 +313,6 @@ definitions:
         type: string
         example: DEU
         description: Alpha3 country code
-  v1BBoxResponse:
-    type: object
-    properties:
-      items:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/poiv1PoI'
   v1Coordinate:
     type: object
     properties:
@@ -335,15 +334,7 @@ definitions:
     properties:
       poi:
         $ref: '#/definitions/poiv1PoI'
-  v1ProximityResponse:
-    type: object
-    properties:
-      items:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/poiv1PoI'
-  v1RouteResponse:
+  v1PoISearchResponse:
     type: object
     properties:
       items:

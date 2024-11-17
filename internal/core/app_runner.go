@@ -52,15 +52,15 @@ func NewApplicationRunner(opts ...ApplicationOpts) *ApplicationRunner {
 		opt(a)
 	}
 	if strings.ToLower(a.bootConfig.Logging.Level) == "prod" {
-		a.logger = app.NewLogger()
+		a.logger = app.NewLogger(&a.bootConfig.Logging)
 	} else {
-		a.logger = app.NewDevLogger()
+		a.logger = app.NewDevLogger(&a.bootConfig.Logging)
 	}
 	repo, err := a.createRepo()
 	if err != nil {
 		panic(fmt.Errorf("unable to create repo: %w", err))
 	}
-	domainService := poi.NewLocationService(repo, a.logger)
+	domainService := poi.NewLocationService(repo)
 	serverOpts := a.getSevrerBaseOptions()
 	serverOpts = append(
 		serverOpts,
@@ -100,10 +100,10 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 		)
 	}
 	repo, err := dynamo.NewPoIGeoRepository(
+		a.logger,
 		dynamo.WithDynamoClientWrapper(dyanmoClient),
 		dynamo.WithTableName(a.bootConfig.Aws.DynamoDb.PoiTableName),
 		dynamo.WithCreateAndInitTable(a.bootConfig.Aws.DynamoDb.CreateInitTable),
-		dynamo.WithLogger(a.logger),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Repository: %w", err)

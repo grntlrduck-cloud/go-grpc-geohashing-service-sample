@@ -16,8 +16,9 @@ configure:
 	@cp pre-commit.sh .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
 	@echo "Done."
+
 ci:
-	go mod download
+	go mod download && go mod verify
 
 lint:
 	golangci-lint run ./...
@@ -55,9 +56,8 @@ test_full_local_amd: lint vuln_scan test_report synth_local build_amd
 test_full_local_arm: lint vuln_scan test_report synth_local build_arm
 
 run_build_container:
-	docker build -t go-grpgeo:local .
-	docker run -p 443:443 -p 8443:8443 go-grpgeo:local
+	docker build -t go-grpc-geo:local .
+	docker run -p 443:443 -p 8443:8443 go-grpc-geo:local
 
 compose_local:
 	docker compose up --build --remove-orphans
-

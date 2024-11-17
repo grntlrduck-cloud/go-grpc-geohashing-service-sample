@@ -44,7 +44,8 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   security_definitions: {
     security: {
       key: "OAuth2"
-      value: {        type: TYPE_OAUTH2
+      value: {
+        type: TYPE_OAUTH2
         flow: FLOW_ACCESS_CODE
         authorization_url: "https://example.com/oauth/authorize" // TODO
         token_url: "https://example.com/oauth/token" // TODO
@@ -226,18 +227,16 @@ message PoIResponse {
 
 message ProximityRequest {
   Coordinate center = 1 [(google.api.field_behavior) = REQUIRED];
-}
-
-message ProximityResponse {
-  repeated PoI items = 1;
+  double radius_meters = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "The search radius in meters to perform a prxomity search. The radius is limmitted due to performance constraints and responsivness of the application"
+    example: "50000"
+    maximum: 100000
+    minimum: 1000
+  }];
 }
 
 message BBoxRequest {
   BBox bbox = 1 [(google.api.field_behavior) = REQUIRED];
-}
-
-message BBoxResponse {
-  repeated PoI items = 1;
 }
 
 message RouteRequest {
@@ -250,7 +249,7 @@ message RouteRequest {
   }];
 }
 
-message RouteResponse {
+message PoISearchResponse {
   repeated PoI items = 1;
 }
 
@@ -287,7 +286,7 @@ service PoIService {
     };
   }
 
-  rpc Proximity(ProximityRequest) returns (ProximityResponse) {
+  rpc Proximity(ProximityRequest) returns (PoISearchResponse) {
     option (google.api.http) = {get: "/api/v1/pois/proximity"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       parameters: {
@@ -304,7 +303,7 @@ service PoIService {
     };
   }
 
-  rpc BBox(BBoxRequest) returns (BBoxResponse) {
+  rpc BBox(BBoxRequest) returns (PoISearchResponse) {
     option (google.api.http) = {get: "/api/v1/pois/bbox"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       parameters: {
@@ -321,7 +320,7 @@ service PoIService {
     };
   }
 
-  rpc Route(RouteRequest) returns (RouteResponse) {
+  rpc Route(RouteRequest) returns (PoISearchResponse) {
     option (google.api.http) = {
       post: "/api/v1/pois/route"
       body: "route"
