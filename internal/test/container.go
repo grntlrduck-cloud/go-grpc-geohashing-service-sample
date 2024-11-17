@@ -22,11 +22,11 @@ type DynamoContainer struct {
 }
 
 func (d *DynamoContainer) Host() string {
-	return d.port
+	return d.host
 }
 
 func (d *DynamoContainer) Port() string {
-	return d.host
+	return d.port
 }
 
 func (d *DynamoContainer) Stop() {

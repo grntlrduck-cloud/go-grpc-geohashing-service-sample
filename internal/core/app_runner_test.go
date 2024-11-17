@@ -24,12 +24,12 @@ var _ = Describe("given application", Ordered, Serial, func() {
 	BeforeAll(func() {
 		err := os.Chdir("../..")
 		Expect(err).To(Not(HaveOccurred()))
-		runner = core.NewApplicationRunner(core.WithApplicationContext(appCtxCancel))
-		Expect(runner).To(Not(BeNil()))
 		container = test.NewDynamoContainer(ctx)
-		os.Setenv("BOOT_PROFILE_ACTIVE", "test")
 		os.Setenv("DYNAMOLOCAL_HOST", container.Host())
 		os.Setenv("DYNAMOLOCAL_PORT", container.Port())
+		os.Setenv("BOOT_PROFILE_ACTIVE", "test")
+		runner = core.NewApplicationRunner(core.WithApplicationContext(appCtxCancel))
+		Expect(runner).To(Not(BeNil()))
 	})
 
 	When("started", Ordered, func() {
