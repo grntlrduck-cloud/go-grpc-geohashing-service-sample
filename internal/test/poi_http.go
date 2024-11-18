@@ -151,6 +151,7 @@ func (p *PoIHttpProxyClient) Route(
 	Expect(err).To(Not(HaveOccurred()))
 
 	withdHeaders(req, correlation, apiKey, apiKeyOverride)
+
 	res, err := p.client.Do(req)
 	Expect(err).To(Not(HaveOccurred()))
 	defer res.Body.Close()
@@ -174,6 +175,7 @@ func withdHeaders(req *http.Request, correlation bool, apiKey bool, apiKeyOverri
 	if apiKey && apiKeyOverride == "" {
 		req.Header.Set("X-Api-Key", "test")
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 }
 
