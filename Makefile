@@ -34,7 +34,7 @@ dia:
 	npx cdk-dia
 
 test_report:
-	go run --mod=mod gotest.tools/gotestsum --junitfile unit-tests.xml -- -coverprofile=cover.out -covermode count ./...
+	go run --mod=mod gotest.tools/gotestsum --junitfile unit-tests.xml  -- -coverprofile=cover.out -covermode count -p 1 ./...
 	grep -v -E -f .covignore cover.out > coverage.filtered.out
 	mv coverage.filtered.out cover.out
 	go tool cover -html=cover.out -o coverage.html

@@ -14,7 +14,8 @@ import (
 )
 
 // basic smoke/integration test
-var _ = Describe("given application", Ordered, Serial, func() {
+// can not be run parallel to other suits which start the full application
+var _ = Describe("given application", Ordered, func() {
 	ctx := context.Background()
 	appCtx := context.Background()
 	appCtxCancel, cancel := context.WithCancel(appCtx)
@@ -30,15 +31,14 @@ var _ = Describe("given application", Ordered, Serial, func() {
 		os.Setenv("BOOT_PROFILE_ACTIVE", "test")
 		runner = core.NewApplicationRunner(core.WithApplicationContext(appCtxCancel))
 		Expect(runner).To(Not(BeNil()))
+		go func() {
+			runner.Run()
+		}()
 	})
 
-	When("started", Ordered, func() {
+	When("started", func() {
 		It("is running as expected", func() {
-			// run app in background
-			go func() {
-				runner.Run()
-			}()
-
+			// run appin background
 			isRunning := false
 		Outer:
 			for {
@@ -58,7 +58,7 @@ var _ = Describe("given application", Ordered, Serial, func() {
 
 		It("application is healthy", func() {
 			healthClient := test.NewHealthRpcClient(runner.BootConfig().Grpc.Server.Port)
-			resp := healthClient.AssertCheckHealth()
+			resp := healthClient.CheckHealth()
 			Expect(resp.GetStatus()).To(Equal(health.HealthCheckResponse_SERVING_STATUS_SERVING))
 		})
 		It("application is is terminated on context cancel", func() {

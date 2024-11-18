@@ -21,12 +21,11 @@ var (
 		codes.InvalidArgument,
 		"invalid request, X-Correlation-Id header is required in UUID v4 format",
 	)
-	invalidGeoParamsStatus = status.Errorf(
-		codes.InvalidArgument,
-		"invalid geo search arguments, ensure correct coordinates and the number of parameters required",
-	)
+	requestCenceledStatus = status.Errorf(codes.Canceled, "client aborted connection")
 
-	severErrStatus = status.Errorf(codes.Internal, "server error, failed to process request")
+	invalidGeoParamsMessage = "invalid geo search arguments, ensure correct coordinates and the number of parameters required"
+
+	severErrMessage = "server error, failed to process request"
 )
 
 const (
@@ -51,6 +50,10 @@ func (p *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
 	// validate request
 	if request == nil || request.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument: id")
@@ -76,7 +79,7 @@ func (p *PoIRpcService) PoI(
 	logger := p.logger.With(
 		zap.String("correlation_id", correlationId.String()),
 		zap.String("rpc_method", "PoI"),
-		zap.String("id", kId.String()),
+		zap.String("location_id", kId.String()),
 	)
 	logger.Info(
 		"processing PoI rpc",
@@ -86,12 +89,12 @@ func (p *PoIRpcService) PoI(
 	location, err := p.locationService.Info(ctx, kId, logger)
 
 	// handle errors accordingly
-	if errors.Is(err, poi.LocationNotFound) {
+	if errors.Is(err, poi.LocationNotFound) || errors.Is(errors.Unwrap(err), poi.LocationNotFound) {
 		return nil, status.Errorf(codes.NotFound, "location not found: id=%s", request.Id)
 	}
 	if err != nil {
 		logger.Error("failed to get poi by id", zap.Error(err))
-		return nil, severErrStatus
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
 
 	response := poi_v1.PoIResponse{
@@ -107,6 +110,10 @@ func (p *PoIRpcService) Proximity(
 	ctx context.Context,
 	request *poi_v1.ProximityRequest,
 ) (*poi_v1.PoISearchResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
 	// validate request
 	if request == nil || request.Center == nil {
 		return nil, status.Errorf(
@@ -149,12 +156,13 @@ func (p *PoIRpcService) Proximity(
 	locations, err := p.locationService.Proximity(ctx, cntr, request.RadiusMeters, logger)
 
 	// handle errors accordingly
-	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
-		return nil, invalidGeoParamsStatus
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) ||
+		errors.Is(errors.Unwrap(err), poi.InvalidSearchCoordinatesErr) {
+		return nil, status.Errorf(codes.InvalidArgument, "%s: %v", invalidGeoParamsMessage, err)
 	}
 	if err != nil {
 		logger.Error("unable to handle request", zap.Error(err))
-		return nil, severErrStatus
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
 
 	// log and return
@@ -170,6 +178,10 @@ func (p *PoIRpcService) BBox(
 	ctx context.Context,
 	request *poi_v1.BBoxRequest,
 ) (*poi_v1.PoISearchResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
 	// validate the bbox request
 	if request == nil || request.Bbox == nil || request.Bbox.Sw == nil || request.Bbox.Ne == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "bounding box coordinates must be defined")
@@ -207,12 +219,13 @@ func (p *PoIRpcService) BBox(
 	locations, err := p.locationService.Bbox(ctx, sw, ne, logger)
 
 	// handle errors accordingly
-	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
-		return nil, invalidGeoParamsStatus
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) ||
+		errors.Is(errors.Unwrap(err), poi.InvalidSearchCoordinatesErr) {
+		return nil, status.Errorf(codes.InvalidArgument, "%s: %v", invalidGeoParamsMessage, err)
 	}
 	if err != nil {
 		logger.Error("unable to handle request", zap.Error(err))
-		return nil, severErrStatus
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
 
 	// log and return
@@ -228,6 +241,10 @@ func (p *PoIRpcService) Route(
 	ctx context.Context,
 	request *poi_v1.RouteRequest,
 ) (*poi_v1.PoISearchResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
 	// validate request
 	if request == nil || request.Route == nil || len(request.Route) < 2 ||
 		len(request.Route) > 100 {
@@ -260,11 +277,11 @@ func (p *PoIRpcService) Route(
 
 	// handle the errors accordingly
 	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
-		return nil, invalidGeoParamsStatus
+		return nil, status.Errorf(codes.InvalidArgument, "%s: %v", invalidGeoParamsMessage, err)
 	}
 	if err != nil {
 		logger.Error("unable to handle request", zap.Error(err))
-		return nil, severErrStatus
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
 
 	// log and return

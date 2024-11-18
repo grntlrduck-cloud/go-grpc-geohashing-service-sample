@@ -88,6 +88,11 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 	pois []poi.PoILocation,
 	logger *zap.Logger,
 ) error {
+	// handle context cancelation
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	// verify validity
 	if len(pois) == 0 {
 		logger.Warn(
 			"skipping batch upsert because pois is empty slice",
@@ -150,6 +155,11 @@ func (pgr *PoIGeoRepository) Upsert(
 	domain poi.PoILocation,
 	logger *zap.Logger,
 ) error {
+	// handle context cancelation
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	// map domain to db item
 	item, err := NewItemFromDomain(domain)
 	if err != nil {
 		logger.Warn("invalid coordinate for proximity search",
@@ -157,6 +167,7 @@ func (pgr *PoIGeoRepository) Upsert(
 		)
 		return fmt.Errorf("unable to upsert location: %w", err)
 	}
+	// map db item to dynamodb attributevalues
 	avs, err := attributevalue.MarshalMap(&item)
 	if err != nil {
 		logger.Error("unable to marshall item to DynamoDB AttributeValues",
@@ -164,6 +175,7 @@ func (pgr *PoIGeoRepository) Upsert(
 		)
 		return poi.DBEntityMappingErr
 	}
+	// create PutItemInput and perform request
 	putItemInput := &dynamodb.PutItemInput{
 		Item:      avs,
 		TableName: &pgr.tableName,
@@ -183,12 +195,18 @@ func (pgr *PoIGeoRepository) GetById(
 	id ksuid.KSUID,
 	logger *zap.Logger,
 ) (poi.PoILocation, error) {
+	// handle context cancelation
+	if ctx.Err() != nil {
+		return poi.PoILocation{}, ctx.Err()
+	}
+	// create GetItemInput
 	getItemInput := &dynamodb.GetItemInput{
 		TableName: aws.String(pgr.tableName),
 		Key: map[string]types.AttributeValue{
 			CPoIItemPK: &types.AttributeValueMemberS{Value: id.String()},
 		},
 	}
+	// check query output and marshall to domain
 	output, err := pgr.dynamoClient.GetItem(ctx, getItemInput)
 	if err != nil {
 		logger.Error("failed to GetItem",
@@ -204,6 +222,7 @@ func (pgr *PoIGeoRepository) GetById(
 		)
 		return poi.PoILocation{}, err
 	}
+	// handle location not found since dynamo does not error
 	if item.Pk == "" {
 		return poi.PoILocation{}, poi.LocationNotFound
 	}
@@ -216,16 +235,24 @@ func (pgr *PoIGeoRepository) GetByProximity(
 	radius float64,
 	logger *zap.Logger,
 ) ([]poi.PoILocation, error) {
+	// handle context cancelation
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	// create hashes, validate, and check if we can perform the search without major performance cuts
 	hashes, err := newHashesFromRadiusCenter(cntr, radius, nil)
 	if err != nil {
 		return nil, poi.InvalidSearchCoordinatesErr
 	}
+	// google s2 does not guarantee that the set MaxCells can be fulfilled
+	// an arbitrary large list of hashes might be returned
 	if len(hashes) > proxHashesLimit {
 		logger.Error("too many hashes calculated for proximity",
 			zap.Int("num_hashes", len(hashes)),
 		)
 		return nil, poi.TooLargeSearchAreaErr
 	}
+	// perform parallel queries
 	res, err := pgr.parallelQueryHashes(ctx, logger, hashes)
 	if err != nil {
 		logger.Error("failed to query by proximity",
@@ -241,6 +268,11 @@ func (pgr *PoIGeoRepository) GetByBbox(
 	sw, ne poi.Coordinates,
 	logger *zap.Logger,
 ) ([]poi.PoILocation, error) {
+	// handle context cancelation
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	// create hashes, validate, and check if we can perform the search without major performance cuts
 	hashes, err := newHashesFromBbox(ne, sw, nil)
 	if err != nil {
 		logger.Warn("invalid coordinates for bounding box",
@@ -248,6 +280,8 @@ func (pgr *PoIGeoRepository) GetByBbox(
 		)
 		return nil, poi.InvalidSearchCoordinatesErr
 	}
+	// google s2 does not guarantee that the set MaxCells can be fulfilled
+	// an arbitrary large list of hashes might be returned
 	if len(hashes) > bboxHashesLimit {
 		logger.Error("too many hashes calculated for bbox",
 			zap.Int("num_hashes", len(hashes)),
@@ -269,6 +303,11 @@ func (pgr *PoIGeoRepository) GetByRoute(
 	path []poi.Coordinates,
 	logger *zap.Logger,
 ) ([]poi.PoILocation, error) {
+	// handle context cancelation
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	// create hashes, validate, and check if we can perform the search without major performance cuts
 	hashes, err := newHashesFromRoute(path, nil)
 	if err != nil {
 		logger.Warn("invalid coordinates in provided coordinate path",
@@ -333,8 +372,10 @@ func (pgr *PoIGeoRepository) parallelQueryHashes(
 				return nil
 			case <-gctx.Done():
 				return gctx.Err()
-			case <-time.After(5 * time.Second):
-				return fmt.Errorf("timeout sending results to channel")
+			case <-time.After(3 * time.Second):
+				return fmt.Errorf(
+					"timeout writing result during parallel db queries",
+				)
 			}
 		})
 	}

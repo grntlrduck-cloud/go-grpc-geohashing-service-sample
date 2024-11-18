@@ -15,7 +15,7 @@ type HealthRpcClient struct {
 	client health.HealthServiceClient
 }
 
-func (h HealthRpcClient) AssertCheckHealth() *health.HealthCheckResponse {
+func (h HealthRpcClient) CheckHealth() *health.HealthCheckResponse {
 	resp, err := h.client.HealthCheck(
 		context.Background(),
 		&health.HealthCheckRequest{Service: ""},
