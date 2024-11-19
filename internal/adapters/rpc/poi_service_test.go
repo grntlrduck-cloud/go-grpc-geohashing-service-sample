@@ -164,6 +164,7 @@ var _ = Describe("given location search request", Ordered, func() {
 			sw := test.CoordinatesHttp{Lon: 8.494772, Lat: 49.425026}
 			ne := test.CoordinatesHttp{Lon: 10.040508, Lat: 50.089540}
 			resp := restTestClient.Bbox(ne, sw, true, true, "")
+
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
 			items := resp.Ok.Items
 			numPois := len(items)
