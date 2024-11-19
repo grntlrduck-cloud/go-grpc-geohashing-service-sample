@@ -125,7 +125,7 @@ func (p *PoIRpcService) Proximity(
 		request.RadiusMeters > maxSearchRadiusMeters {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
-			"invalid radius: radius=%f must be between 1000 m and 200_000 m",
+			"invalid radius: radius=%f must be between 1000 m (1 km) and 100000 m (100 km)",
 			request.RadiusMeters,
 		)
 	}

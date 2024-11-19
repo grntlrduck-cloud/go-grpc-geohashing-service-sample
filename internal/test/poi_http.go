@@ -13,7 +13,7 @@ import (
 
 const (
 	basePath      = "api/v1/pois"
-	proximityPath = "prxoimity"
+	proximityPath = "proximity"
 	bboxPath      = "bbox"
 	routePath     = "route"
 	infoPath      = "info" // the only endpoint where we have a path variable
@@ -30,7 +30,7 @@ type PoIsHttpResponse struct {
 }
 
 type HttpErrorResponse struct {
-	Code    string   `json:"code"`
+	Code    int      `json:"code"`
 	Message string   `json:"message"`
 	Details []string `json:"details"`
 }
@@ -139,7 +139,7 @@ func (p *PoIHttpProxyClient) Route(
 	encRoute, err := json.Marshal(route)
 	Expect(err).To(Not(HaveOccurred()))
 	reader := bytes.NewReader(encRoute)
-	req, err := http.NewRequest(http.MethodGet, url, reader)
+	req, err := http.NewRequest(http.MethodPost, url, reader)
 	Expect(err).To(Not(HaveOccurred()))
 
 	withdHeaders(req, correlation)

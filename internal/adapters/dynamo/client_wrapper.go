@@ -95,7 +95,7 @@ func (client *ClientWrapper) CreateTable(
 	return output, err
 }
 
-func NewClientWrapper(opts ...ClientOptions) (*ClientWrapper, error) {
+func NewClientWrapper(opts ...ClientOptions) (DbClient, error) {
 	cw := &ClientWrapper{
 		region: "eu-west-1",
 		ctx:    context.Background(),

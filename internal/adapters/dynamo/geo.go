@@ -151,6 +151,6 @@ func pointFromCords(c poi.Coordinates) s2.Point {
 }
 
 func isValidLatLon(lat, lon float64) bool {
-	return lat >= minLatitude || lat <= maxLatitude ||
-		lon >= minLongitude || lon <= maxLongitude
+	return lat >= minLatitude && lat <= maxLatitude &&
+		lon >= minLongitude && lon <= maxLongitude
 }

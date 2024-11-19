@@ -32,11 +32,12 @@ type PoIGeoRepository struct {
 	dynamoClient    DbClient
 	tableName       string
 	createInitTable bool
+	initDataPath    string
 }
 
 type PoIGeoRepositoryOptions func(p *PoIGeoRepository)
 
-func WithDynamoClientWrapper(client *ClientWrapper) PoIGeoRepositoryOptions {
+func WithDynamoClientWrapper(client DbClient) PoIGeoRepositoryOptions {
 	return func(p *PoIGeoRepository) {
 		p.dynamoClient = client
 	}
@@ -54,12 +55,19 @@ func WithCreateAndInitTable(createAndInitTable bool) PoIGeoRepositoryOptions {
 	}
 }
 
+func WithTestInitDataOverrid(testInitDataPath string) PoIGeoRepositoryOptions {
+	return func(p *PoIGeoRepository) {
+		p.initDataPath = testInitDataPath
+	}
+}
+
 func NewPoIGeoRepository(
 	logger *zap.Logger,
 	opts ...PoIGeoRepositoryOptions,
-) (*PoIGeoRepository, error) {
+) (poi.Repository, error) {
 	repo := &PoIGeoRepository{
-		tableName: "NOT_DEFINED",
+		tableName:    "NOT_DEFINED",
+		initDataPath: testInitDataPath,
 	}
 	for _, opt := range opts {
 		opt(repo)
@@ -549,7 +557,7 @@ func createBatchRequests(pois []poi.PoILocation) ([][]types.WriteRequest, error)
 }
 
 func (pgr *PoIGeoRepository) loadInitData(logger *zap.Logger) error {
-	csv, err := os.Open(testInitDataPath)
+	csv, err := os.Open(pgr.initDataPath)
 	if err != nil {
 		return fmt.Errorf("failed to load csv from file: %w", err)
 	}
