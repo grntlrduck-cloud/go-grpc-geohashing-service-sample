@@ -1,8 +1,6 @@
 package app
 
 import (
-	"log"
-
 	"go.uber.org/zap"
 )
 
@@ -13,7 +11,6 @@ func NewLogger(config *LoggingConfig) *zap.Logger {
 		),
 	)
 	if err != nil {
-		log.Fatalf("failed to initialize zap logger: %v", err)
 		panic(err)
 	}
 	return logger
@@ -26,7 +23,6 @@ func NewDevLogger(config *LoggingConfig) *zap.Logger {
 		),
 	)
 	if err != nil {
-		log.Fatalf("failed to initialize zap logger: %v", err)
 		panic(err)
 	}
 	return logger
