@@ -1,6 +1,5 @@
 name: Go APP CI
 # run on push to main or on PR targeting main
-# TODO: https://github.com/marketplace/actions/code-coverage-summary
 on:
   push:
     branches: [main]
