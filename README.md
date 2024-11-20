@@ -28,25 +28,27 @@ defined in the API and adds gehoashing to enable querying the data efficiently.
 
 ## Setup
 
-Before setting app the required protoc plugins and tools by running
-`make configure` ensure to set up
+Before getting statrted, set up the required tools and run `make configure`
 
-- [protoc](https://grpc.io/docs/protoc-installation/)
-- [make](https://www.gnu.org/software/make/)
-- [buf](https://buf.build/docs/installation)
-- [docker](https://docs.docker.com/engine/install/) &
-  [docker-buildx](https://github.com/docker/buildx)
+- [protoc](https://grpc.io/docs/protoc-installation/) (not required immediate)
+- [make](https://www.gnu.org/software/make/) (required)
+- [buf](https://buf.build/docs/installation) (not required immediate)
+- [docker](https://docs.docker.com/engine/install/) (required)
+  [docker-buildx](https://github.com/docker/buildx) (required)
 - [colima](https://github.com/abiosoft/colima) or
-  [docker desktop](https://www.docker.com/products/docker-desktop/)
-- [configure GOBIN or GOPATH](https://go.dev/wiki/SettingGOPATH)
+  [docker desktop](https://www.docker.com/products/docker-desktop/) (required)
+- [configure GOBIN or GOPATH](https://go.dev/wiki/SettingGOPATH) (required)
 - [aws cdk](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) &
-  [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+  [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) (not required immediate)
+
+Not all is required to 'just' get started.
+The generated protobuf files are committed as part of the version control, hence the protobuf tooling is optional unless needed.
 
 ### Colima and Testcontainers
 
-If you have a Mac you might be using colima since docker desktop requires a
-license especially in corporate ograniyations. Make sure to correctly configure
-colima:
+If you have a Mac you might be using colima (or podman) since docker desktop (may) require a
+license especially in corporate ogranizations. Make sure to correctly configure
+colima (or podman):
 
 ```bash
 export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
@@ -63,7 +65,7 @@ make ci
 
 The tests include unit and integrations in a BDD manner. For the integration
 tests testcontainers is used to easily automate the container lifetime during
-test suites.
+test suite execution.
 
 Run tests and generate reports
 
