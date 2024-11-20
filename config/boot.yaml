@@ -13,6 +13,7 @@ grpc:
     cert_path: "cert/grpc-cert.pem"
     key_path: "cert/grpc-key.pem"
     ca_path: "cert/ca-cert.pem"
+  secret: ${API_KEY_SECRET_VALUE}
 
 aws:
   config:

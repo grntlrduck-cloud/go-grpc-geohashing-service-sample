@@ -17,8 +17,13 @@ type PoIRpcClient struct {
 	client poiv1.PoIServiceClient
 }
 
-func (p *PoIRpcClient) PoI(id string, correlation bool) (*poiv1.PoIResponse, error) {
-	ctx := contextWithCorrelationId(correlation)
+func (p *PoIRpcClient) PoI(
+	id string,
+	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
+) (*poiv1.PoIResponse, error) {
+	ctx := contextWithHeaders(correlation, apiKey, apiKeyOverride)
 	resp, err := p.client.PoI(ctx, &poiv1.PoIRequest{Id: id})
 	return resp, err
 }
@@ -26,8 +31,10 @@ func (p *PoIRpcClient) PoI(id string, correlation bool) (*poiv1.PoIResponse, err
 func (p *PoIRpcClient) Bbox(
 	ne, sw *poiv1.Coordinate,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) (*poiv1.PoISearchResponse, error) {
-	ctx := contextWithCorrelationId(correlation)
+	ctx := contextWithHeaders(correlation, apiKey, apiKeyOverride)
 	resp, err := p.client.BBox(ctx, &poiv1.BBoxRequest{Bbox: &poiv1.BBox{Ne: ne, Sw: sw}})
 	return resp, err
 }
@@ -36,8 +43,10 @@ func (p *PoIRpcClient) Proximity(
 	cntr *poiv1.Coordinate,
 	radiusMeters float64,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) (*poiv1.PoISearchResponse, error) {
-	ctx := contextWithCorrelationId(correlation)
+	ctx := contextWithHeaders(correlation, apiKey, apiKeyOverride)
 	resp, err := p.client.Proximity(
 		ctx,
 		&poiv1.ProximityRequest{Center: cntr, RadiusMeters: radiusMeters},
@@ -48,19 +57,31 @@ func (p *PoIRpcClient) Proximity(
 func (p *PoIRpcClient) Route(
 	route []*poiv1.Coordinate,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) (*poiv1.PoISearchResponse, error) {
-	ctx := contextWithCorrelationId(correlation)
+	ctx := contextWithHeaders(correlation, apiKey, apiKeyOverride)
 	resp, err := p.client.Route(ctx, &poiv1.RouteRequest{Route: route})
 	return resp, err
 }
 
-func contextWithCorrelationId(correlation bool) context.Context {
+func contextWithHeaders(
+	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
+) context.Context {
 	ctx := context.Background()
+	md := metadata.Pairs()
 	if correlation {
-		md := metadata.Pairs("X-Correlation-Id", uuid.NewString())
-		return metadata.NewOutgoingContext(ctx, md)
+		md.Append("X-Correlation-Id", uuid.NewString())
 	}
-	return ctx
+	if apiKey && apiKeyOverride != "" {
+		md.Append("X-Api-Key", apiKeyOverride)
+	}
+	if apiKey && apiKeyOverride == "" {
+		md.Append("X-Api-Key", "test")
+	}
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 func NewPoIRpcClient(port int32) *PoIRpcClient {

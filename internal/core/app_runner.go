@@ -124,6 +124,7 @@ func (a *ApplicationRunner) getSevrerBaseOptions() []rpc.ServerOption {
 			a.bootConfig.Grpc.Ssl.CaPath,
 		),
 		rpc.WithSslEnabled(a.bootConfig.Grpc.Ssl.Enabled),
+		rpc.WithAuthSecret(a.bootConfig.Grpc.Secret),
 	}
 }
 

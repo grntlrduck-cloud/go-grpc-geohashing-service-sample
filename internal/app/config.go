@@ -30,6 +30,7 @@ type GrpcConfig struct {
 	Server PortConfig `yaml:"server"`
 	Proxy  PortConfig `yaml:"proxy"`
 	Ssl    SslConfig  `yaml:"ssl"`
+	Secret string     `yaml:"secret"`
 }
 
 type PortConfig struct {

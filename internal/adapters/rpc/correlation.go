@@ -11,21 +11,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	correlationHeader = "X-Correlation-Id"
-	gCorrelationMD    = "Grpc-Metadata-X-Correlation-Id"
-	noTrace           = "NO_TRACE"
-)
-
-func correlationIdMatcher(key string) (string, bool) {
-	switch key {
-	case correlationHeader:
-		return key, true
-	default:
-		return key, false
-	}
-}
-
 func getCorrelationId(ctx context.Context) (uuid.UUID, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -53,7 +38,7 @@ func correlationIdResponseModifier(
 	if len(hv) > 0 {
 		w.Header().Set(correlationHeader, hv)
 	} else {
-		w.Header().Set(correlationHeader, noTrace)
+		w.Header().Set(correlationHeader, "NO_TRACE")
 	}
 	// remove unwanted metadata
 	delete(w.Header(), gCorrelationMD)

@@ -1,6 +1,7 @@
 grpc:
   ssl:
     enabled: true
+  secret: "test"
 
 aws:
   dynamodb:

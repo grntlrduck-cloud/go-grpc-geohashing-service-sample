@@ -70,12 +70,14 @@ type PoIHttpProxyClient struct {
 func (p *PoIHttpProxyClient) Info(
 	id string,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) *HttpResponse[PoIHttpResponse] {
 	url := fmt.Sprintf("%s/%s/%s", p.baseUri, infoPath, id)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	Expect(err).To(Not(HaveOccurred()))
 
-	withdHeaders(req, correlation)
+	withdHeaders(req, correlation, apiKey, apiKeyOverride)
 	res, err := p.client.Do(req)
 	Expect(err).To(Not(HaveOccurred()))
 	defer res.Body.Close()
@@ -86,6 +88,8 @@ func (p *PoIHttpProxyClient) Info(
 func (p *PoIHttpProxyClient) Bbox(
 	ne, sw CoordinatesHttp,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) *HttpResponse[PoIsHttpResponse] {
 	url := fmt.Sprintf(
 		"%s/%s?bbox.ne.lat=%f&bbox.ne.lon=%f&bbox.sw.lat=%f&bbox.sw.lon=%f",
@@ -99,7 +103,7 @@ func (p *PoIHttpProxyClient) Bbox(
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	Expect(err).To(Not(HaveOccurred()))
 
-	withdHeaders(req, correlation)
+	withdHeaders(req, correlation, apiKey, apiKeyOverride)
 	res, err := p.client.Do(req)
 	Expect(err).To(Not(HaveOccurred()))
 	defer res.Body.Close()
@@ -111,6 +115,8 @@ func (p *PoIHttpProxyClient) Prxoimity(
 	center CoordinatesHttp,
 	radiusMeters float64,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) *HttpResponse[PoIsHttpResponse] {
 	url := fmt.Sprintf(
 		"%s/%s?center.lat=%f&center.lon=%f&radius_meters=%f",
@@ -123,7 +129,7 @@ func (p *PoIHttpProxyClient) Prxoimity(
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	Expect(err).To(Not(HaveOccurred()))
 
-	withdHeaders(req, correlation)
+	withdHeaders(req, correlation, apiKey, apiKeyOverride)
 	res, err := p.client.Do(req)
 	Expect(err).To(Not(HaveOccurred()))
 	defer res.Body.Close()
@@ -134,6 +140,8 @@ func (p *PoIHttpProxyClient) Prxoimity(
 func (p *PoIHttpProxyClient) Route(
 	route []CoordinatesHttp,
 	correlation bool,
+	apiKey bool,
+	apiKeyOverride string,
 ) *HttpResponse[PoIsHttpResponse] {
 	url := fmt.Sprintf("%s/%s", p.baseUri, routePath)
 	encRoute, err := json.Marshal(route)
@@ -142,7 +150,7 @@ func (p *PoIHttpProxyClient) Route(
 	req, err := http.NewRequest(http.MethodPost, url, reader)
 	Expect(err).To(Not(HaveOccurred()))
 
-	withdHeaders(req, correlation)
+	withdHeaders(req, correlation, apiKey, apiKeyOverride)
 	res, err := p.client.Do(req)
 	Expect(err).To(Not(HaveOccurred()))
 	defer res.Body.Close()
@@ -156,9 +164,15 @@ func NewPoIHttpProxyClient(host string, port int32) *PoIHttpProxyClient {
 	return &PoIHttpProxyClient{host: host, port: port, baseUri: uri, client: client}
 }
 
-func withdHeaders(req *http.Request, correlation bool) {
+func withdHeaders(req *http.Request, correlation bool, apiKey bool, apiKeyOverride string) {
 	if correlation {
 		req.Header.Set("X-Correlation-Id", uuid.NewString())
+	}
+	if apiKey && apiKeyOverride != "" {
+		req.Header.Set("X-Api-Key", apiKeyOverride)
+	}
+	if apiKey && apiKeyOverride == "" {
+		req.Header.Set("X-Api-Key", "test")
 	}
 	req.Header.Set("Content-Type", "application/json")
 }

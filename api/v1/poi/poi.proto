@@ -38,9 +38,9 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   }
   schemes: HTTPS
   consumes: "application/json"
-  consumes: "application/x-protobuf"
+  consumes: "application/grpc"
   produces: "application/json"
-  produces: "application/x-protobuf"
+  produces: "application/grpc"
   security_definitions: {
     security: {
       key: "OAuth2"

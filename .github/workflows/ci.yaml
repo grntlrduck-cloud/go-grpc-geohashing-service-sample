@@ -1,6 +1,5 @@
 name: Go APP CI
 # run on push to main or on PR targeting main
-# TODO: https://github.com/marketplace/actions/code-coverage-summary
 on:
   push:
     branches: [main]
@@ -60,6 +59,24 @@ jobs:
         run: make ci
       - name: Run tests
         run: make test_report
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: true
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: "60 80"
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
   build:
     runs-on: ubuntu-latest
     needs:
