@@ -22,11 +22,14 @@ services:
     environment:
       APP_NAME: "grpc-chagring-location-service-local"
       BOOT_PROFILE_ACTIVE: "dc-local"
+      APP_ENV: "local"
       DYNAMOLOCAL_HOST: "dynamodb"
       DYNAMOLOCAL_PORT: 8000
       AWS_ACCESS_KEY_ID: "test"
       AWS_SECRET_ACCESS_KEY: "test"
       AWS_REGION: "eu-west-1"
+      ACCOUNT_ID: "123456789012"
+      HOSTNAME: "compose"
     volumes:
       - "./config/db/local/:/service/config/db/local"
     depends_on:

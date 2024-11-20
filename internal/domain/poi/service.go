@@ -4,44 +4,38 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/segmentio/ksuid"
 	"go.uber.org/zap"
 )
 
-const proximitSearchRadiusMeters float64 = 50_000.0
-
 type LocationService struct {
-	repo   Repository
-	logger *zap.Logger
+	repo Repository
 }
 
-func NewLocationService(repo Repository, logger *zap.Logger) *LocationService {
+func NewLocationService(repo Repository) *LocationService {
 	return &LocationService{
-		repo:   repo,
-		logger: logger,
+		repo: repo,
 	}
 }
 
 func (ls *LocationService) Info(
 	ctx context.Context,
 	id ksuid.KSUID,
-	correlationId uuid.UUID,
+	logger *zap.Logger,
 ) (PoILocation, error) {
-	ls.logger.Info(
-		"getting PoI",
-		zap.String("poi_id", id.String()),
-		zap.String("correlation_id", correlationId.String()),
-	)
-	location, err := ls.repo.GetById(ctx, id, correlationId)
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return PoILocation{}, ctx.Err()
+	}
+	// ensure db queries are canceled before causing sever loss of responsiveness
+	logger.Debug("getting poi from db", zap.String("operation", "GetById"))
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+	location, err := ls.repo.GetById(ctx, id, logger)
 	if errors.Is(err, LocationNotFound) {
-		ls.logger.Warn("location not found",
-			zap.String("poi_id", id.String()),
-			zap.String("correlation_id", correlationId.String()),
-		)
-		location.Id = ksuid.Max
-		return location, nil
+		logger.Warn("location not found")
 	}
 	return location, err
 }
@@ -49,29 +43,34 @@ func (ls *LocationService) Info(
 func (ls *LocationService) Proximity(
 	ctx context.Context,
 	cntr Coordinates,
-	correlationId uuid.UUID,
+	radius float64,
+	logger *zap.Logger,
 ) ([]PoILocation, error) {
-	ls.logger.Info(
-		"getting PoIs in Proximity",
-		zap.Float64("lon", cntr.Longitude),
-		zap.Float64("lat", cntr.Latitude),
-		zap.String("correlation_id", correlationId.String()),
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	logger.Info(
+		"getting locations within proxmity from DB",
+		zap.String("operation", "GetByProximity"),
 	)
+	// ensure db queries are canceled before causing sever loss of responsiveness
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	locations, err := ls.repo.GetByProximity(
 		ctx,
 		cntr,
-		proximitSearchRadiusMeters,
-		correlationId,
+		radius,
+		logger,
 	)
 	if err != nil {
-		ls.logger.Error(
-			"repository proximity query failed",
-			zap.Float64("lon", cntr.Longitude),
-			zap.Float64("lat", cntr.Latitude),
-			zap.String("correlation_id", correlationId.String()),
-			zap.Error(err),
+		return nil, fmt.Errorf(
+			"failed proximity search center.lat=%f, center.lon=%f, radius_meters=%f: %w",
+			cntr.Latitude,
+			cntr.Longitude,
+			radius,
+			err,
 		)
-		return nil, fmt.Errorf("unable to fulfill proximity query: %w", err)
 	}
 	return locations, nil
 }
@@ -79,28 +78,29 @@ func (ls *LocationService) Proximity(
 func (ls *LocationService) Bbox(
 	ctx context.Context,
 	sw, ne Coordinates,
-	correlationId uuid.UUID,
+	logger *zap.Logger,
 ) ([]PoILocation, error) {
-	ls.logger.Info(
-		"getting PoIs in bbox",
-		zap.Float64("sw_lat", sw.Latitude),
-		zap.Float64("sw_lon", sw.Longitude),
-		zap.Float64("ne_lat", ne.Latitude),
-		zap.Float64("ne_lon", ne.Longitude),
-		zap.String("correlation_id", correlationId.String()),
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	logger.Debug(
+		"getting locations in bbox from db",
+		zap.String("operation", "GetByBbox"),
 	)
-	locations, err := ls.repo.GetByBbox(ctx, sw, ne, correlationId)
+	// ensure db queries are canceled before causing sever loss of responsiveness
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	locations, err := ls.repo.GetByBbox(ctx, sw, ne, logger)
 	if err != nil {
-		ls.logger.Error(
-			"repository bbox query failed",
-			zap.Float64("sw_lat", sw.Latitude),
-			zap.Float64("sw_lon", sw.Longitude),
-			zap.Float64("ne_lat", ne.Latitude),
-			zap.Float64("ne_lon", ne.Longitude),
-			zap.String("correlation_id", correlationId.String()),
-			zap.Error(err),
+		return nil, fmt.Errorf(
+			"failed bbox search for area ne.lat=%f, ne.lon=%f, sw.lat=%f, sw.lon=%f: %w",
+			ne.Latitude,
+			ne.Longitude,
+			sw.Latitude,
+			sw.Longitude,
+			err,
 		)
-		return nil, fmt.Errorf("unable to fulfill bbox search for area: %w", err)
 	}
 	return locations, nil
 }
@@ -108,22 +108,22 @@ func (ls *LocationService) Bbox(
 func (ls *LocationService) Route(
 	ctx context.Context,
 	wgsPath []Coordinates,
-	correlationId uuid.UUID,
+	logger *zap.Logger,
 ) ([]PoILocation, error) {
-	ls.logger.Info(
-		"getting PoIs along route",
-		zap.Int("num_coordinates", len(wgsPath)),
-		zap.String("correlation_id", correlationId.String()),
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	logger.Debug(
+		"getting locations along route from db",
+		zap.String("operation", "GetByRoute"),
 	)
-	locations, err := ls.repo.GetByRoute(ctx, wgsPath, correlationId)
+	// ensure db queries are canceled before causing sever loss of responsiveness
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	locations, err := ls.repo.GetByRoute(ctx, wgsPath, logger)
 	if err != nil {
-		ls.logger.Error(
-			"repository route query failed",
-			zap.Int("num_coordinates", len(wgsPath)),
-			zap.String("correlation_id", correlationId.String()),
-			zap.Error(err),
-		)
-		return nil, fmt.Errorf("unable to fulfill route search: %w", err)
+		return nil, fmt.Errorf("route search failed route_length=%d: %w", len(wgsPath), err)
 	}
 	return locations, nil
 }

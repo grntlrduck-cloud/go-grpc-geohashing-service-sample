@@ -18,6 +18,7 @@ type ApplicationRunner struct {
 	logger     *zap.Logger
 	bootConfig *app.BootConfig
 	server     *rpc.Server
+	running    bool
 }
 
 type ApplicationOpts func(*ApplicationRunner)
@@ -52,15 +53,15 @@ func NewApplicationRunner(opts ...ApplicationOpts) *ApplicationRunner {
 		opt(a)
 	}
 	if strings.ToLower(a.bootConfig.Logging.Level) == "prod" {
-		a.logger = app.NewLogger()
+		a.logger = app.NewLogger(&a.bootConfig.Logging)
 	} else {
-		a.logger = app.NewDevLogger()
+		a.logger = app.NewDevLogger(&a.bootConfig.Logging)
 	}
 	repo, err := a.createRepo()
 	if err != nil {
 		panic(fmt.Errorf("unable to create repo: %w", err))
 	}
-	domainService := poi.NewLocationService(repo, a.logger)
+	domainService := poi.NewLocationService(repo)
 	serverOpts := a.getSevrerBaseOptions()
 	serverOpts = append(
 		serverOpts,
@@ -100,10 +101,10 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 		)
 	}
 	repo, err := dynamo.NewPoIGeoRepository(
+		a.logger,
 		dynamo.WithDynamoClientWrapper(dyanmoClient),
 		dynamo.WithTableName(a.bootConfig.Aws.DynamoDb.PoiTableName),
 		dynamo.WithCreateAndInitTable(a.bootConfig.Aws.DynamoDb.CreateInitTable),
-		dynamo.WithLogger(a.logger),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Repository: %w", err)
@@ -123,7 +124,16 @@ func (a *ApplicationRunner) getSevrerBaseOptions() []rpc.ServerOption {
 			a.bootConfig.Grpc.Ssl.CaPath,
 		),
 		rpc.WithSslEnabled(a.bootConfig.Grpc.Ssl.Enabled),
+		rpc.WithAuthSecret(a.bootConfig.Grpc.Secret),
 	}
+}
+
+func (a *ApplicationRunner) Running() bool {
+	return a.running
+}
+
+func (a *ApplicationRunner) BootConfig() *app.BootConfig {
+	return a.bootConfig
 }
 
 func (a *ApplicationRunner) Run() {
@@ -136,7 +146,9 @@ func (a *ApplicationRunner) Run() {
 		a.logger.Panic("application run failed, unable to start grpc server", zap.Error(err))
 	}
 	a.logger.Info("application running")
+	a.running = true
 	a.awaitTermination()
+	a.running = false
 	a.logger.Info("application shut down")
 }
 

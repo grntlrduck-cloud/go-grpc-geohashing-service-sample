@@ -11,6 +11,6 @@ Requirements:
 - pip3
 - make
 
-To set up the python environment with the required dependencies just run `make setup`.
+To set up the python environment with the required dependencies just run `make configure`.
 The command will create a virtual environment, activate it and install all dependencies.
 To start the jupyter notebook, just rum `make start` and open the notebook on the gven URL.

@@ -115,8 +115,9 @@ var _ = Describe("Given charging location CPoIItem", func() {
 				CountryCode:       domain.Address.CountryCode,
 				Features:          domain.Features,
 			}
-			actual := dynamo.NewItemFromDomain(domain)
-			assertItemToEqualWithoutId(actual, expected)
+			actual, err := dynamo.NewItemFromDomain(domain)
+			Expect(err).To(Not(HaveOccurred()))
+			assertItemToEqualWithoutId(*actual, expected)
 			Expect(actual.Id).To(Equal(expected.Id))
 			Expect(actual.Pk).To(Equal(expected.Pk))
 		})

@@ -41,6 +41,7 @@ type Server struct {
 	grpcTlsConfig            credentials.TransportCredentials
 	httpProxyTlsConfig       credentials.TransportCredentials
 	albDeregistrationSeconds int64
+	secret                   string
 }
 
 type ServerOption func(s *Server)
@@ -107,6 +108,14 @@ func WithAlbDegistrationDelay(seconds int64) ServerOption {
 	}
 }
 
+func WithAuthSecret(secret string) ServerOption {
+	return func(s *Server) {
+		if secret != "" {
+			s.secret = secret
+		}
+	}
+}
+
 func NewServer(opts ...ServerOption) (*Server, error) {
 	// apply defaults to server
 	server := &Server{
@@ -121,7 +130,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		opt(server)
 	}
 	if server.logger == nil {
-		server.logger = app.NewDevLogger()
+		server.logger = app.NewDevLogger(nil)
 	}
 	if server.healthService == nil {
 		return nil, errors.New(
@@ -143,6 +152,9 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		server.logger.Warn(
 			"no services registered for server. Use WithRegisterRpcService option to register services",
 		)
+	}
+	if server.secret == "" {
+		return nil, errors.New("server secret not is empty")
 	}
 	return server, nil
 }
@@ -211,12 +223,14 @@ func (s *Server) startRpcServer() error {
 			err,
 		)
 	}
+	authInterceptor, err := NewKeyAuthInterceptor(s.secret)
+	if err != nil {
+		return fmt.Errorf("failed to start rpc server: %w", err)
+	}
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
+			grpc.UnaryServerInterceptor(authInterceptor.UnaryKeyAuthorizer()),
 			grpclogging.UnaryServerInterceptor(InterceptorLogger(s.logger)),
-		),
-		grpc.ChainStreamInterceptor(
-			grpclogging.StreamServerInterceptor(InterceptorLogger(s.logger)),
 		),
 	}
 	if s.sslEnabled {
@@ -230,6 +244,7 @@ func (s *Server) startRpcServer() error {
 	for _, service := range s.services {
 		service.Register(s.rpcServer)
 	}
+	s.healthService.Register(s.rpcServer)
 
 	go func() {
 		err := s.rpcServer.Serve(lis)
@@ -248,7 +263,7 @@ func (s *Server) startHttpProxy() error {
 	grpcEndpoint := fmt.Sprintf(":%d", s.grpcPort)
 	s.logger.Info("starting HTTP reverse proxy with RPC handler")
 	mux := runtime.NewServeMux(
-		runtime.WithIncomingHeaderMatcher(correlationIdMatcher),
+		runtime.WithIncomingHeaderMatcher(headerMatcher),
 		runtime.WithForwardResponseOption(correlationIdResponseModifier),
 	)
 	opts := []grpc.DialOption{

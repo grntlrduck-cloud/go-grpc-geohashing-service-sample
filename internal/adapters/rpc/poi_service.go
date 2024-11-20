@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/segmentio/ksuid"
@@ -16,11 +17,20 @@ import (
 )
 
 var (
-	missingCorrelationIdStatus = status.Errorf(
+	missingOrInvalidCorrelationIdStatus = status.Errorf(
 		codes.InvalidArgument,
-		"invalid request, X-Correlation-Id header is required",
+		"invalid request, X-Correlation-Id header is required in UUID v4 format",
 	)
-	severErrStatus = status.Errorf(codes.Internal, "server error, failed to process request")
+	requestCenceledStatus = status.Errorf(codes.Canceled, "client aborted connection")
+
+	invalidGeoParamsMessage = "invalid geo search arguments, ensure correct coordinates and the number of parameters required"
+
+	severErrMessage = "server error, failed to process request"
+)
+
+const (
+	minSearchRadiusMeters float64 = 1000.0    // 1 km
+	maxSearchRadiusMeters float64 = 100_000.0 // 100 km
 )
 
 type PoIRpcService struct {
@@ -40,39 +50,58 @@ func (p *PoIRpcService) PoI(
 	ctx context.Context,
 	request *poi_v1.PoIRequest,
 ) (*poi_v1.PoIResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
+	// validate request
 	if request == nil || request.Id == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "missing argument id")
+		return nil, status.Error(codes.InvalidArgument, "missing argument: id")
 	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
-		return nil, missingCorrelationIdStatus
+		return nil, missingOrInvalidCorrelationIdStatus
 	}
+
+	// setting response header for client side tracing
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
+
 	kId, err := ksuid.Parse(request.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid location id format")
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid location id format: given id=%s",
+			request.Id,
+		)
 	}
 
-	p.logger.Info(
-		"processing PoI rpc",
-		zap.String("id", request.Id),
+	// set correlationId and PoI ID for logger
+	logger := p.logger.With(
 		zap.String("correlation_id", correlationId.String()),
+		zap.String("rpc_method", "PoI"),
+		zap.String("location_id", kId.String()),
 	)
-	location, err := p.locationService.Info(ctx, kId, correlationId)
-	if err != nil {
-		return nil, severErrStatus
+	logger.Info(
+		"processing PoI rpc",
+	)
+
+	// process request
+	location, err := p.locationService.Info(ctx, kId, logger)
+
+	// handle errors accordingly
+	if errors.Is(err, poi.LocationNotFound) || errors.Is(errors.Unwrap(err), poi.LocationNotFound) {
+		return nil, status.Errorf(codes.NotFound, "location not found: id=%s", request.Id)
 	}
-	if location.Id == ksuid.Max {
-		return nil, status.Errorf(codes.NotFound, "location not found")
+	if err != nil {
+		logger.Error("failed to get poi by id", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
 
-	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
 	response := poi_v1.PoIResponse{
 		Poi: poiToProto(location),
 	}
 	p.logger.Info(
 		"returning response for PoI rpc",
-		zap.String("id", request.Id),
-		zap.String("correlation_id", correlationId.String()),
 	)
 	return &response, nil
 }
@@ -80,52 +109,105 @@ func (p *PoIRpcService) PoI(
 func (p *PoIRpcService) Proximity(
 	ctx context.Context,
 	request *poi_v1.ProximityRequest,
-) (*poi_v1.ProximityResponse, error) {
+) (*poi_v1.PoISearchResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
+	// validate request
 	if request == nil || request.Center == nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"center must be given to perform proximity search",
 		)
 	}
+	if request.RadiusMeters < minSearchRadiusMeters ||
+		request.RadiusMeters > maxSearchRadiusMeters {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid radius: radius=%f must be between 1000 m (1 km) and 100000 m (100 km)",
+			request.RadiusMeters,
+		)
+	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
-		return nil, missingCorrelationIdStatus
+		return nil, missingOrInvalidCorrelationIdStatus
 	}
+
+	// setting response header for client side tracing
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
+
+	// set correlationId for logging
+	logger := p.logger.With(
+		zap.String("correlation_id", correlationId.String()),
+		zap.String("rpc_method", "Proximity"),
+		zap.Float64("lat", request.Center.Lat),
+		zap.Float64("lon", request.Center.Lon),
+	)
+	logger.Info(
+		"processing Proximity rpc",
+	)
+
+	// process request
 	cntr := poi.Coordinates{
 		Latitude:  request.Center.Lat,
 		Longitude: request.Center.Lon,
 	}
-	p.logger.Info(
-		"processing Proximity rpc",
-		zap.String("correlation_id", correlationId.String()),
-	)
-	locations, err := p.locationService.Proximity(ctx, cntr, correlationId)
+	locations, err := p.locationService.Proximity(ctx, cntr, request.RadiusMeters, logger)
+
+	// handle errors accordingly
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) ||
+		errors.Is(errors.Unwrap(err), poi.InvalidSearchCoordinatesErr) {
+		return nil, status.Errorf(codes.InvalidArgument, "%s: %v", invalidGeoParamsMessage, err)
+	}
 	if err != nil {
-		return nil, severErrStatus
+		logger.Error("unable to handle request", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
-	proto := locationsToProto(locations)
-	p.logger.Info(
+
+	// log and return
+	logger.Info(
 		"returning response for Proximity RPC",
-		zap.Int("num_locations", len(proto)),
-		zap.String("correlation_id", correlationId.String()),
+		zap.Int("num_locations", len(locations)),
 	)
-	resp := poi_v1.ProximityResponse{
-		Items: proto,
-	}
-	return &resp, nil
+	resp := buildPoISearchResponse(locations)
+	return resp, nil
 }
 
 func (p *PoIRpcService) BBox(
 	ctx context.Context,
 	request *poi_v1.BBoxRequest,
-) (*poi_v1.BBoxResponse, error) {
+) (*poi_v1.PoISearchResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
+	// validate the bbox request
 	if request == nil || request.Bbox == nil || request.Bbox.Sw == nil || request.Bbox.Ne == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "bounding box coordinates must be defined")
 	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
-		return nil, missingCorrelationIdStatus
+		return nil, missingOrInvalidCorrelationIdStatus
 	}
+
+	// setting response header for client side tracing
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
+
+	// set correlationId for logging
+	logger := p.logger.With(
+		zap.String("correlation_id", correlationId.String()),
+		zap.String("rpc_method", "Bbox"),
+		zap.Float64("ne.lat", request.Bbox.Ne.Lat),
+		zap.Float64("ne.lon", request.Bbox.Ne.Lon),
+		zap.Float64("sw.lat", request.Bbox.Sw.Lat),
+		zap.Float64("sw.lon", request.Bbox.Sw.Lon),
+	)
+	logger.Info(
+		"processing BBox rpc",
+	)
+
+	// process request
 	sw := poi.Coordinates{
 		Latitude:  request.Bbox.Sw.Lat,
 		Longitude: request.Bbox.Sw.Lon,
@@ -134,59 +216,81 @@ func (p *PoIRpcService) BBox(
 		Latitude:  request.Bbox.Ne.Lat,
 		Longitude: request.Bbox.Ne.Lon,
 	}
-	p.logger.Info(
-		"processing BBox rpc",
-		zap.String("correlation_id", correlationId.String()),
-	)
-	locations, err := p.locationService.Bbox(ctx, sw, ne, correlationId)
+	locations, err := p.locationService.Bbox(ctx, sw, ne, logger)
+
+	// handle errors accordingly
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) ||
+		errors.Is(errors.Unwrap(err), poi.InvalidSearchCoordinatesErr) {
+		return nil, status.Errorf(codes.InvalidArgument, "%s: %v", invalidGeoParamsMessage, err)
+	}
 	if err != nil {
-		return nil, severErrStatus
+		logger.Error("unable to handle request", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
-	proto := locationsToProto(locations)
-	p.logger.Info(
+
+	// log and return
+	logger.Info(
 		"returning response for BBox RPC",
-		zap.Int("num_locations", len(proto)),
-		zap.String("correlation_id", correlationId.String()),
+		zap.Int("num_locations", len(locations)),
 	)
-	resp := poi_v1.BBoxResponse{
-		Items: proto,
-	}
-	return &resp, nil
+	resp := buildPoISearchResponse(locations)
+	return resp, nil
 }
 
 func (p *PoIRpcService) Route(
 	ctx context.Context,
 	request *poi_v1.RouteRequest,
-) (*poi_v1.RouteResponse, error) {
-	if request == nil || request.Route == nil || len(request.Route) < 2 {
+) (*poi_v1.PoISearchResponse, error) {
+	// handle context cancellation
+	if ctx.Err() != nil {
+		return nil, requestCenceledStatus
+	}
+	// validate request
+	if request == nil || request.Route == nil || len(request.Route) < 2 ||
+		len(request.Route) > 100 {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
-			"a route og at least two coordinates must be provided",
+			"a route must at least have two coordinates and not more then 100",
 		)
 	}
 	correlationId, err := getCorrelationId(ctx)
 	if err != nil {
-		return nil, missingCorrelationIdStatus
+		return nil, missingOrInvalidCorrelationIdStatus
 	}
-	path := coordinatesPathFromProto(request.Route)
-	p.logger.Info(
+
+	// setting response header for client side tracing
+	_ = grpc.SendHeader(ctx, metadata.Pairs(correlationHeader, correlationId.String()))
+
+	// set correlatioId for logging
+	logger := p.logger.With(
+		zap.String("correlation_id", correlationId.String()),
+		zap.String("rpc_method", "Route"),
+		zap.Int("num_route_points", len(request.Route)),
+	)
+	logger.Info(
 		"processing Route rpc",
-		zap.String("correlation_id", correlationId.String()),
 	)
-	locations, err := p.locationService.Route(ctx, path, correlationId)
+
+	// process request
+	path := coordinatesPathFromProto(request.Route)
+	locations, err := p.locationService.Route(ctx, path, logger)
+
+	// handle the errors accordingly
+	if errors.Is(err, poi.InvalidSearchCoordinatesErr) {
+		return nil, status.Errorf(codes.InvalidArgument, "%s: %v", invalidGeoParamsMessage, err)
+	}
 	if err != nil {
-		return nil, severErrStatus
+		logger.Error("unable to handle request", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "%s: %v", severErrMessage, err)
 	}
-	proto := locationsToProto(locations)
-	p.logger.Info(
+
+	// log and return
+	logger.Info(
 		"returning response for Route RPC",
-		zap.Int("num_locations", len(proto)),
-		zap.String("correlation_id", correlationId.String()),
+		zap.Int("num_locations", len(locations)),
 	)
-	resp := poi_v1.RouteResponse{
-		Items: proto,
-	}
-	return &resp, nil
+	resp := buildPoISearchResponse(locations)
+	return resp, nil
 }
 
 func (p *PoIRpcService) Register(server *grpc.Server) {
@@ -205,6 +309,13 @@ func (p *PoIRpcService) RegisterProxy(
 		endpoint,
 		opts,
 	)
+}
+
+func buildPoISearchResponse(l []poi.PoILocation) *poi_v1.PoISearchResponse {
+	proto := locationsToProto(l)
+	return &poi_v1.PoISearchResponse{
+		Items: proto,
+	}
 }
 
 func locationsToProto(l []poi.PoILocation) []*poi_v1.PoI {

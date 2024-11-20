@@ -9,7 +9,6 @@ Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
 - Dynamo
 - GitHub Actions
 - AWS Infrastructure:
-  - Cognito User Group for Auth
   - Public ALB + WAF
   - ECS Fargate Cluster
   - ECR Container Registry
@@ -46,7 +45,7 @@ Before setting app the required protoc plugins and tools by running
 ### Colima and Testcontainers
 
 If you have a Mac you might be using colima since docker desktop requires a
-license especially in corporate ograniyations. Make sure to correclty configure
+license especially in corporate ograniyations. Make sure to correctly configure
 colima:
 
 ```bash
@@ -113,7 +112,7 @@ make vuln_scan
 - `go mod tidy` remove unused go modules
 - `go mod download` install go modules
 - `go get -u ./...` update all dependencies recursive
-- `ginkgo bootstrap` boostrap ginkgo test suit into current dir
+- `ginkgo bootstrap` bootstrap ginkgo test suit into current dir
 
 ## Helpful Resources
 

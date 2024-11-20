@@ -12,7 +12,7 @@ message HealthCheckRequest {
 
 message HealthCheckResponse {
   enum ServingStatus {
-    SERVING_STATUS_UNSPECIFIED= 0;
+    SERVING_STATUS_UNSPECIFIED = 0;
     SERVING_STATUS_SERVING = 1;
     SERVING_STATUS_NOT_SERVING = 2;
   }
@@ -33,6 +33,6 @@ service HealthService {
   //
   // Check implementations should be idempotent and side effect free.
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {
-    option (google.api.http) = {get: "/api/v1/health/readiness"};
-  };
+    option (google.api.http) = {get: "/api/v1/health/liveness"};
+  }
 }
