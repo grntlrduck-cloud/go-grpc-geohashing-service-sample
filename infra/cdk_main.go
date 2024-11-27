@@ -24,6 +24,26 @@ func main() {
 		AppName: appName,
 	})
 
+	dbStack := stacks.NewDbStack(
+		app,
+		fmt.Sprintf("%s-db-stack", appName),
+		&stacks.DbStackProps{
+			StackProps: awscdk.StackProps{
+				Env: env(),
+			},
+			AppName:   appName,
+			TableName: fmt.Sprintf("%s_charging-pois", appName),
+		},
+	)
+
+	stacks.NewAppStack(app, fmt.Sprintf("%s-app-stack", appName), &stacks.AppStackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		AppName: appName,
+		Table:   dbStack.Table,
+	})
+
 	app.Synth(nil)
 }
 
