@@ -47,7 +47,8 @@ func NewDbStack(
 	csvObjectPath := "dynamo/csv/cpoi_dynamo_items.csv"
 
 	tableProps := &awsdynamodb.TablePropsV2{
-		TableName: &props.TableName,
+		TableName:     &props.TableName,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY, // don't in your company
 		PartitionKey: &awsdynamodb.Attribute{
 			Name: jsii.String("pk"),
 			Type: awsdynamodb.AttributeType_STRING,

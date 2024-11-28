@@ -17,6 +17,7 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
+	// this stack and the demo data processing needs to be deployed and executed form local machine
 	stacks.NewDataStack(app, fmt.Sprintf("%s-data-stack", appName), &stacks.DataStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env(),
@@ -24,6 +25,16 @@ func main() {
 		AppName: appName,
 	})
 
+	// this stack gets deployed in the beginning of the CI so that we have an ECR to push to
+	stacks.NewEcrStack(app, fmt.Sprintf("%s-ecr-stack", appName), &stacks.EcrStackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		AppName: appName,
+	})
+
+	// the following stacks make up the actual service and the dynamodb table
+	// deployed in deployment phase of CI
 	dbStack := stacks.NewDbStack(
 		app,
 		fmt.Sprintf("%s-db-stack", appName),

@@ -6,6 +6,8 @@ require (
 	dario.cat/mergo v1.0.1
 	github.com/amazon-ion/ion-go v1.5.0
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.171.0
+	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.171.0-alpha.0
+	github.com/aws/aws-lambda-go v1.47.0
 	github.com/aws/aws-sdk-go-v2 v1.31.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.37
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.35
@@ -40,8 +42,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.171.0-alpha.0 // indirect
-	github.com/aws/aws-lambda-go v1.47.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.18 // indirect
