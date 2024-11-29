@@ -24,6 +24,7 @@ const (
 	cPoIDynamoItemsLocalTestCSVPath = "config/db/local/cpoi_dynamo_items_int_test.csv" // cpois to use for integration testing in CI and local
 	cPoIIonFilePath                 = "cpoi_ion_items"
 )
+
 // This program requires the dataset from kaggle to be present in the root of this project as 'cpoi_data.csv'.
 // The CSV is proecessed and mapped to fit the data model for dynamo db, saved to disk as CSV and AWS ION.
 // Finally, the files, the raw and the processed data is uploaded to the S3 bucket defined in the data-stack

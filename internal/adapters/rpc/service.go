@@ -22,6 +22,6 @@ type HealthChecker interface {
 }
 
 type HealthService interface {
-  Service
-  HealthChecker
+	Service
+	HealthChecker
 }

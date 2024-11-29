@@ -1,0 +1,12 @@
+run:
+  deadline: 5m
+  tests: true
+
+linters:
+  enable:
+    - gofmt
+    - govet
+    - errcheck
+    - staticcheck
+    - gosimple
+    - ineffassign
