@@ -1,4 +1,8 @@
-# installs required binaries for linting and protobuf generation for local depvelopment as well as a pre commit hook to lint all files before committing
+APP_NAME=grpc-chagring-location-service
+
+
+# installs required binaries for linting and protobuf generation for local depvelopment 
+# as well as a pre commit hook to lint all files before committing
 configure:
 	@echo "Ensure GOBIN is added to path, buf, aws-cdk, docker & docker-buildx, and protoc is installed as docuemented in README. The configure script does not set up the aforementioned tools."
 	@echo "Installing protobuf dependencies to GOBIN..."
@@ -47,15 +51,28 @@ update_deps:
 vuln_scan:
 	go run --mod=mod golang.org/x/vuln/cmd/govulncheck ./...
 
-build_amd:
-	docker buildx build --platform linux/amd64 -t grntlerduck/poi-info-service:$(shell git rev-parse --short HEAD) .
-
-build_arm:
-	docker buildx build --platform linux/arm64 -t grntlerduck/poi-info-service:$(shell git rev-parse --short HEAD) .
-
 test_full_local_amd: lint vuln_scan test_report synth_local build_amd
 
 test_full_local_arm: lint vuln_scan test_report synth_local build_arm
+
+build_amd:
+	docker buildx build --platform linux/amd64 -t grntlrduck/grpc-chagring-location-service:$(shell git rev-parse --short HEAD) .
+
+build_arm:
+	docker buildx build --platform linux/arm64 -t grntlrduck/grpc-chagring-location-service:$(shell git rev-parse --short HEAD) .
+
+build_tag_ci:
+	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
+	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),no-tag); \
+	PLATFORM=$(if $(strip $(TARGET_PLATFORM)),$(TARGET_PLATFORM),linux/arm64); \
+	docker buildx build --platform $$PLATFORM -t $$REPO_URI:$$TAG .
+
+build_tag_push_ci:
+	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
+	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),no-tag); \
+	PLATFORM=$(if $(strip $(TARGET_PLATFORM)),$(TARGET_PLATFORM),linux/arm64); \
+	docker buildx build --platform $$PLATFORM -t $$REPO_URI:$$TAG .; \
+	docker push $$REPO_URI:$$TAG
 
 run_build_container:
 	docker build -t go-grpc-geo:local .
@@ -63,3 +80,4 @@ run_build_container:
 
 compose_local:
 	docker compose up --build --remove-orphans
+

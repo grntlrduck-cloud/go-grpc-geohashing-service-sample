@@ -10,7 +10,7 @@ import (
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
 )
 
-const appName = "go-grpc-poi-service"
+const appName = "grpc-chagring-location-service"
 
 func main() {
 	defer jsii.Close()

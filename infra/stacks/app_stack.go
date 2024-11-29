@@ -3,8 +3,6 @@ package stacks
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
@@ -13,6 +11,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsecs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsecspatterns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awselasticloadbalancingv2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssecretsmanager"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsssm"
 	"github.com/aws/constructs-go/constructs/v10"
@@ -36,8 +35,7 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 
 	imageTag := os.Getenv("GITHUB_SHA")
 	if imageTag == "" {
-		n := strconv.FormatInt(time.Now().Unix(), 10)
-		imageTag = fmt.Sprintf("no-tag-%s", n)
+		imageTag = "no-tag"
 	}
 
 	ecrArn := awsssm.StringParameter_FromStringParameterName(
@@ -62,12 +60,21 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 		},
 	)
 
-	containerName := "grpc-gateway-service"
+	containerName := fmt.Sprintf("%s-container", props.AppName)
 	restProxyPort := 8443
-	// TODO: custom loggroup
+
+	logGroup := awslogs.NewLogGroup(
+		stack,
+		jsii.String("ServiceLogGroup"),
+		&awslogs.LogGroupProps{
+			RemovalPolicy: awscdk.RemovalPolicy_DESTROY, // don't do in corporate area
+			Retention:     awslogs.RetentionDays_TWO_WEEKS,
+		},
+	)
+
 	service := awsecspatterns.NewApplicationLoadBalancedFargateService(
 		stack,
-		jsii.String("ALBFargateService"),
+		jsii.Sprintf("ALBFargateService-%s", props.AppName),
 		&awsecspatterns.ApplicationLoadBalancedFargateServiceProps{
 			ServiceName: &props.AppName,
 			TaskImageOptions: &awsecspatterns.ApplicationLoadBalancedTaskImageOptions{
@@ -83,6 +90,12 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 					"ACCOUNT_ID":          props.StackProps.Env.Account,
 				},
 				ContainerPort: jsii.Number(443),
+				LogDriver: awsecs.AwsLogDriver_AwsLogs(
+					&awsecs.AwsLogDriverProps{
+						LogGroup:     logGroup,
+						StreamPrefix: jsii.Sprintf("FargateService-%s", containerName),
+					},
+				),
 			},
 			DesiredCount:    jsii.Number(1),
 			Cpu:             jsii.Number(512),
@@ -138,6 +151,10 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 				),
 			},
 		)
+	awscdk.Annotations_Of(service).AcknowledgeWarning(
+		jsii.String("@aws-cdk/aws-elbv2:listenerExistingDefaultActionReplaced"),
+		jsii.String("Default action intentionally set to 404"),
+	)
 
 	// modify l3 constructs target group and add health and actions
 	targetGroup := service.TargetGroup()
