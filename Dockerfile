@@ -1,6 +1,4 @@
-FROM public.ecr.aws/docker/library/golang:1.23.0-alpine3.20 as build_base
-
-ARG APP_NAME=grpc-chagring-location-service
+FROM public.ecr.aws/docker/library/golang:1.23.3-alpine3.20 as build_base
 
 WORKDIR /src
 
