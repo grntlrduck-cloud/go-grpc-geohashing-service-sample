@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssecretsmanager"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsssm"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awswafv2"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 
@@ -250,6 +251,18 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 			awsec2.Port_Tcp(jsii.Number(8443)),
 			jsii.String("Allow servic to reach ALB"),
 		)
+
+	// add WAF ACL to ALB
+	loadBalancer := service.LoadBalancer()
+	albWafAcl := mycnstrcts.NewAlbWafAcl(stack, jsii.String("ALBFargateService-WAF"))
+	awswafv2.NewCfnWebACLAssociation(
+		stack,
+		jsii.String("ALBWafAssociation"),
+		&awswafv2.CfnWebACLAssociationProps{
+			ResourceArn: loadBalancer.LoadBalancerArn(),
+			WebAclArn:   albWafAcl.Acl.AttrArn(),
+		},
+	)
 
 	return stack
 }

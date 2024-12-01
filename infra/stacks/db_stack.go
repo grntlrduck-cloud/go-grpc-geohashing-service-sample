@@ -15,6 +15,7 @@ type DbStackProps struct {
 	StackProps awscdk.StackProps
 	TableName  string
 	AppName    string
+	LambdaPath string
 }
 
 type DbStack struct {
@@ -102,6 +103,7 @@ func NewDbStack(
 			TableName:     props.TableName,
 			Bucket:        bucket,
 			CsvObjectPath: csvObjectPath,
+			LambdaPath:    props.LambdaPath,
 		},
 	)
 	return &DbStack{Stack: stack, Table: tableWithInitPois.Table}

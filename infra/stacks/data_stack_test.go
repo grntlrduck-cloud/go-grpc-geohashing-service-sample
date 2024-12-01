@@ -9,7 +9,7 @@ import (
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/infra/stacks"
 )
 
-var _ = Describe("Given app", func() {
+var _ = Describe("Given data stack", func() {
 	app := awscdk.NewApp(nil)
 
 	When("has data stack", func() {

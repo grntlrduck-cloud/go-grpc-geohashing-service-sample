@@ -20,6 +20,7 @@ type DynamoDBWithInitialDataProps struct {
 	CsvObjectPath string
 	Bucket        awss3.IBucket
 	TableProps    *awsdynamodb.TablePropsV2
+	LambdaPath    string
 }
 
 type DynamoDBWithInitialData struct {
@@ -40,6 +41,11 @@ func NewDynamoDBWithInitialData(
 		props.TableProps,
 	)
 
+	lambdaEntryPath := "cmd/lambda"
+	if props.LambdaPath != "" {
+		lambdaEntryPath = props.LambdaPath
+	}
+
 	// create the lambda which will upload the poi items on create of CFN resource
 	lambda := awscdklambdagoalpha.NewGoFunction(
 		construct,
@@ -47,7 +53,7 @@ func NewDynamoDBWithInitialData(
 		&awscdklambdagoalpha.GoFunctionProps{
 			Architecture: awslambda.Architecture_ARM_64(),
 			LogRetention: awslogs.RetentionDays_TWO_WEEKS,
-			Entry:        jsii.String("cmd/lambda"),
+			Entry:        &lambdaEntryPath,
 			MemorySize:   jsii.Number(512),
 			Timeout:      awscdk.Duration_Minutes(jsii.Number(15)),
 			Environment: &map[string]*string{
