@@ -15,8 +15,6 @@ import (
 var _ = Describe("Given app stack", Ordered, func() {
 	var template assertions.Template
 	BeforeAll(func() {
-		wd, _ := os.Getwd()
-		println(fmt.Sprintf("########## current wd: %s", wd))
 		app := awscdk.NewApp(nil)
 		dbStack := stacks.NewDbStack(app, "test-db-stack", &stacks.DbStackProps{
 			StackProps: awscdk.StackProps{

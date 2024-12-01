@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	bucketNameParam                 = "/config/go-grpc-poi-service/charging-data-bucket-name"
+	bucketNameParam                 = "/config/grpc-charging-location-service/charging-data-bucket-name"
 	cPoIDataCSVPath                 = "cpoi_data.csv"
 	cPoIDynamoItemsCSVPath          = "cpoi_dynamo_items.csv"
 	cPoIDynamoItemsLocalTestCSVPath = "config/db/local/cpoi_dynamo_items_int_test.csv" // cpois to use for integration testing in CI and local

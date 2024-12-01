@@ -20,7 +20,7 @@ services:
       - "443:443"
       - "8443:8443"
     environment:
-      APP_NAME: "grpc-chagring-location-service-local"
+      APP_NAME: "grpc-charging-location-service-local"
       BOOT_PROFILE_ACTIVE: "dc-local"
       APP_ENV: "local"
       DYNAMOLOCAL_HOST: "dynamodb"

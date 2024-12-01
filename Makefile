@@ -1,4 +1,4 @@
-APP_NAME=grpc-chagring-location-service
+APP_NAME=grpc-charging-location-service
 
 
 # installs required binaries for linting and protobuf generation for local depvelopment 
@@ -34,6 +34,12 @@ synth_local:
 synth_ci:
 	cdk synth >>/dev/null
 
+ecr_deploy_ci:
+	cdk deploy \*ecr-stack --require-approval never
+
+ecr_diff_ci:
+	cdk deploy \*ecr-stack
+
 dia:
 	npx cdk-dia
 
@@ -47,6 +53,7 @@ test_report:
 update_deps:
 	go get -u ./...
 	go mod tidy
+	go mod verify
 
 vuln_scan:
 	go run --mod=mod golang.org/x/vuln/cmd/govulncheck ./...
@@ -56,10 +63,10 @@ test_full_local_amd: lint vuln_scan test_report synth_local build_amd
 test_full_local_arm: lint vuln_scan test_report synth_local build_arm
 
 build_amd:
-	docker buildx build --platform linux/amd64 -t grntlrduck/grpc-chagring-location-service:$(shell git rev-parse --short HEAD) .
+	docker buildx build --platform linux/amd64 -t grntlrduck/grpc-charging-location-service:$(shell git rev-parse --short HEAD) .
 
 build_arm:
-	docker buildx build --platform linux/arm64 -t grntlrduck/grpc-chagring-location-service:$(shell git rev-parse --short HEAD) .
+	docker buildx build --platform linux/arm64 -t grntlrduck/grpc-charging-location-service:$(shell git rev-parse --short HEAD) .
 
 build_tag_ci:
 	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
