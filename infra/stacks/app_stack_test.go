@@ -1,9 +1,6 @@
 package stacks_test
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/assertions"
 	"github.com/aws/jsii-runtime-go"
