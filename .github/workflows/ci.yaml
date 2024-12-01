@@ -101,6 +101,9 @@ jobs:
       - name: Setup CDK
         run: npm install -g aws-cdk
       - name: CDK diff
+        env:
+          AWS_REGION: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          AWS_ACCOUNT: ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
         run: make ecr_diff_ci
       - name: CDK deploy
         if: github.ref == 'refs/heads/main'
