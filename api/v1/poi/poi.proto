@@ -43,25 +43,18 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   produces: "application/grpc"
   security_definitions: {
     security: {
-      key: "OAuth2"
+      key: "ApiKeyAuth"
       value: {
-        type: TYPE_OAUTH2
-        flow: FLOW_ACCESS_CODE
-        authorization_url: "https://example.com/oauth/authorize" // TODO
-        token_url: "https://example.com/oauth/token" // TODO
-        scopes: {
-          scope: {
-            key: "pois.read"
-            value: "Grants read access to poi resources"
-          }
-        }
+        type: TYPE_API_KEY
+        in: IN_HEADER
+        name: "X-Api-Key"
       }
     }
   }
   security: {
     security_requirement: {
-      key: "OAuth2"
-      value: {scope: "pois.read"}
+      key: "ApiKeyAuth"
+      value: {}
     }
   }
   responses: {
