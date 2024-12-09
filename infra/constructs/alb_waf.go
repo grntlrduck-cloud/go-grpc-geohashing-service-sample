@@ -40,6 +40,12 @@ func ruleSet() []*awswafv2.CfnWebACL_RuleProperty {
 				ManagedRuleGroupStatement: &awswafv2.CfnWebACL_ManagedRuleGroupStatementProperty{
 					Name:       jsii.String("AWSManagedRulesCommonRuleSet"),
 					VendorName: jsii.String("AWS"),
+					// to enable testing gRPC from local
+					ExcludedRules: &[]*awswafv2.CfnWebACL_ExcludedRuleProperty{
+						{
+							Name: jsii.String("NoUserAgent_HEADER"),
+						},
+					},
 				},
 			},
 			VisibilityConfig: &awswafv2.CfnWebACL_VisibilityConfigProperty{

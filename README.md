@@ -1,17 +1,17 @@
 # go-grpc-geohashing-service-sample - poi-info-service
 
-## The Plan
+## Architecture
 
-Prerequisites: Public HostedZone + VPC (in my case a mini VPC due to costs)
-
-- Go
-- gRPC
-- Dynamo
-- GitHub Actions
-- AWS Infrastructure:
-  - Public ALB + WAF
-  - ECS Fargate Cluster
-  - ECR Container Registry
+The service is implemented using the AWS ECS Load-Balanced Fargate Service pattern.
+As for the DB, DynamoDB is used to implement a geo-index with provisioned capancity and autosacling.
+The DB initiation is implemmented using a custom resource Lambda function, fetching the data from S3,
+and BatchPutRequest the data set into the table. This approach was selected due to the limitations of the DynamoDB
+import and lack of IaC integration. The S3 import was originally palnned to be utilized.
+The Fargate service has two target groups attached, one for port 443, where the gRPC Service is listening,
+and port 8443 where the gRPC GateWay REST API is listening for requests.
+The ALB has a WAF associated for additional protection of the application.
+The cloud architecture is visualized down below. The diagram was generated using [CDK Dia](https://github.com/pistazie/cdk-dia)
+![Architecture](diagram.png)
 
 ## Data Set for PoIs
 
@@ -25,6 +25,15 @@ license
 The data is modified and processed as part of this sample application just for
 demo purposes. The modification is minimal and adjust it to the simple model
 defined in the API and adds gehoashing to enable querying the data efficiently.
+
+## Initial Deployment
+
+The Deployment requires one manual step before everything is fully automated within GitHub Actions:
+The data set needs to be downloaded and stored into the root of this project locally.
+The CSV must have the name `cpoi_data.csv`. Login to AWS and assume a role which allows you to deploy stacks and run `cdk deploy \*data-stack`.
+Finally run `go run cmd/data/main.go`.
+After the initial setup of the S3 Bucket and the parsing of data, everything is automated.
+I decided to not automate this step, since it only needs to be done once and I want to move on to other priate projects.
 
 ## Setup
 

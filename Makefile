@@ -21,27 +21,15 @@ configure:
 	@chmod +x .git/hooks/pre-commit
 	@echo "Done."
 
+### CI SCRIPTS ###
 ci:
 	go mod download && go mod verify
 
-lint:
-	golangci-lint run ./...
-
-synth_local:
-	@echo "Syntheizing app with region=eu-west-1 and mock account..."
-	AWS_ACCOUNT=123456789012 AWS_REGION=eu-west-1 cdk synth
+vuln_scan:
+	go run --mod=mod golang.org/x/vuln/cmd/govulncheck ./...
 
 synth_ci:
 	cdk synth >>/dev/null
-
-ecr_deploy_ci:
-	cdk deploy \*ecr-stack --require-approval never
-
-ecr_diff_ci:
-	cdk deploy \*ecr-stack
-
-dia:
-	npx cdk-dia
 
 test_report:
 	go run --mod=mod gotest.tools/gotestsum --junitfile unit-tests.xml  -- -coverprofile=cover.out -covermode count -p 1 ./...
@@ -50,23 +38,11 @@ test_report:
 	go tool cover -html=cover.out -o coverage.html
 	go run --mod=mod github.com/boumenot/gocover-cobertura <cover.out > coverage.xml
 
-update_deps:
-	go get -u ./...
-	go mod tidy
-	go mod verify
+ecr_deploy_ci:
+	cdk deploy \*ecr-stack --require-approval never
 
-vuln_scan:
-	go run --mod=mod golang.org/x/vuln/cmd/govulncheck ./...
-
-test_full_local_amd: lint vuln_scan test_report synth_local build_amd
-
-test_full_local_arm: lint vuln_scan test_report synth_local build_arm
-
-build_amd:
-	docker buildx build --platform linux/amd64 -t grntlrduck/grpc-charging-location-service:$(shell git rev-parse --short HEAD) .
-
-build_arm:
-	docker buildx build --platform linux/arm64 -t grntlrduck/grpc-charging-location-service:$(shell git rev-parse --short HEAD) .
+ecr_diff_ci:
+	cdk diff \*ecr-stack
 
 build_tag_ci:
 	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
@@ -80,6 +56,38 @@ build_tag_push_ci:
 	PLATFORM=$(if $(strip $(TARGET_PLATFORM)),$(TARGET_PLATFORM),linux/arm64); \
 	docker buildx build --platform $$PLATFORM -t $$REPO_URI:$$TAG .; \
 	docker push $$REPO_URI:$$TAG
+
+deploy_stacks_ci:
+	cdk deploy \*db-stack \*app-stack require-approval never
+
+diff_stacks_ci:
+	cdk diff \*db-stack \*app-stack
+
+### UTILITY FOR LOCAL DEVELOPMENT ###
+lint:
+	golangci-lint run ./...
+
+synth_local:
+	@echo "Syntheizing app with region=eu-west-1 and mock account..."
+	AWS_ACCOUNT=123456789012 AWS_REGION=eu-west-1 cdk synth
+
+dia:
+	npx cdk-dia
+
+update_deps:
+	go get -u ./...
+	go mod tidy
+	go mod verify
+
+test_full_local_amd: lint vuln_scan test_report synth_local build_amd
+
+test_full_local_arm: lint vuln_scan test_report synth_local build_arm
+
+build_amd:
+	docker buildx build --platform linux/amd64 -t grntlrduck/grpc-charging-location-service:$(shell git rev-parse --short HEAD) .
+
+build_arm:
+	docker buildx build --platform linux/arm64 -t grntlrduck/grpc-charging-location-service:$(shell git rev-parse --short HEAD) .
 
 run_build_container:
 	docker build -t go-grpc-geo:local .
