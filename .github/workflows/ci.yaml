@@ -5,10 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
 permissions:
   id-token: write
   contents: read
   pull-requests: write
+
 jobs:
   vuln-scan:
     runs-on: ubuntu-latest
@@ -18,11 +20,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.0"
+          go-version: "1.23.3"
       - name: Install dependencies
         run: make ci
       - name: Vulnerability Scan
         run: make vuln_scan
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -31,13 +34,39 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.0"
+          go-version: "1.23.3"
       - name: Lint
         uses: golangci/golangci-lint-action@v6
+
+  synth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.3"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: Assume synth role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          role-to-assume: ${{ secrets.CI_CDK_SYNTH_ROLE_ARN }}
+      - name: Setup CDK
+        run: npm install -g aws-cdk
+      - name: CDK Synth
+        env:
+          AWS_REGION: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          AWS_ACCOUNT: ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
+        run: make synth_ci
+
   test:
     runs-on: ubuntu-latest
     needs:
-      - vuln-scan
       - lint
     steps:
       - name: Checkout
@@ -45,11 +74,11 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.0"
+          go-version: "1.23.3"
       - name: Assume build role
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: us-east-1 # required for public ecr
+          aws-region: us-east-1 # required for public ecr to pull images in tests
           role-to-assume: ${{ secrets.CI_BUILD_ROLE_ARN }}
       - name: Login to Amazon ECR Public Gallery
         id: login-ecr-public
@@ -78,15 +107,56 @@ jobs:
         with:
           recreate: true
           path: code-coverage-results.md
-  build:
+
+  ecr-registry:
     runs-on: ubuntu-latest
     needs:
-      - vuln-scan
-      - lint
+      - synth
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Assume build role
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.3"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: Assume role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          role-to-assume: ${{ secrets.CI_CDK_DEPLOY_ROLE_ARN }}
+      - name: Setup CDK
+        run: npm install -g aws-cdk
+      - name: CDK diff
+        env:
+          AWS_REGION: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          AWS_ACCOUNT: ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
+        run: make ecr_diff_ci
+      - name: CDK deploy
+        if: github.ref == 'refs/heads/main'
+        env:
+          AWS_REGION: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          AWS_ACCOUNT: ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
+        run: make ecr_deploy_ci
+
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - test
+      - vuln-scan
+      - lint
+      - ecr-registry
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Assume build role for eu-east to get public ECR access
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1 # required for public ecr
@@ -96,33 +166,53 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           registry-type: public
-      - name: Build Docker image
-        run: docker build .
-  synth:
+      - name: Assume build role for eu-west-1
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-west-1
+          role-to-assume: ${{ secrets.CI_BUILD_ROLE_ARN }}
+      - name: Login to private ECR
+        id: login-ecr-private
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build, Tag Docker image for PR
+        if: github.event_name == 'pull_request'
+        run: make build_tag_ci
+      - name: Build, Tag, Push Docker image
+        if: github.ref == 'refs/heads/main'
+        run: make build_tag_push_ci
+
+  deploy-stacks:
     runs-on: ubuntu-latest
     needs:
-      - vuln-scan
-      - lint
+      - synth
+      - build
+      - test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.0"
+          go-version: "1.23.3"
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-      - name: Assume synth role
+      - name: Assume role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
-          role-to-assume: ${{ secrets.CI_CDK_SYNTH_ROLE_ARN }}
+          role-to-assume: ${{ secrets.CI_CDK_DEPLOY_ROLE_ARN }}
       - name: Setup CDK
         run: npm install -g aws-cdk
-      - name: CDK Synth
+      - name: CDK diff
         env:
           AWS_REGION: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
           AWS_ACCOUNT: ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
-        run: make synth_ci
+        run: make diff_stacks_ci
+      - name: CDK deploy
+        if: github.ref == 'refs/heads/main'
+        env:
+          AWS_REGION: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
+          AWS_ACCOUNT: ${{ secrets.DEFAULT_TARGET_AWS_ACCOUNT_ID }}
+        run: make deploy_stacks_ci
