@@ -123,7 +123,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-      - name: Assume synth role
+      - name: Assume role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
@@ -198,7 +198,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-      - name: Assume synth role
+      - name: Assume role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ secrets.DEFAULT_AWS_TARGET_REGION }}
