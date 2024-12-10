@@ -54,20 +54,12 @@ func NewDbStack(
 			Name: jsii.String("pk"),
 			Type: awsdynamodb.AttributeType_STRING,
 		},
-		Billing: awsdynamodb.Billing_Provisioned(&awsdynamodb.ThroughputProps{
-			WriteCapacity: awsdynamodb.Capacity_Autoscaled(
-				&awsdynamodb.AutoscaledCapacityOptions{
-					MinCapacity: jsii.Number(10.0),
-					MaxCapacity: jsii.Number(50.0),
-				},
-			),
-			ReadCapacity: awsdynamodb.Capacity_Autoscaled(
-				&awsdynamodb.AutoscaledCapacityOptions{
-					MinCapacity: jsii.Number(10.0),
-					MaxCapacity: jsii.Number(50.0),
-				},
-			),
-		}),
+		Billing: awsdynamodb.Billing_OnDemand(
+			&awsdynamodb.MaxThroughputProps{
+				MaxReadRequestUnits:  jsii.Number(200),
+				MaxWriteRequestUnits: jsii.Number(200),
+			},
+		),
 		GlobalSecondaryIndexes: &[]*awsdynamodb.GlobalSecondaryIndexPropsV2{
 			{
 				IndexName: jsii.String("gsi1_geo"),
@@ -79,18 +71,8 @@ func NewDbStack(
 					Name: jsii.String("gsi1_geo_sk"),
 					Type: awsdynamodb.AttributeType_NUMBER,
 				},
-				WriteCapacity: awsdynamodb.Capacity_Autoscaled(
-					&awsdynamodb.AutoscaledCapacityOptions{
-						MinCapacity: jsii.Number(10.0),
-						MaxCapacity: jsii.Number(50.0),
-					},
-				),
-				ReadCapacity: awsdynamodb.Capacity_Autoscaled(
-					&awsdynamodb.AutoscaledCapacityOptions{
-						MinCapacity: jsii.Number(10.0),
-						MaxCapacity: jsii.Number(150.0),
-					},
-				),
+				MaxWriteRequestUnits: jsii.Number(200),
+				MaxReadRequestUnits:  jsii.Number(200),
 			},
 		},
 	}

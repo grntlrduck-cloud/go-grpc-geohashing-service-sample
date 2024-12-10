@@ -23,7 +23,7 @@ const (
 	routeHashesLimit     = 200
 	bboxHashesLimit      = 150
 	proxHashesLimit      = 150
-	dynamoMaxBatchSize   = 25
+	dynamoMaxBatchSize   = 10
 	maxConcurrentQueries = 10 // Configurable max concurrent queries
 	testInitDataPath     = "config/db/local/cpoi_dynamo_items_int_test.csv"
 )
@@ -135,7 +135,7 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 		}
 		_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 		if err != nil {
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			_, err := pgr.dynamoClient.BatchPutItem(ctx, input)
 			if err != nil {
 				logger.Error(
@@ -143,10 +143,18 @@ func (pgr *PoIGeoRepository) UpsertBatch(
 					zap.Int("batch_num", i),
 					zap.Int("total_num_batches", len(chunks)),
 					zap.Int("num_items", len(c)),
+					zap.Error(err),
 				)
 				errs = append(errs, err)
 			}
 		}
+		logger.Debug(
+			"successfully inserted batch",
+			zap.Int("batch_num", i),
+			zap.Int("total_num_batches", len(chunks)),
+			zap.Int("num_items", len(c)),
+		)
+		time.Sleep(50 * time.Microsecond)
 	}
 	if len(errs) > 0 {
 		logger.Error("batch upsert incomplete",

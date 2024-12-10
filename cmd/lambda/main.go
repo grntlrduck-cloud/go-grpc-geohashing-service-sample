@@ -27,9 +27,18 @@ type TableInitHandler struct {
 func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event) {
 	resp := cfn.NewResponse(event)
 	if event.RequestType != cfn.RequestCreate {
+		handler.logger.Info(
+			"No create event, retuening instant with success",
+			zap.String("event_type", string(event.RequestType)),
+		)
 		resp.Status = cfn.StatusSuccess
 		_ = resp.Send()
+		return
 	}
+	handler.logger.Info(
+		"Processing CREATE event, initiating table",
+		zap.String("event_type", string(event.RequestType)),
+	)
 
 	// get data from s3
 	data, err := handler.s3Client.GetObject(ctx, &s3.GetObjectInput{
@@ -78,6 +87,9 @@ func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event
 	err = handler.repository.UpsertBatch(ctx, domain, handler.logger)
 	if err != nil {
 		handler.logger.Error("failed to upsert batches to table", zap.Error(err))
+		resp.Status = cfn.StatusFailed
+		_ = resp.Send()
+		return
 	}
 
 	// send success response to CFN

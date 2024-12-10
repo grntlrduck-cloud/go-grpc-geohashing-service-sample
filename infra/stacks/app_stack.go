@@ -3,6 +3,8 @@ package stacks
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
@@ -34,14 +36,11 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	imageTag := os.Getenv("GITHUB_SHA")
-	if imageTag == "" {
-		imageTag = "no-tag"
-	}
+	imageTag := getTag()
 
 	ecrArn := awsssm.StringParameter_FromStringParameterName(
 		stack,
-		jsii.String("EcrArnParam"),
+		jsii.String("EcrNameParam"),
 		jsii.Sprintf("/config/%s/ecr/name", props.AppName),
 	)
 	ecrRepo := awsecr.Repository_FromRepositoryName(stack, jsii.String("ECR"), ecrArn.StringValue())
@@ -265,4 +264,16 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 	)
 
 	return stack
+}
+
+func getTag() string {
+	imageTag := os.Getenv("GITHUB_SHA")
+	if imageTag == "" {
+		output, err := exec.Command("git", "rev-parse", "HEAD").Output()
+		if err != nil {
+			return "no-tag"
+		}
+		return strings.TrimSpace(string(output))
+	}
+	return imageTag
 }

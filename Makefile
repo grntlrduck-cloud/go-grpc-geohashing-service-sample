@@ -46,13 +46,13 @@ ecr_diff_ci:
 
 build_tag_ci:
 	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
-	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),no-tag); \
+	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),$(shell git rev-parse HEAD)); \
 	PLATFORM=$(if $(strip $(TARGET_PLATFORM)),$(TARGET_PLATFORM),linux/arm64); \
 	docker buildx build --platform $$PLATFORM -t $$REPO_URI:$$TAG .
 
 build_tag_push_ci:
 	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
-	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),no-tag); \
+	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),$(shell git rev-parse HEAD)); \
 	PLATFORM=$(if $(strip $(TARGET_PLATFORM)),$(TARGET_PLATFORM),linux/arm64); \
 	docker buildx build --platform $$PLATFORM -t $$REPO_URI:$$TAG .; \
 	docker push $$REPO_URI:$$TAG
@@ -95,4 +95,7 @@ run_build_container:
 
 compose_local:
 	docker compose up --build --remove-orphans
+
+do_stuff:
+	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),$(shell git rev-parse HEAD)); 
 
