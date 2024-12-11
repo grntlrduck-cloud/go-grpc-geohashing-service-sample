@@ -12,20 +12,26 @@ import (
 func LandingZoneVPC(scope constructs.Construct, id string) awsec2.IVpc {
 	vpc := awsec2.Vpc_FromVpcAttributes(scope, jsii.String(id), &awsec2.VpcAttributes{
 		VpcId:             awscdk.Fn_ImportValue(jsii.String("LandingZoneVpcId")),
-		AvailabilityZones: jsii.Strings("eu-west-1a"),
+		AvailabilityZones: jsii.Strings("eu-west1a"),
 		IsolatedSubnetIds: &[]*string{
 			awscdk.Fn_ImportValue(jsii.String("LandingZoneIsolatedSubnet1Id")),
+			awscdk.Fn_ImportValue(jsii.String("LandingZoneIsolatedSubnet2Id")),
 		},
 		PublicSubnetIds: &[]*string{
 			awscdk.Fn_ImportValue(jsii.String("LandingZonePublicSubnet1Id")),
+			awscdk.Fn_ImportValue(jsii.String("LandingZonePublicSubnet2Id")),
 		},
 		PrivateSubnetIds: &[]*string{
 			awscdk.Fn_ImportValue(jsii.String("LandingZonePrivateSubnet1Id")),
+			awscdk.Fn_ImportValue(jsii.String("LandingZonePrivateSubnet2Id")),
 		},
 		// only the route table for private subnet are interesting
 		PrivateSubnetRouteTableIds: &[]*string{
 			awscdk.Fn_ImportValue(
 				jsii.String("LandingZonePrivateSubnet1RouteTableId"),
+			),
+			awscdk.Fn_ImportValue(
+				jsii.String("LandingZonePrivateSubnet2RouteTableId"),
 			),
 		},
 	})

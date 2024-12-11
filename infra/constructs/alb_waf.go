@@ -36,6 +36,9 @@ func ruleSet() []*awswafv2.CfnWebACL_RuleProperty {
 			// https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html#aws-managed-rule-groups-baseline-crs
 			Name:     jsii.String("AWSManagedRulesCommonRuleSet"),
 			Priority: jsii.Number(10),
+			OverrideAction: &awswafv2.CfnWebACL_OverrideActionProperty{
+				None: &map[string]interface{}{},
+			},
 			Statement: &awswafv2.CfnWebACL_StatementProperty{
 				ManagedRuleGroupStatement: &awswafv2.CfnWebACL_ManagedRuleGroupStatementProperty{
 					Name:       jsii.String("AWSManagedRulesCommonRuleSet"),
@@ -58,6 +61,9 @@ func ruleSet() []*awswafv2.CfnWebACL_RuleProperty {
 			// https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html#aws-managed-rule-groups-baseline-crs
 			Name:     jsii.String("AWSManagedRulesKnownBadInputsRuleSet"),
 			Priority: jsii.Number(20),
+			OverrideAction: &awswafv2.CfnWebACL_OverrideActionProperty{
+				None: &map[string]interface{}{},
+			},
 			Statement: &awswafv2.CfnWebACL_StatementProperty{
 				ManagedRuleGroupStatement: &awswafv2.CfnWebACL_ManagedRuleGroupStatementProperty{
 					Name:       jsii.String("AWSManagedRulesKnownBadInputsRuleSet"),
@@ -74,6 +80,9 @@ func ruleSet() []*awswafv2.CfnWebACL_RuleProperty {
 			// https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html#aws-managed-rule-groups-baseline-crs
 			Name:     jsii.String("AWSManagedRulesAmazonIpReputationList"),
 			Priority: jsii.Number(30),
+			OverrideAction: &awswafv2.CfnWebACL_OverrideActionProperty{
+				None: &map[string]interface{}{},
+			},
 			Statement: &awswafv2.CfnWebACL_StatementProperty{
 				ManagedRuleGroupStatement: &awswafv2.CfnWebACL_ManagedRuleGroupStatementProperty{
 					Name:       jsii.String("AWSManagedRulesAmazonIpReputationList"),
@@ -90,8 +99,8 @@ func ruleSet() []*awswafv2.CfnWebACL_RuleProperty {
 			// Rate Limit the number of requests from one IP
 			Name:     jsii.String("RateLimitRequests"),
 			Priority: jsii.Number(2),
-			Action: awswafv2.CfnWebACL_RuleActionProperty{
-				Count: &map[string]interface{}{},
+			Action: &awswafv2.CfnWebACL_RuleActionProperty{
+				Block: &map[string]interface{}{},
 			},
 			Statement: &awswafv2.CfnWebACL_StatementProperty{
 				RateBasedStatement: &awswafv2.CfnWebACL_RateBasedStatementProperty{
