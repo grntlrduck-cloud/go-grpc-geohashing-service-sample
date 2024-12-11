@@ -12,7 +12,7 @@ import (
 func LandingZoneVPC(scope constructs.Construct, id string) awsec2.IVpc {
 	vpc := awsec2.Vpc_FromVpcAttributes(scope, jsii.String(id), &awsec2.VpcAttributes{
 		VpcId:             awscdk.Fn_ImportValue(jsii.String("LandingZoneVpcId")),
-		AvailabilityZones: jsii.Strings("eu-west1a"),
+		AvailabilityZones: jsii.Strings("eu-west-1a", "eu-west-1b"),
 		IsolatedSubnetIds: &[]*string{
 			awscdk.Fn_ImportValue(jsii.String("LandingZoneIsolatedSubnet1Id")),
 			awscdk.Fn_ImportValue(jsii.String("LandingZoneIsolatedSubnet2Id")),
