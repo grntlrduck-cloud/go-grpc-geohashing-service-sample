@@ -29,7 +29,7 @@ type CPoIItem struct {
 	Pk                string   `json:"pk"             csv:"pk"            dynamodbav:"pk"`
 	GeoIndexPk        uint64   `json:"gsi1_geo_pk_pk" csv:"gsi1_geo_pk"   dynamodbav:"gsi1_geo_pk"` // the geohash with trimmed precision
 	GeoIndexSk        uint64   `json:"gsi1_geo_pk"    csv:"gsi1_geo_sk"   dynamodbav:"gsi1_geo_sk"` // the geohash with full precision
-	Id                string   `json:"id"             csv:"id"            dynamodbav:"id"`
+	ID                string   `json:"id"             csv:"id"            dynamodbav:"id"`
 	Street            string   `json:"street"         csv:"street"        dynamodbav:"street"`
 	StreetNumber      string   `json:"street_number"  csv:"street_number" dynamodbav:"street_number"`
 	ZipCode           string   `json:"zip_code"       csv:"zip_code"      dynamodbav:"zip_code"`
@@ -42,13 +42,13 @@ type CPoIItem struct {
 	EntranceLatitude  float64  `json:"entrance_lat"   csv:"entrance_lat"  dynamodbav:"entrance_lat"`
 }
 
-func (cp *CPoIItem) Domain() (poi.PoILocation, error) {
-	id, err := ksuid.Parse(cp.Id)
+func (cp *CPoIItem) Domain() (*poi.PoILocation, error) {
+	id, err := ksuid.Parse(cp.ID)
 	if err != nil {
-		return poi.PoILocation{}, fmt.Errorf("failed to pares Pk of item to ksuid: %w", err)
+		return nil, fmt.Errorf("failed to pares Pk of item to ksuid: %w", err)
 	}
-	return poi.PoILocation{
-		Id: id,
+	return &poi.PoILocation{
+		ID: id,
 		Location: poi.Coordinates{
 			Latitude:  cp.Latitude,
 			Longitude: cp.Longitude,
@@ -68,29 +68,29 @@ func (cp *CPoIItem) Domain() (poi.PoILocation, error) {
 	}, nil
 }
 
-func NewItemFromDomain(poi poi.PoILocation) (*CPoIItem, error) {
-	gh, err := newGeoHash(poi.Location.Latitude, poi.Location.Longitude)
+func NewItemFromDomain(poiL *poi.PoILocation) (*CPoIItem, error) {
+	gh, err := newGeoHash(poiL.Location.Latitude, poiL.Location.Longitude)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create geo hash: %w", err)
 	}
-	id := poi.Id.String()
+	id := poiL.ID.String()
 	return &CPoIItem{
 		Pk: id,
 		GeoIndexPk: gh.trimmed(
 			CPoIItemCellLevel,
 		), // the trimmed geo hash adjusted to the level
 		GeoIndexSk:        gh.hash(), // the full length geo hash
-		Id:                id,
-		Street:            poi.Address.Street,
-		StreetNumber:      poi.Address.StreetNumber,
-		ZipCode:           poi.Address.ZipCode,
-		City:              poi.Address.City,
-		CountryCode:       poi.Address.CountryCode,
-		Longitude:         poi.Location.Longitude,
-		Latitude:          poi.Location.Latitude,
-		EntranceLongitude: poi.LocationEntrance.Longitude,
-		EntranceLatitude:  poi.LocationEntrance.Latitude,
-		Features:          poi.Features,
+		ID:                id,
+		Street:            poiL.Address.Street,
+		StreetNumber:      poiL.Address.StreetNumber,
+		ZipCode:           poiL.Address.ZipCode,
+		City:              poiL.Address.City,
+		CountryCode:       poiL.Address.CountryCode,
+		Longitude:         poiL.Location.Longitude,
+		Latitude:          poiL.Location.Latitude,
+		EntranceLongitude: poiL.LocationEntrance.Longitude,
+		EntranceLatitude:  poiL.LocationEntrance.Latitude,
+		Features:          poiL.Features,
 	}, nil
 }
 
@@ -98,9 +98,9 @@ func (cp *CPoIItem) IonItem() *IonItem {
 	return &IonItem{
 		CPoIIonItem{
 			Pk:                cp.Pk,
-			GeoIndexPk:        *ion.NewDecimalInt(int64(cp.GeoIndexPk)),
-			GeoIndexSk:        *ion.NewDecimalInt(int64(cp.GeoIndexSk)),
-			Id:                cp.Id,
+			GeoIndexPk:        *ion.NewDecimalInt(int64(cp.GeoIndexPk)), //nolint:gosec // no relevant risk
+			GeoIndexSk:        *ion.NewDecimalInt(int64(cp.GeoIndexSk)), //nolint:gosec // no relevant risk
+			ID:                cp.ID,
 			Street:            cp.Street,
 			StreetNumber:      cp.StreetNumber,
 			ZipCode:           cp.ZipCode,
@@ -172,7 +172,7 @@ func (cte *ChargingCSVEntry) MapToDynamo() (*CPoIItem, error) {
 			CPoIItemCellLevel,
 		), // the trimmed geo hash representing a tile
 		GeoIndexSk:        gh.hash(), // the full length geo hash
-		Id:                id,
+		ID:                id,
 		Street:            cte.Street,
 		StreetNumber:      cte.StreetNumber,
 		ZipCode:           cte.ZipCode,
@@ -219,7 +219,7 @@ type CPoIIonItem struct {
 	Pk                string      `ion:"pk"`
 	GeoIndexPk        ion.Decimal `ion:"gsi1_geo_pk"`
 	GeoIndexSk        ion.Decimal `ion:"gsi1_geo_sk"`
-	Id                string      `ion:"id"`
+	ID                string      `ion:"id"`
 	Street            string      `ion:"street"`
 	StreetNumber      string      `ion:"street_number"`
 	ZipCode           string      `ion:"zip_code"`

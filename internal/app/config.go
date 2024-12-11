@@ -46,7 +46,7 @@ type SslConfig struct {
 
 type AwsConfig struct {
 	Config   BasicConfig    `yaml:"config"`
-	DynamoDb DynamoDbConfig `yaml:"dynamodb"`
+	DynamoDB DynamoDBConfig `yaml:"dynamodb"`
 }
 
 type BasicConfig struct {
@@ -54,7 +54,7 @@ type BasicConfig struct {
 	Account string `yaml:"account"`
 }
 
-type DynamoDbConfig struct {
+type DynamoDBConfig struct {
 	PoiTableName     string           `yaml:"poi_table_name"`
 	EndpointOverride EndpointOverride `yaml:"endpoint_override"`
 	CreateInitTable  bool             `yaml:"create_init_table"`

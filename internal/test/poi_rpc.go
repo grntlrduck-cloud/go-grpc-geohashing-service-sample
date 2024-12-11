@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega" //nolint:stylecheck
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -13,11 +13,11 @@ import (
 	poiv1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/poi"
 )
 
-type PoIRpcClient struct {
+type PoIRPCClient struct {
 	client poiv1.PoIServiceClient
 }
 
-func (p *PoIRpcClient) PoI(
+func (p *PoIRPCClient) PoI(
 	id string,
 	correlation bool,
 	apiKey bool,
@@ -28,7 +28,7 @@ func (p *PoIRpcClient) PoI(
 	return resp, err
 }
 
-func (p *PoIRpcClient) Bbox(
+func (p *PoIRPCClient) Bbox(
 	ne, sw *poiv1.Coordinate,
 	correlation bool,
 	apiKey bool,
@@ -39,7 +39,7 @@ func (p *PoIRpcClient) Bbox(
 	return resp, err
 }
 
-func (p *PoIRpcClient) Proximity(
+func (p *PoIRPCClient) Proximity(
 	cntr *poiv1.Coordinate,
 	radiusMeters float64,
 	correlation bool,
@@ -54,7 +54,7 @@ func (p *PoIRpcClient) Proximity(
 	return resp, err
 }
 
-func (p *PoIRpcClient) Route(
+func (p *PoIRPCClient) Route(
 	route []*poiv1.Coordinate,
 	correlation bool,
 	apiKey bool,
@@ -84,7 +84,7 @@ func contextWithHeaders(
 	return metadata.NewOutgoingContext(ctx, md)
 }
 
-func NewPoIRpcClient(port int32) *PoIRpcClient {
+func NewPoIRPCClient(port int32) *PoIRPCClient {
 	adr := fmt.Sprintf("localhost:%d", port)
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -92,5 +92,5 @@ func NewPoIRpcClient(port int32) *PoIRpcClient {
 	client, err := grpc.NewClient(adr, dialOpts...)
 	Expect(err).To(Not(HaveOccurred()))
 	poiClient := poiv1.NewPoIServiceClient(client)
-	return &PoIRpcClient{client: poiClient}
+	return &PoIRPCClient{client: poiClient}
 }

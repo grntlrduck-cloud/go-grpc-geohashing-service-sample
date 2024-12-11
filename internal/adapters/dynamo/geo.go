@@ -38,27 +38,27 @@ var defaultPolylineCoverer = s2.RegionCoverer{
 
 // The GeoHash wraps and hides the actual geohashing complexity
 type geoHash struct {
-	hashId s2.CellID
+	hashID s2.CellID
 }
 
 func (h geoHash) hash() uint64 {
-	return uint64(h.hashId)
+	return uint64(h.hashID)
 }
 
 func (h geoHash) trimmed(level int) uint64 {
 	if level < 0 || level > 30 {
-		return uint64(h.hashId)
+		return uint64(h.hashID)
 	}
-	parent := s2.CellIDFromFacePosLevel(h.hashId.Face(), h.hashId.Pos(), level)
+	parent := s2.CellIDFromFacePosLevel(h.hashID.Face(), h.hashID.Pos(), level)
 	return uint64(parent)
 }
 
 func (h geoHash) min() uint64 {
-	return uint64(h.hashId.RangeMin())
+	return uint64(h.hashID.RangeMin())
 }
 
 func (h geoHash) max() uint64 {
-	return uint64(h.hashId.RangeMax())
+	return uint64(h.hashID.RangeMax())
 }
 
 func newGeoHash(lat, lon float64) (*geoHash, error) {
@@ -67,7 +67,7 @@ func newGeoHash(lat, lon float64) (*geoHash, error) {
 	}
 	latLonAngles := s2.LatLngFromDegrees(lat, lon)
 	cell := s2.CellFromLatLng(latLonAngles)
-	return &geoHash{hashId: cell.ID()}, nil
+	return &geoHash{hashID: cell.ID()}, nil
 }
 
 func newHashesFromRadiusCenter(
@@ -141,7 +141,7 @@ func newHashesFromRoute(path []poi.Coordinates, coverer *s2.RegionCoverer) ([]ge
 func newGeoHashesFromCells(cells []s2.CellID) []geoHash {
 	hashes := make([]geoHash, len(cells))
 	for i, v := range cells {
-		hashes[i] = geoHash{hashId: v}
+		hashes[i] = geoHash{hashID: v}
 	}
 	return hashes
 }

@@ -40,7 +40,7 @@ func NewApplicationRunner(opts ...ApplicationOpts) *ApplicationRunner {
 	if err != nil {
 		panic(
 			fmt.Errorf(
-				"unable to create application since boot config can not be loaded, please check boot.yaml location is as expected and permissions to read the file are given: %w",
+				"unable to create application since boot config: %w",
 				err,
 			),
 		)
@@ -52,7 +52,7 @@ func NewApplicationRunner(opts ...ApplicationOpts) *ApplicationRunner {
 	for _, opt := range opts {
 		opt(a)
 	}
-	if strings.ToLower(a.bootConfig.Logging.Level) == "prod" {
+	if strings.EqualFold(a.bootConfig.Logging.Level, "prod") {
 		a.logger = app.NewLogger(&a.bootConfig.Logging)
 	} else {
 		a.logger = app.NewDevLogger(&a.bootConfig.Logging)
@@ -65,8 +65,8 @@ func NewApplicationRunner(opts ...ApplicationOpts) *ApplicationRunner {
 	serverOpts := a.getSevrerBaseOptions()
 	serverOpts = append(
 		serverOpts,
-		rpc.WithHealthService(&rpc.HealthRpcService{}),
-		rpc.WithRegisterRpcService(rpc.NewPoIRpcService(a.logger, domainService)),
+		rpc.WithHealthService(&rpc.HealthRPCService{}),
+		rpc.WithRegisterRPCService(rpc.NewPoIRPCService(a.logger, domainService)),
 	)
 	server, err := rpc.NewServer(serverOpts...)
 	if err != nil {
@@ -85,11 +85,11 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 		dynamo.WithContext(a.ctx),
 		dynamo.WithRegion(a.bootConfig.Aws.Config.Region),
 	}
-	if a.bootConfig.Aws.DynamoDb.EndpointOverride.Enabled {
+	if a.bootConfig.Aws.DynamoDB.EndpointOverride.Enabled {
 		dynamoOpts = append(dynamoOpts,
 			dynamo.WithEndPointOverride(
-				a.bootConfig.Aws.DynamoDb.EndpointOverride.Host,
-				a.bootConfig.Aws.DynamoDb.EndpointOverride.Port,
+				a.bootConfig.Aws.DynamoDB.EndpointOverride.Host,
+				a.bootConfig.Aws.DynamoDB.EndpointOverride.Port,
 			),
 		)
 	}
@@ -103,8 +103,8 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 	repo, err := dynamo.NewPoIGeoRepository(
 		a.logger,
 		dynamo.WithDynamoClientWrapper(dyanmoClient),
-		dynamo.WithTableName(a.bootConfig.Aws.DynamoDb.PoiTableName),
-		dynamo.WithCreateAndInitTable(a.bootConfig.Aws.DynamoDb.CreateInitTable),
+		dynamo.WithTableName(a.bootConfig.Aws.DynamoDB.PoiTableName),
+		dynamo.WithCreateAndInitTable(a.bootConfig.Aws.DynamoDB.CreateInitTable),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Repository: %w", err)
@@ -115,15 +115,15 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 func (a *ApplicationRunner) getSevrerBaseOptions() []rpc.ServerOption {
 	return []rpc.ServerOption{
 		rpc.WithContext(a.ctx),
-		rpc.WithRpcLogger(a.logger),
-		rpc.WithGrpcPort(a.bootConfig.Grpc.Server.Port),
-		rpc.WithHttpPort(a.bootConfig.Grpc.Proxy.Port),
-		rpc.WithSslConfig(
+		rpc.WithRPCLogger(a.logger),
+		rpc.WithGRPCPort(a.bootConfig.Grpc.Server.Port),
+		rpc.WithHTTPPort(a.bootConfig.Grpc.Proxy.Port),
+		rpc.WithSSLConfig(
 			a.bootConfig.Grpc.Ssl.CertPath,
 			a.bootConfig.Grpc.Ssl.KeyPath,
 			a.bootConfig.Grpc.Ssl.CaPath,
 		),
-		rpc.WithSslEnabled(a.bootConfig.Grpc.Ssl.Enabled),
+		rpc.WithSSLEnabled(a.bootConfig.Grpc.Ssl.Enabled),
 		rpc.WithAuthSecret(a.bootConfig.Grpc.Secret),
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-type DbClient interface {
+type DBClient interface {
 	BatchPutItem(
 		ctx context.Context,
 		input *dynamodb.BatchWriteItemInput,
@@ -95,7 +95,7 @@ func (client *ClientWrapper) CreateTable(
 	return output, err
 }
 
-func NewClientWrapper(opts ...ClientOptions) (DbClient, error) {
+func NewClientWrapper(opts ...ClientOptions) (DBClient, error) {
 	cw := &ClientWrapper{
 		region: "eu-west-1",
 		ctx:    context.Background(),

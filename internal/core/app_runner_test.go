@@ -57,7 +57,7 @@ var _ = Describe("given application", Ordered, func() {
 		})
 
 		It("application is healthy", func() {
-			healthClient := test.NewHealthRpcClient(runner.BootConfig().Grpc.Server.Port)
+			healthClient := test.NewHealthRPCClient(runner.BootConfig().Grpc.Server.Port)
 			resp := healthClient.CheckHealth()
 			Expect(resp.GetStatus()).To(Equal(health.HealthCheckResponse_SERVING_STATUS_SERVING))
 		})

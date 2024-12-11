@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func getCorrelationId(ctx context.Context) (uuid.UUID, error) {
+func getCorrelationID(ctx context.Context) (uuid.UUID, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return uuid.Max, errors.New("failed to extract metadata")
@@ -26,16 +26,16 @@ func getCorrelationId(ctx context.Context) (uuid.UUID, error) {
 		}
 		return id, nil
 	}
-	return uuid.Max, errors.New("correlationId not in request metadata/headers")
+	return uuid.Max, errors.New("correlationID not in request metadata/headers")
 }
 
-func correlationIdResponseModifier(
+func correlationIDResponseModifier(
 	ctx context.Context,
 	w http.ResponseWriter,
 	p proto.Message,
 ) error {
 	hv := w.Header().Get(gCorrelationMD)
-	if len(hv) > 0 {
+	if hv != "" {
 		w.Header().Set(correlationHeader, hv)
 	} else {
 		w.Header().Set(correlationHeader, "NO_TRACE")
