@@ -11,12 +11,12 @@ import (
 	health_v1 "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/health"
 )
 
-type HealthRpcService struct {
+type HealthRPCService struct {
 	health_v1.UnimplementedHealthServiceServer
 	serverHealthy bool
 }
 
-func (h *HealthRpcService) HealthCheck(
+func (h *HealthRPCService) HealthCheck(
 	ctx context.Context,
 	request *health_v1.HealthCheckRequest,
 ) (*health_v1.HealthCheckResponse, error) {
@@ -28,15 +28,15 @@ func (h *HealthRpcService) HealthCheck(
 	return nil, status.Errorf(codes.Unavailable, "endpoints not available")
 }
 
-func (h *HealthRpcService) SetHealth(healthy bool) {
+func (h *HealthRPCService) SetHealth(healthy bool) {
 	h.serverHealthy = healthy
 }
 
-func (h *HealthRpcService) Register(server *grpc.Server) {
+func (h *HealthRPCService) Register(server *grpc.Server) {
 	health_v1.RegisterHealthServiceServer(server, h)
 }
 
-func (h *HealthRpcService) RegisterProxy(
+func (h *HealthRPCService) RegisterProxy(
 	ctx context.Context,
 	mux *runtime.ServeMux,
 	endpoint string,

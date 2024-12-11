@@ -35,10 +35,10 @@ func main() {
 
 	// the following stacks make up the actual service and the dynamodb table
 	// deployed in deployment phase of CI
-	dbStack := stacks.NewDbStack(
+	dbStack := stacks.NewDBStack(
 		app,
 		fmt.Sprintf("%s-db-stack", appName),
-		&stacks.DbStackProps{
+		&stacks.DBStackProps{
 			StackProps: awscdk.StackProps{
 				Env: env(),
 			},

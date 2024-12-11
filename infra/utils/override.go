@@ -6,8 +6,8 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-func OverrideLogicalId(construct constructs.Node, idOverride string) {
+func OverrideLogicalID(construct constructs.Node, idOverride string) {
 	var resource awscdk.CfnResource
-	jsii.Get(construct, "defaultChild", &resource) // nolint:staticcheck
+	jsii.Get(construct, "defaultChild", &resource) //nolint:staticcheck
 	resource.OverrideLogicalId(jsii.String(idOverride))
 }

@@ -14,7 +14,7 @@ var _ = Describe("Given app stack", Ordered, func() {
 	BeforeAll(func() {
 		app := awscdk.NewApp(nil)
 
-		stack := stacks.NewDbStack(app, "test-db-stack", &stacks.DbStackProps{
+		stack := stacks.NewDBStack(app, "test-db-stack", &stacks.DBStackProps{
 			StackProps: awscdk.StackProps{
 				Env: &awscdk.Environment{
 					Account: jsii.String("123456789012"),

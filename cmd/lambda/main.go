@@ -57,7 +57,7 @@ func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event
 	}
 	defer data.Body.Close()
 
-	var items []dynamo.CPoIItem
+	var items []*dynamo.CPoIItem
 	err = gocsv.Unmarshal(data.Body, &items)
 	if err != nil {
 		handler.logger.Error(
@@ -69,13 +69,13 @@ func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event
 	}
 
 	// map items to domain
-	domain := make([]poi.PoILocation, len(items))
+	domain := make([]*poi.PoILocation, len(items))
 	for i, v := range items {
-		d, err := v.Domain()
-		if err != nil {
+		d, errD := v.Domain()
+		if errD != nil {
 			handler.logger.Error(
 				"failed to map items to domain",
-				zap.Error(err),
+				zap.Error(errD),
 			)
 			resp.Status = cfn.StatusFailed
 			_ = resp.Send()

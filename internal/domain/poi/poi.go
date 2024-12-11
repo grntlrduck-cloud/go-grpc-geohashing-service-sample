@@ -5,7 +5,7 @@ import (
 )
 
 type PoILocation struct {
-	Id               ksuid.KSUID
+	ID               ksuid.KSUID
 	Location         Coordinates
 	Address          Address
 	LocationEntrance Coordinates

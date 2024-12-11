@@ -8,10 +8,10 @@ import (
 
 type AlbWafACL struct {
 	awsconstructs.Construct
-	Acl awswafv2.CfnWebACL
+	ACL awswafv2.CfnWebACL
 }
 
-func NewAlbWafAcl(scope awsconstructs.Construct, id *string) *AlbWafACL {
+func NewAlbWafACL(scope awsconstructs.Construct, id *string) *AlbWafACL {
 	myConstruct := awsconstructs.NewConstruct(scope, id)
 	acl := awswafv2.NewCfnWebACL(myConstruct, jsii.String("CfnWebACL"), &awswafv2.CfnWebACLProps{
 		DefaultAction: &awswafv2.CfnWebACL_DefaultActionProperty{
@@ -27,7 +27,7 @@ func NewAlbWafAcl(scope awsconstructs.Construct, id *string) *AlbWafACL {
 		Name:        jsii.Sprintf("wafv2-alb-%s", *id),
 		Rules:       ruleSet(),
 	})
-	return &AlbWafACL{Construct: myConstruct, Acl: acl}
+	return &AlbWafACL{Construct: myConstruct, ACL: acl}
 }
 
 func ruleSet() []*awswafv2.CfnWebACL_RuleProperty {

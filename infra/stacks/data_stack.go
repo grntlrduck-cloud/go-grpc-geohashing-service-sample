@@ -32,7 +32,7 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 			},
 		},
 	})
-	utils.OverrideLogicalId(databucket.Node(), "ChargingDataBucket")
+	utils.OverrideLogicalID(databucket.Node(), "ChargingDataBucket")
 
 	// params
 	bucketNameParam := awsssm.NewStringParameter(
@@ -43,7 +43,7 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 			StringValue:   databucket.BucketName(),
 		},
 	)
-	utils.OverrideLogicalId(bucketNameParam.Node(), "SSMChargingDataBucketName")
+	utils.OverrideLogicalID(bucketNameParam.Node(), "SSMChargingDataBucketName")
 
 	bucketArnParam := awsssm.NewStringParameter(
 		stack,
@@ -53,7 +53,7 @@ func NewDataStack(scope constructs.Construct, id string, props *DataStackProps) 
 			ParameterName: jsii.Sprintf("/config/%s/charging-data-bucket-arn", props.AppName),
 		},
 	)
-	utils.OverrideLogicalId(bucketArnParam.Node(), "SSMChargingDataBucketArn")
+	utils.OverrideLogicalID(bucketArnParam.Node(), "SSMChargingDataBucketArn")
 
 	// outputs
 	outputBucketName := awscdk.NewCfnOutput(

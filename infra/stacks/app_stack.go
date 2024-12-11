@@ -29,7 +29,12 @@ type AppStackProps struct {
 	AppName    string
 }
 
-func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) awscdk.Stack {
+//nolint:funlen
+func NewAppStack(
+	scope constructs.Construct,
+	id string,
+	props *AppStackProps,
+) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
 		sprops = props.StackProps
@@ -253,13 +258,13 @@ func NewAppStack(scope constructs.Construct, id string, props *AppStackProps) aw
 
 	// add WAF ACL to ALB
 	loadBalancer := service.LoadBalancer()
-	albWafAcl := mycnstrcts.NewAlbWafAcl(stack, jsii.String("ALBFargateService-WAF"))
+	albWafACL := mycnstrcts.NewAlbWafACL(stack, jsii.String("ALBFargateService-WAF"))
 	awswafv2.NewCfnWebACLAssociation(
 		stack,
 		jsii.String("ALBWafAssociation"),
 		&awswafv2.CfnWebACLAssociationProps{
 			ResourceArn: loadBalancer.LoadBalancerArn(),
-			WebAclArn:   albWafAcl.Acl.AttrArn(),
+			WebAclArn:   albWafACL.ACL.AttrArn(),
 		},
 	)
 

@@ -13,7 +13,7 @@ var _ = Describe("Given app stack", Ordered, func() {
 	var template assertions.Template
 	BeforeAll(func() {
 		app := awscdk.NewApp(nil)
-		dbStack := stacks.NewDbStack(app, "test-db-stack", &stacks.DbStackProps{
+		dbStack := stacks.NewDBStack(app, "test-db-stack", &stacks.DBStackProps{
 			StackProps: awscdk.StackProps{
 				Env: &awscdk.Environment{
 					Account: jsii.String("123456789012"),

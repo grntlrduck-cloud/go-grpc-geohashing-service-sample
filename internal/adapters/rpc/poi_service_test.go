@@ -22,8 +22,8 @@ var _ = Describe("given location search request", Ordered, func() {
 	appCtxCancel, cancel := context.WithCancel(appCtx)
 	var runner *core.ApplicationRunner
 	var container *test.DynamoContainer
-	var rpcTestClient *test.PoIRpcClient
-	var restTestClient *test.PoIHttpProxyClient
+	var rpcTestClient *test.PoIRPCClient
+	var restTestClient *test.PoIHTTPProxyClient
 	BeforeAll(func() {
 		err := os.Chdir("../../../")
 		Expect(err).To(Not(HaveOccurred()))
@@ -48,8 +48,8 @@ var _ = Describe("given location search request", Ordered, func() {
 				continue
 			}
 		}
-		rpcTestClient = test.NewPoIRpcClient(runner.BootConfig().Grpc.Server.Port)
-		restTestClient = test.NewPoIHttpProxyClient(
+		rpcTestClient = test.NewPoIRPCClient(runner.BootConfig().Grpc.Server.Port)
+		restTestClient = test.NewPoIHTTPProxyClient(
 			"localhost",
 			runner.BootConfig().Grpc.Proxy.Port,
 		)
@@ -89,7 +89,7 @@ var _ = Describe("given location search request", Ordered, func() {
 			id := "2ofD9hciu5kGIGdGXjPuJy3tUvH" // id from test data csv
 			resp := restTestClient.Info(id, true, true, "")
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			actualId := resp.Ok.Poi.Id
+			actualId := resp.Ok.Poi.ID
 			Expect(actualId).To(Equal(id))
 		})
 
@@ -100,7 +100,7 @@ var _ = Describe("given location search request", Ordered, func() {
 			Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 		})
 
-		It("poi info search without correlationId return invalid arguments", func() {
+		It("poi info search without correlationID return invalid arguments", func() {
 			id := "2ofD9hciu5kGIGdGXjPuJy3tUvH" // id from test data csv
 			_, err := rpcTestClient.PoI(id, false, true, "")
 			Expect(err).To(HaveOccurred())
@@ -161,8 +161,8 @@ var _ = Describe("given location search request", Ordered, func() {
 
 		It("poi http bbox search returns result correctly", func() {
 			// large geographic area
-			sw := test.CoordinatesHttp{Lon: 8.494772, Lat: 49.425026}
-			ne := test.CoordinatesHttp{Lon: 10.040508, Lat: 50.089540}
+			sw := test.CoordinatesHTTP{Lon: 8.494772, Lat: 49.425026}
+			ne := test.CoordinatesHTTP{Lon: 10.040508, Lat: 50.089540}
 			resp := restTestClient.Bbox(ne, sw, true, true, "")
 
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -171,11 +171,11 @@ var _ = Describe("given location search request", Ordered, func() {
 			Expect(numPois).To(BeNumerically(">", 70))
 		})
 
-		It("poi rpc bbox search without correlationId results in invalid arguments", func() {
+		It("poi rpc bbox search without correlationID results in invalid arguments", func() {
 			// large geographic area
 			sw := &poiv1.Coordinate{Lon: 8.494772, Lat: 49.425026}
 			ne := &poiv1.Coordinate{Lon: 10.040508, Lat: 50.089540}
-			_, err := rpcTestClient.Bbox(ne, sw, false, true, "") // send no correlationId
+			_, err := rpcTestClient.Bbox(ne, sw, false, true, "") // send no correlationID
 			Expect(err).To((HaveOccurred()))
 			actualStatus, ok := status.FromError(err)
 			Expect(ok).To(BeTrue())
@@ -240,7 +240,7 @@ var _ = Describe("given location search request", Ordered, func() {
 
 		It("poi http proximity search in medium sized area returns result correctly", func() {
 			// medium sized geographic area
-			cntr := test.CoordinatesHttp{Lon: 9.147263, Lat: 49.333418}
+			cntr := test.CoordinatesHTTP{Lon: 9.147263, Lat: 49.333418}
 			var radiusmeter float64 = 50_000.0 // 50km
 			resp := restTestClient.Prxoimity(cntr, radiusmeter, true, true, "")
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -270,7 +270,7 @@ var _ = Describe("given location search request", Ordered, func() {
 			Expect(actualStatus.Code()).To(Equal(codes.InvalidArgument))
 		})
 
-		It("poi rpc proximity search without correlationId returns invalid arguments", func() {
+		It("poi rpc proximity search without correlationID returns invalid arguments", func() {
 			cntr := &poiv1.Coordinate{Lon: 9.147263, Lat: 49.333418}
 			var radiusmeter float64 = 10_000.0 // 10km
 			_, err := rpcTestClient.Proximity(cntr, radiusmeter, false, true, "")
@@ -318,7 +318,7 @@ var _ = Describe("given location search request", Ordered, func() {
 
 		It("poi http route search return result correctly", func() {
 			// random route from Frankfurt area to Berlin area
-			route := []test.CoordinatesHttp{
+			route := []test.CoordinatesHTTP{
 				{Lon: 9.181946, Lat: 48.796183},
 				{Lon: 8.611994, Lat: 49.75371},
 				{Lon: 8.180723, Lat: 49.558617},
@@ -331,7 +331,7 @@ var _ = Describe("given location search request", Ordered, func() {
 			Expect(len(items)).To(BeNumerically(">", 10))
 		})
 
-		It("poi rpc route search without correlationId returns invalid arguments", func() {
+		It("poi rpc route search without correlationID returns invalid arguments", func() {
 			// random route from Frankfurt area to Berlin area
 			route := []*poiv1.Coordinate{
 				{Lon: 9.181946, Lat: 48.796183},
@@ -340,7 +340,7 @@ var _ = Describe("given location search request", Ordered, func() {
 				{Lon: 8.740714, Lat: 50.144288},
 				{Lon: 13.100310, Lat: 52.551214},
 			}
-			_, err := rpcTestClient.Route(route, false, true, "") // dont send correlationId
+			_, err := rpcTestClient.Route(route, false, true, "") // dont send correlationID
 			Expect(err).To((HaveOccurred()))
 			errStatus, ok := status.FromError(err)
 			Expect(ok).To(BeTrue())
@@ -382,7 +382,7 @@ var _ = Describe("given location search request", Ordered, func() {
 				{Lon: 8.740714, Lat: 50.144288},
 				{Lon: 13000.100310, Lat: 52.551214},
 			}
-			_, err := rpcTestClient.Route(route, true, true, "") // dont send correlationId
+			_, err := rpcTestClient.Route(route, true, true, "") // dont send correlationID
 			Expect(err).To((HaveOccurred()))
 			errStatus, ok := status.FromError(err)
 			Expect(ok).To(BeTrue())

@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega" //nolint:stylecheck
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/api/gen/v1/health"
 )
 
-type HealthRpcClient struct {
+type HealthRPCClient struct {
 	client health.HealthServiceClient
 }
 
-func (h HealthRpcClient) CheckHealth() *health.HealthCheckResponse {
+func (h HealthRPCClient) CheckHealth() *health.HealthCheckResponse {
 	resp, err := h.client.HealthCheck(
 		context.Background(),
 		&health.HealthCheckRequest{Service: ""},
@@ -25,7 +25,7 @@ func (h HealthRpcClient) CheckHealth() *health.HealthCheckResponse {
 	return resp
 }
 
-func NewHealthRpcClient(port int32) *HealthRpcClient {
+func NewHealthRPCClient(port int32) *HealthRPCClient {
 	adr := fmt.Sprintf("localhost:%d", port)
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -34,5 +34,5 @@ func NewHealthRpcClient(port int32) *HealthRpcClient {
 	Expect(err).To(Not(HaveOccurred()))
 	healthClient := health.NewHealthServiceClient(client)
 	Expect(healthClient).To(Not(BeNil()))
-	return &HealthRpcClient{client: healthClient}
+	return &HealthRPCClient{client: healthClient}
 }

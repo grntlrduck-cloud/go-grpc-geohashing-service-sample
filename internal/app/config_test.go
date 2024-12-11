@@ -49,7 +49,7 @@ var _ = Describe("Given application run as in container", Serial, func() {
 			bootConfig, err := app.LoadBootConfig()
 
 			Expect(err).To(Not(HaveOccurred()))
-			Expect(bootConfig.Aws.DynamoDb.PoiTableName).To(Equal(expectedTableName))
+			Expect(bootConfig.Aws.DynamoDB.PoiTableName).To(Equal(expectedTableName))
 			Expect(bootConfig.Aws.Config.Account).To(Equal(expectedAccountId))
 			Expect(bootConfig.App.Name).To(Equal(expectedAppName))
 		})

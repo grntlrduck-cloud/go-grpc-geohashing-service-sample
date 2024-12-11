@@ -130,8 +130,8 @@ func writeIonFile(items []*dynamo.CPoIItem, filePath string) {
 	}(writer)
 	encoder := ion.NewEncoder(writer)
 	for _, v := range items {
-		ion := v.IonItem()
-		e := encoder.Encode(ion)
+		ionItem := v.IonItem()
+		e := encoder.Encode(ionItem)
 		if e != nil {
 			panic(fmt.Errorf("failed to encode ion itemm, %w", e))
 		}

@@ -11,23 +11,23 @@ import (
 	mycnstrcts "github.com/grntlrduck-cloud/go-grpc-geohasing-service-sample/infra/constructs"
 )
 
-type DbStackProps struct {
+type DBStackProps struct {
 	StackProps awscdk.StackProps
 	TableName  string
 	AppName    string
 	LambdaPath string
 }
 
-type DbStack struct {
+type DBStack struct {
 	awscdk.Stack
 	Table awsdynamodb.ITable
 }
 
-func NewDbStack(
+func NewDBStack(
 	scope constructs.Construct,
 	id string,
-	props *DbStackProps,
-) *DbStack {
+	props *DBStackProps,
+) *DBStack {
 	var sprops awscdk.StackProps
 	if props != nil {
 		sprops = props.StackProps
@@ -88,5 +88,5 @@ func NewDbStack(
 			LambdaPath:    props.LambdaPath,
 		},
 	)
-	return &DbStack{Stack: stack, Table: tableWithInitPois.Table}
+	return &DBStack{Stack: stack, Table: tableWithInitPois.Table}
 }

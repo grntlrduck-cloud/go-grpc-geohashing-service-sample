@@ -45,29 +45,29 @@ var _ = Describe("given db connected", Ordered, func() {
 	})
 
 	When("location query received", func() {
-		// GetById
+		// GetByID
 		It("get poi by id returns poi location as expected", func() {
 			id := "2ofD9igSisfEtgC743gf3BnzO7L"
-			kId, err := ksuid.Parse(id)
+			kID, err := ksuid.Parse(id)
 			Expect(err).To(Not(HaveOccurred()))
-			poi, err := repository.GetById(ctx, kId, logger)
+			poi, err := repository.GetByID(ctx, kID, logger)
 			Expect(err).To(Not(HaveOccurred()))
-			Expect(poi.Id).To(Equal(kId))
+			Expect(poi.ID).To(Equal(kID))
 		})
 
 		It("get poi by id with id not in DB return LocationNotFound", func() {
 			id := "2ofD9i2CSiA4Oa0tIYRJlJv399H"
-			kId, err := ksuid.Parse(id)
+			kID, err := ksuid.Parse(id)
 			Expect(err).To(Not(HaveOccurred()))
-			_, err = repository.GetById(ctx, kId, logger)
+			_, err = repository.GetByID(ctx, kID, logger)
 			Expect(err).To((HaveOccurred()))
-			Expect(err).To(Equal(poi.LocationNotFound))
+			Expect(err).To(Equal(poi.ErrLocationNotFound))
 		})
 
 		// Upsert
 		It("upsert poi does not error as expected", func() {
 			poi := poi.PoILocation{
-				Id:               ksuid.New(),
+				ID:               ksuid.New(),
 				Location:         poi.Coordinates{Latitude: 49.5, Longitude: 8.0},
 				LocationEntrance: poi.Coordinates{Latitude: 49.5, Longitude: 8.0},
 				Address: poi.Address{
@@ -79,12 +79,12 @@ var _ = Describe("given db connected", Ordered, func() {
 				},
 				Features: []string{"hello", "dynamo"},
 			}
-			err := repository.Upsert(ctx, poi, logger)
+			err := repository.Upsert(ctx, &poi, logger)
 			Expect(err).To(Not(HaveOccurred()))
 
-			actualSafedPoi, err := repository.GetById(ctx, poi.Id, logger)
+			actualSafedPoi, err := repository.GetByID(ctx, poi.ID, logger)
 			Expect(err).To(Not(HaveOccurred()))
-			Expect(actualSafedPoi).To(Equal(poi))
+			Expect(*actualSafedPoi).To(Equal(poi))
 		})
 
 		// GetByProxinity
@@ -109,7 +109,7 @@ var _ = Describe("given db connected", Ordered, func() {
 			radiusMeters := 50_000.0 // 50 km
 			_, err := repository.GetByProximity(ctx, cntr, radiusMeters, logger)
 			Expect(err).To((HaveOccurred()))
-			Expect(err).To(Equal(poi.InvalidSearchCoordinatesErr))
+			Expect(err).To(Equal(poi.ErrInvalidSearchCoordinates))
 		})
 
 		// GetByBbox
@@ -126,7 +126,7 @@ var _ = Describe("given db connected", Ordered, func() {
 			ne := poi.Coordinates{Longitude: 10000.040508, Latitude: 509999.089540}
 			_, err := repository.GetByBbox(ctx, sw, ne, logger)
 			Expect(err).To((HaveOccurred()))
-			Expect(err).To(Equal(poi.InvalidSearchCoordinatesErr))
+			Expect(err).To(Equal(poi.ErrInvalidSearchCoordinates))
 		})
 
 		// GetByRoute
@@ -153,7 +153,7 @@ var _ = Describe("given db connected", Ordered, func() {
 			}
 			_, err := repository.GetByRoute(ctx, route, logger)
 			Expect(err).To((HaveOccurred()))
-			Expect(err).To(Equal(poi.InvalidSearchCoordinatesErr))
+			Expect(err).To(Equal(poi.ErrInvalidSearchCoordinates))
 		})
 	})
 
