@@ -18,6 +18,7 @@ import (
 
 const testDataID = "2ofD9hciu5kGIGdGXjPuJy3tUvH"
 
+// random route from Frankfurt area to Berlin area
 var routeFixtureCoordinates = []*poiv1.Coordinate{
 	{Lon: 9.181946, Lat: 48.796183},
 	{Lon: 8.611994, Lat: 49.75371},
@@ -311,7 +312,6 @@ var _ = Describe("given location search request", Ordered, func() {
 
 		// Route RPC
 		It("poi rpc route search return result correctly", func() {
-			// random route from Frankfurt area to Berlin area
 			route := routeFixtureCoordinates
 			resp, err := rpcTestClient.Route(route, true, true, "")
 			Expect(err).To(Not(HaveOccurred()))
@@ -335,7 +335,6 @@ var _ = Describe("given location search request", Ordered, func() {
 		})
 
 		It("poi rpc route search without correlationID returns invalid arguments", func() {
-			// random route from Frankfurt area to Berlin area
 			route := routeFixtureCoordinates
 			_, err := rpcTestClient.Route(route, false, true, "") // dont send correlationID
 			Expect(err).To((HaveOccurred()))
@@ -371,7 +370,6 @@ var _ = Describe("given location search request", Ordered, func() {
 		)
 
 		It("poi rpc route search invalid coordinates returns invalid arguments", func() {
-			// random route from Frankfurt area to Berlin area
 			route := routeFixtureCoordinates
 			_, err := rpcTestClient.Route(route, true, true, "") // dont send correlationID
 			Expect(err).To((HaveOccurred()))
