@@ -93,6 +93,7 @@ func NewAppStack(
 					"APP_ENV":             jsii.String("prod"),
 					"BOOT_PROFILE_ACTIVE": jsii.String("prod"),
 					"ACCOUNT_ID":          props.StackProps.Env.Account,
+					"POI_TABLE_NAME":      props.Table.TableName(),
 				},
 				ContainerPort: jsii.Number(443),
 				LogDriver: awsecs.AwsLogDriver_AwsLogs(
@@ -102,7 +103,11 @@ func NewAppStack(
 					},
 				),
 			},
-			DesiredCount:    jsii.Number(1),
+			DesiredCount: jsii.Number(1),
+			RuntimePlatform: &awsecs.RuntimePlatform{
+				CpuArchitecture:       awsecs.CpuArchitecture_ARM64(),
+				OperatingSystemFamily: awsecs.OperatingSystemFamily_LINUX(),
+			},
 			Cpu:             jsii.Number(512),
 			MemoryLimitMiB:  jsii.Number(1024),
 			ListenerPort:    jsii.Number(443),
@@ -115,7 +120,7 @@ func NewAppStack(
 			MinHealthyPercent: jsii.Number(100),
 			MaxHealthyPercent: jsii.Number(200),
 			HealthCheck: &awsecs.HealthCheck{
-				Command:     jsii.Strings("CMD-SHELL", "/service/probe"),
+				Command:     jsii.Strings("CMD", "/service/probe"),
 				StartPeriod: awscdk.Duration_Seconds(jsii.Number(10)),
 				Interval:    awscdk.Duration_Seconds(jsii.Number(5)),
 				Timeout:     awscdk.Duration_Seconds(jsii.Number(2)),
@@ -126,6 +131,10 @@ func NewAppStack(
 				Enable:   jsii.Bool(true),
 				Rollback: jsii.Bool(true),
 			},
+			Cluster: awsecs.NewCluster(stack, jsii.String("Cluster"), &awsecs.ClusterProps{
+				Vpc:               vpc,
+				ContainerInsights: jsii.Bool(true),
+			}),
 			DomainName: jsii.Sprintf("%s.%s", props.AppName, *hostedZone.ZoneName()),
 			DomainZone: hostedZone,
 			Vpc:        vpc,

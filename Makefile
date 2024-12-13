@@ -58,7 +58,7 @@ build_tag_push_ci:
 	docker push $$REPO_URI:$$TAG
 
 deploy_stacks_ci:
-	cdk deploy \*db-stack \*app-stack require-approval never
+	cdk deploy \*app-stack --require-approval never
 
 diff_stacks_ci:
 	cdk diff \*db-stack \*app-stack
