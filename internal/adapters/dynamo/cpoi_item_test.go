@@ -51,7 +51,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			}
 			actual, err := poiItem.Domain()
 			Expect(err).To(Not(HaveOccurred()))
-			assertDomainToEqual(*actual, expectedDomain)
+			assertDomainToEqual(actual, &expectedDomain)
 		})
 	})
 
@@ -117,7 +117,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			}
 			actual, err := dynamo.NewItemFromDomain(&domain)
 			Expect(err).To(Not(HaveOccurred()))
-			assertItemToEqualWithoutId(*actual, expected)
+			assertItemToEqualWithoutID(actual, &expected)
 			Expect(actual.ID).To(Equal(expected.ID))
 			Expect(actual.Pk).To(Equal(expected.Pk))
 		})
@@ -168,7 +168,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			actual := dynamo.EntriesToDynamo(csvEntries)
 
 			Expect(len(actual)).To(Equal(len(expected)))
-			assertItemToEqualWithoutId(*expected[0], *actual[0])
+			assertItemToEqualWithoutID(expected[0], actual[0])
 		})
 	})
 
@@ -215,7 +215,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 	})
 })
 
-func assertDomainToEqual(actual, expected poi.PoILocation) {
+func assertDomainToEqual(actual, expected *poi.PoILocation) {
 	Expect(actual.LocationEntrance.Latitude).Should(
 		BeNumerically("~", expected.LocationEntrance.Latitude),
 	)
@@ -233,7 +233,7 @@ func assertDomainToEqual(actual, expected poi.PoILocation) {
 	Expect(actual.ID).To(Equal(expected.ID))
 }
 
-func assertItemToEqualWithoutId(actual, expected dynamo.CPoIItem) {
+func assertItemToEqualWithoutID(actual, expected *dynamo.CPoIItem) {
 	Expect(actual.EntranceLatitude).Should(
 		BeNumerically("~", expected.EntranceLatitude),
 	)
