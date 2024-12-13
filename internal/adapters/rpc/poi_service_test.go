@@ -139,7 +139,7 @@ var _ = Describe("given location search request", Ordered, func() {
 		})
 
 		It("poi info search with none existing id return not found", func() {
-			_, err := rpcTestClient.PoI(testDataID, true, true, "")
+			_, err := rpcTestClient.PoI("3yfD9hciu5kGIGdGXjPuJy3tUvH", true, true, "")
 			Expect(err).To(HaveOccurred())
 			actualStatus, ok := status.FromError(err)
 			Expect(ok).To(BeTrue())
@@ -370,7 +370,11 @@ var _ = Describe("given location search request", Ordered, func() {
 		)
 
 		It("poi rpc route search invalid coordinates returns invalid arguments", func() {
-			route := routeFixtureCoordinates
+			route := []*poiv1.Coordinate{
+				{Lon: 99999.181946, Lat: 4899999.796183},
+				{Lon: 8.611994, Lat: 499999.75371},
+			}
+
 			_, err := rpcTestClient.Route(route, true, true, "") // dont send correlationID
 			Expect(err).To((HaveOccurred()))
 			errStatus, ok := status.FromError(err)
