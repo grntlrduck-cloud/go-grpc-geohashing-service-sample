@@ -137,7 +137,6 @@ func NewAppStack(
 			}),
 			DomainName: jsii.Sprintf("%s.%s", props.AppName, *hostedZone.ZoneName()),
 			DomainZone: hostedZone,
-			Vpc:        vpc,
 			TaskSubnets: &awsec2.SubnetSelection{
 				Subnets: vpc.PrivateSubnets(),
 			},
