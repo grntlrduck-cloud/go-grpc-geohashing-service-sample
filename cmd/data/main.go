@@ -18,12 +18,13 @@ import (
 )
 
 const (
-	bucketNameParam                 = "/config/go-grpc-poi-service/charging-data-bucket-name"
+	bucketNameParam                 = "/config/grpc-charging-location-service/charging-data-bucket-name"
 	cPoIDataCSVPath                 = "cpoi_data.csv"
 	cPoIDynamoItemsCSVPath          = "cpoi_dynamo_items.csv"
 	cPoIDynamoItemsLocalTestCSVPath = "config/db/local/cpoi_dynamo_items_int_test.csv" // cpois to use for integration testing in CI and local
 	cPoIIonFilePath                 = "cpoi_ion_items"
 )
+
 // This program requires the dataset from kaggle to be present in the root of this project as 'cpoi_data.csv'.
 // The CSV is proecessed and mapped to fit the data model for dynamo db, saved to disk as CSV and AWS ION.
 // Finally, the files, the raw and the processed data is uploaded to the S3 bucket defined in the data-stack
@@ -129,8 +130,8 @@ func writeIonFile(items []*dynamo.CPoIItem, filePath string) {
 	}(writer)
 	encoder := ion.NewEncoder(writer)
 	for _, v := range items {
-		ion := v.IonItem()
-		e := encoder.Encode(ion)
+		ionItem := v.IonItem()
+		e := encoder.Encode(ionItem)
 		if e != nil {
 			panic(fmt.Errorf("failed to encode ion itemm, %w", e))
 		}

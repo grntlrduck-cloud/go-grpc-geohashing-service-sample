@@ -35,7 +35,7 @@ func (k *KeyAuthInterceptor) UnaryKeyAuthorizer() grpc.UnaryServerInterceptor {
 		if strings.Contains(info.FullMethod, healthServiceMethodName) {
 			return handler(ctx, req)
 		}
-		requestKey, err := getApiKeyFromContext(ctx)
+		requestKey, err := getAPIKeyFromContext(ctx)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, "unauthenticated, key missing")
 		}
@@ -56,14 +56,14 @@ func (k *KeyAuthInterceptor) UnaryKeyAuthorizer() grpc.UnaryServerInterceptor {
 	}
 }
 
-func getApiKeyFromContext(ctx context.Context) (string, error) {
+func getAPIKeyFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", errors.New("failed to extract metadata")
 	}
 	// extract grpc metadata and header from REST request to handle both cases
 	match := md.Get(apiKeyHeader)
-	match = append(match, md.Get(gApiKeyMetadata)...)
+	match = append(match, md.Get(gAPIKeyMetadata)...)
 	if len(match) > 0 {
 		return match[0], nil
 	}

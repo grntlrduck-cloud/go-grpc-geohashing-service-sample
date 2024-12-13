@@ -15,10 +15,10 @@ schemes:
   - https
 consumes:
   - application/json
-  - application/x-protobuf
+  - application/grpc
 produces:
   - application/json
-  - application/x-protobuf
+  - application/grpc
 paths:
   /api/v1/pois/bbox:
     get:
@@ -162,7 +162,6 @@ paths:
           required: false
           type: number
           format: double
-          default: "50000"
         - name: X-Correlation-Id
           description: Unique event identifier for server requests
           in: header
@@ -343,13 +342,9 @@ definitions:
           type: object
           $ref: '#/definitions/poiv1PoI'
 securityDefinitions:
-  OAuth2:
-    type: oauth2
-    flow: accessCode
-    authorizationUrl: https://example.com/oauth/authorize
-    tokenUrl: https://example.com/oauth/token
-    scopes:
-      pois.read: Grants read access to poi resources
+  ApiKeyAuth:
+    type: apiKey
+    name: X-Api-Key
+    in: header
 security:
-  - OAuth2:
-      - pois.read
+  - ApiKeyAuth: []

@@ -1,4 +1,5 @@
 .api/gen.
 .cmd/.
 .infra/cdk_main.go.
+.infra/constructs.
 .internal/test.

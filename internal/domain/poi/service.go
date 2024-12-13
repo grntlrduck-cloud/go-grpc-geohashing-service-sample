@@ -24,17 +24,17 @@ func (ls *LocationService) Info(
 	ctx context.Context,
 	id ksuid.KSUID,
 	logger *zap.Logger,
-) (PoILocation, error) {
+) (*PoILocation, error) {
 	// handle context cancellation
 	if ctx.Err() != nil {
-		return PoILocation{}, ctx.Err()
+		return nil, ctx.Err()
 	}
 	// ensure db queries are canceled before causing sever loss of responsiveness
-	logger.Debug("getting poi from db", zap.String("operation", "GetById"))
+	logger.Debug("getting poi from db", zap.String("operation", "GetByID"))
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	location, err := ls.repo.GetById(ctx, id, logger)
-	if errors.Is(err, LocationNotFound) {
+	location, err := ls.repo.GetByID(ctx, id, logger)
+	if errors.Is(err, ErrLocationNotFound) {
 		logger.Warn("location not found")
 	}
 	return location, err
@@ -45,7 +45,7 @@ func (ls *LocationService) Proximity(
 	cntr Coordinates,
 	radius float64,
 	logger *zap.Logger,
-) ([]PoILocation, error) {
+) ([]*PoILocation, error) {
 	// handle context cancellation
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
@@ -79,7 +79,7 @@ func (ls *LocationService) Bbox(
 	ctx context.Context,
 	sw, ne Coordinates,
 	logger *zap.Logger,
-) ([]PoILocation, error) {
+) ([]*PoILocation, error) {
 	// handle context cancellation
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
@@ -109,7 +109,7 @@ func (ls *LocationService) Route(
 	ctx context.Context,
 	wgsPath []Coordinates,
 	logger *zap.Logger,
-) ([]PoILocation, error) {
+) ([]*PoILocation, error) {
 	// handle context cancellation
 	if ctx.Err() != nil {
 		return nil, ctx.Err()

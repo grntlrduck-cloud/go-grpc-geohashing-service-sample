@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega" //nolint:stylecheck
 	dynamodblocal "github.com/testcontainers/testcontainers-go/modules/dynamodb"
 )
 
@@ -30,7 +30,7 @@ func (d *DynamoContainer) Port() string {
 }
 
 func (d *DynamoContainer) Stop() {
-	until := time.Duration(5 * time.Second)
+	until := time.Duration(5 * time.Second) //nolint:unconvert // false positive
 	_ = d.container.Stop(d.ctx, &until)
 }
 

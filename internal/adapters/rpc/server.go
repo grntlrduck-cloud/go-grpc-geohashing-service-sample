@@ -23,7 +23,7 @@ import (
 
 const (
 	defaultGrpcPort = 8081
-	defaultHttpPort = 9081
+	defaultHTTPPort = 9081
 )
 
 type Server struct {
@@ -38,21 +38,21 @@ type Server struct {
 	sslCertPath              string
 	sslKeyPath               string
 	sslCaPath                string
-	grpcTlsConfig            credentials.TransportCredentials
-	httpProxyTlsConfig       credentials.TransportCredentials
+	grpcTlSConfig            credentials.TransportCredentials
+	httpProxyTlSConfig       credentials.TransportCredentials
 	albDeregistrationSeconds int64
 	secret                   string
 }
 
 type ServerOption func(s *Server)
 
-func WithGrpcPort(port int32) ServerOption {
+func WithGRPCPort(port int32) ServerOption {
 	return func(s *Server) {
 		s.grpcPort = port
 	}
 }
 
-func WithHttpPort(port int32) ServerOption {
+func WithHTTPPort(port int32) ServerOption {
 	return func(s *Server) {
 		s.httpPort = port
 	}
@@ -64,19 +64,19 @@ func WithContext(ctx context.Context) ServerOption {
 	}
 }
 
-func WithSslEnabled(sslEnabled bool) ServerOption {
+func WithSSLEnabled(sslEnabled bool) ServerOption {
 	return func(s *Server) {
 		s.sslEnabled = sslEnabled
 	}
 }
 
-func WithRpcLogger(logger *zap.Logger) ServerOption {
+func WithRPCLogger(logger *zap.Logger) ServerOption {
 	return func(s *Server) {
 		s.logger = logger
 	}
 }
 
-func WithSslConfig(certPath, keyPath, caPath string) ServerOption {
+func WithSSLConfig(certPath, keyPath, caPath string) ServerOption {
 	return func(s *Server) {
 		s.sslCertPath = certPath
 		s.sslKeyPath = keyPath
@@ -84,7 +84,7 @@ func WithSslConfig(certPath, keyPath, caPath string) ServerOption {
 	}
 }
 
-func WithRegisterRpcService(service Service) ServerOption {
+func WithRegisterRPCService(service Service) ServerOption {
 	return func(s *Server) {
 		if service != nil {
 			s.services = append(s.services, service)
@@ -100,7 +100,7 @@ func WithHealthService(healthService HealthService) ServerOption {
 	}
 }
 
-func WithAlbDegistrationDelay(seconds int64) ServerOption {
+func WithALBDegistrationDelay(seconds int64) ServerOption {
 	return func(s *Server) {
 		if seconds > 0 {
 			s.albDeregistrationSeconds = seconds
@@ -120,7 +120,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	// apply defaults to server
 	server := &Server{
 		grpcPort:                 defaultGrpcPort,
-		httpPort:                 defaultHttpPort,
+		httpPort:                 defaultHTTPPort,
 		ctx:                      context.Background(),
 		albDeregistrationSeconds: 1,
 		services:                 make([]Service, 0),
@@ -143,7 +143,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		)
 	}
 	if server.sslEnabled {
-		err := server.loadTlsConfig()
+		err := server.loadTLSConfig()
 		if err != nil {
 			return nil, fmt.Errorf("fatal, failed to load tls config: %w", err)
 		}
@@ -159,7 +159,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 	return server, nil
 }
 
-func (s *Server) loadTlsConfig() error {
+func (s *Server) loadTLSConfig() error {
 	s.logger.Info("loading tls config for server")
 	ca, err := os.ReadFile(s.sslCaPath)
 	if err != nil {
@@ -175,14 +175,14 @@ func (s *Server) loadTlsConfig() error {
 		return err
 	}
 
-	s.grpcTlsConfig = credentials.NewTLS(
+	s.grpcTlSConfig = credentials.NewTLS(
 		&tls.Config{
 			Certificates: []tls.Certificate{cert},
 			ClientAuth:   tls.NoClientCert,
 			MinVersion:   tls.VersionTLS12,
 		},
 	)
-	s.httpProxyTlsConfig = credentials.NewTLS(
+	s.httpProxyTlSConfig = credentials.NewTLS(
 		&tls.Config{
 			RootCAs:    cp,
 			MinVersion: tls.VersionTLS12,
@@ -194,12 +194,12 @@ func (s *Server) loadTlsConfig() error {
 func (s *Server) Start() error {
 	// explicit ensure we start the service unhealthy
 	s.healthService.SetHealth(false)
-	err := s.startRpcServer()
+	err := s.startRPCServer()
 	if err != nil {
 		return fmt.Errorf("failed to start rpc server: %w", err)
 	}
 
-	err = s.startHttpProxy()
+	err = s.startHTTPProxy()
 	if err != nil {
 		s.rpcServer.GracefulStop()
 		return fmt.Errorf("failed to start reverse rpc proxy: %w", err)
@@ -212,7 +212,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) startRpcServer() error {
+func (s *Server) startRPCServer() error {
 	endpoint := fmt.Sprintf(":%d", s.grpcPort)
 	s.logger.Info("starting gRPC server")
 	lis, err := net.Listen("tcp", endpoint)
@@ -229,12 +229,12 @@ func (s *Server) startRpcServer() error {
 	}
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
-			grpc.UnaryServerInterceptor(authInterceptor.UnaryKeyAuthorizer()),
+			authInterceptor.UnaryKeyAuthorizer(),
 			grpclogging.UnaryServerInterceptor(InterceptorLogger(s.logger)),
 		),
 	}
 	if s.sslEnabled {
-		opts = append(opts, grpc.Creds(s.grpcTlsConfig))
+		opts = append(opts, grpc.Creds(s.grpcTlSConfig))
 	} else {
 		s.logger.Warn("running grpc server without tls!")
 	}
@@ -258,13 +258,13 @@ func (s *Server) startRpcServer() error {
 	return nil
 }
 
-func (s *Server) startHttpProxy() error {
+func (s *Server) startHTTPProxy() error {
 	httpEndpoint := fmt.Sprintf(":%d", s.httpPort)
 	grpcEndpoint := fmt.Sprintf(":%d", s.grpcPort)
 	s.logger.Info("starting HTTP reverse proxy with RPC handler")
 	mux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(headerMatcher),
-		runtime.WithForwardResponseOption(correlationIdResponseModifier),
+		runtime.WithForwardResponseOption(correlationIDResponseModifier),
 	)
 	opts := []grpc.DialOption{
 		grpc.WithChainUnaryInterceptor(
@@ -276,7 +276,7 @@ func (s *Server) startHttpProxy() error {
 	}
 	if s.sslEnabled {
 		s.logger.Info("configuring client tls credentials")
-		opts = append(opts, grpc.WithTransportCredentials(s.httpProxyTlsConfig))
+		opts = append(opts, grpc.WithTransportCredentials(s.httpProxyTlSConfig))
 	} else {
 		s.logger.Warn("dial options insecure")
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -301,12 +301,18 @@ func (s *Server) startHttpProxy() error {
 	go func() {
 		if s.sslEnabled {
 			s.logger.Info("starting http server")
-			err = http.ListenAndServeTLS(httpEndpoint, s.sslCertPath, s.sslKeyPath, mux)
+			err = http.ListenAndServeTLS( //nolint:gosec // handled by framework
+				httpEndpoint,
+				s.sslCertPath,
+				s.sslKeyPath,
+				mux,
+			)
 			if err != nil {
 				s.logger.Panic("failed to start http server with TLS configured", zap.Error(err))
 			}
 		} else {
 			s.logger.Warn("start http server without TLS!")
+			//nolint:gosec // handled by framework, only used in dev
 			err = http.ListenAndServe(httpEndpoint, mux)
 			if err != nil {
 				s.logger.Panic("failed to start http server", zap.Error(err))

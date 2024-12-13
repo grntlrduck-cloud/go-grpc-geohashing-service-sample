@@ -17,7 +17,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			Pk:                pk.String(),
 			GeoIndexPk:        1234,
 			GeoIndexSk:        12456789012,
-			Id:                pk.String(),
+			ID:                pk.String(),
 			Street:            "Some Street",
 			StreetNumber:      "12b",
 			ZipCode:           "123456",
@@ -31,7 +31,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 		}
 		It("does not return an error when parsed to Domain", func() {
 			expectedDomain := poi.PoILocation{
-				Id: pk,
+				ID: pk,
 				Location: poi.Coordinates{
 					Latitude:  15.5,
 					Longitude: 12.5,
@@ -51,7 +51,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			}
 			actual, err := poiItem.Domain()
 			Expect(err).To(Not(HaveOccurred()))
-			assertDomainToEqual(actual, expectedDomain)
+			assertDomainToEqual(actual, &expectedDomain)
 		})
 	})
 
@@ -60,7 +60,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			Pk:                "NOT A KSUID",
 			GeoIndexPk:        1234,
 			GeoIndexSk:        12456789012,
-			Id:                "NOT A KSUID",
+			ID:                "NOT A KSUID",
 			Street:            "Some Street",
 			StreetNumber:      "12b",
 			ZipCode:           "123456",
@@ -80,7 +80,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 
 	When("domain is paresed to CPoIItem", func() {
 		domain := poi.PoILocation{
-			Id: ksuid.New(),
+			ID: ksuid.New(),
 			Address: poi.Address{
 				Street:       "IDK",
 				StreetNumber: "13b",
@@ -100,8 +100,8 @@ var _ = Describe("Given charging location CPoIItem", func() {
 		}
 		It("is valid location", func() {
 			expected := dynamo.CPoIItem{
-				Id:                domain.Id.String(),
-				Pk:                domain.Id.String(),
+				ID:                domain.ID.String(),
+				Pk:                domain.ID.String(),
 				Longitude:         domain.Location.Longitude,
 				Latitude:          domain.Location.Latitude,
 				EntranceLongitude: domain.LocationEntrance.Longitude,
@@ -115,10 +115,10 @@ var _ = Describe("Given charging location CPoIItem", func() {
 				CountryCode:       domain.Address.CountryCode,
 				Features:          domain.Features,
 			}
-			actual, err := dynamo.NewItemFromDomain(domain)
+			actual, err := dynamo.NewItemFromDomain(&domain)
 			Expect(err).To(Not(HaveOccurred()))
-			assertItemToEqualWithoutId(*actual, expected)
-			Expect(actual.Id).To(Equal(expected.Id))
+			assertItemToEqualWithoutID(actual, &expected)
+			Expect(actual.ID).To(Equal(expected.ID))
 			Expect(actual.Pk).To(Equal(expected.Pk))
 		})
 	})
@@ -143,7 +143,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 		It("mapped correctly", func() {
 			expected := []*dynamo.CPoIItem{
 				{
-					Id:                ksuid.Nil.String(),
+					ID:                ksuid.Nil.String(),
 					Pk:                ksuid.Nil.String(),
 					Longitude:         15.4,
 					Latitude:          14.5,
@@ -168,7 +168,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			actual := dynamo.EntriesToDynamo(csvEntries)
 
 			Expect(len(actual)).To(Equal(len(expected)))
-			assertItemToEqualWithoutId(*expected[0], *actual[0])
+			assertItemToEqualWithoutID(expected[0], actual[0])
 		})
 	})
 
@@ -178,7 +178,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			Pk:                pk.String(),
 			GeoIndexPk:        1234,
 			GeoIndexSk:        123456789012,
-			Id:                pk.String(),
+			ID:                pk.String(),
 			Street:            "Some Street",
 			StreetNumber:      "12b",
 			ZipCode:           "123456",
@@ -194,7 +194,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 			Pk:                pk.String(),
 			GeoIndexPk:        *ion.NewDecimalInt(1234),
 			GeoIndexSk:        *ion.NewDecimalInt(123456789012),
-			Id:                pk.String(),
+			ID:                pk.String(),
 			Street:            "Some Street",
 			StreetNumber:      "12b",
 			ZipCode:           "123456",
@@ -215,7 +215,7 @@ var _ = Describe("Given charging location CPoIItem", func() {
 	})
 })
 
-func assertDomainToEqual(actual, expected poi.PoILocation) {
+func assertDomainToEqual(actual, expected *poi.PoILocation) {
 	Expect(actual.LocationEntrance.Latitude).Should(
 		BeNumerically("~", expected.LocationEntrance.Latitude),
 	)
@@ -230,10 +230,10 @@ func assertDomainToEqual(actual, expected poi.PoILocation) {
 	)
 	Expect(actual.Address).To(Equal(expected.Address))
 	Expect(actual.Features).To(Equal(expected.Features))
-	Expect(actual.Id).To(Equal(expected.Id))
+	Expect(actual.ID).To(Equal(expected.ID))
 }
 
-func assertItemToEqualWithoutId(actual, expected dynamo.CPoIItem) {
+func assertItemToEqualWithoutID(actual, expected *dynamo.CPoIItem) {
 	Expect(actual.EntranceLatitude).Should(
 		BeNumerically("~", expected.EntranceLatitude),
 	)

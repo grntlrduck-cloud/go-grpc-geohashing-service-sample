@@ -43,14 +43,14 @@ var _ = Describe("Given application run as in container", Serial, func() {
 			expectedAppName := "grpc-chagring-location-service"
 			os.Setenv("APP_NAME", expectedAppName)
 
-			expectedAccountId := "123456789012"
-			os.Setenv("ACCOUNT_ID", expectedAccountId)
+			expectedAccountID := "123456789012"
+			os.Setenv("ACCOUNT_ID", expectedAccountID)
 
 			bootConfig, err := app.LoadBootConfig()
 
 			Expect(err).To(Not(HaveOccurred()))
-			Expect(bootConfig.Aws.DynamoDb.PoiTableName).To(Equal(expectedTableName))
-			Expect(bootConfig.Aws.Config.Account).To(Equal(expectedAccountId))
+			Expect(bootConfig.Aws.DynamoDB.PoiTableName).To(Equal(expectedTableName))
+			Expect(bootConfig.Aws.Config.Account).To(Equal(expectedAccountID))
 			Expect(bootConfig.App.Name).To(Equal(expectedAppName))
 		})
 	})
