@@ -54,7 +54,7 @@ build_tag_push_ci:
 	REPO_URI=$(shell aws ssm get-parameter --name "/config/${APP_NAME}/ecr/uri" --query "Parameter.Value" --output text); \
 	TAG=$(if $(strip $(GITHUB_SHA)),$(GITHUB_SHA),$(shell git rev-parse HEAD)); \
 	PLATFORM=$(if $(strip $(TARGET_PLATFORM)),$(TARGET_PLATFORM),linux/arm64); \
-	docker buildx build --platform $$PLATFORM --push -t $$REPO_URI:$$TAG . && docker push $$REPO_URI:$$TAG
+	docker buildx build --platform $$PLATFORM --push -t $$REPO_URI:$$TAG .
 
 deploy_stacks_ci:
 	cdk deploy \*app-stack --require-approval never
