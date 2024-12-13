@@ -94,6 +94,7 @@ func NewAppStack(
 					"BOOT_PROFILE_ACTIVE": jsii.String("prod"),
 					"ACCOUNT_ID":          props.StackProps.Env.Account,
 					"POI_TABLE_NAME":      props.Table.TableName(),
+					"GOMAXPROCS":          jsii.String("1"),
 				},
 				ContainerPort: jsii.Number(443),
 				LogDriver: awsecs.AwsLogDriver_AwsLogs(

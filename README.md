@@ -132,3 +132,53 @@ make vuln_scan
   - https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/customizing_openapi_output/
   - https://github.com/grpc-ecosystem/grpc-gateway
   - https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
+
+## Evaluation
+
+### gRPC GateWay
+
+The HTTP 2.0 based gRPC protocol is ideal for service to service communication, easy to set up and ergonomic to implement.
+The idea of beating to nails with one strike and using gRPC and Protobuf to implement a REST API seem really appealing.
+The advantages are:
+
+- efficiency
+- simplicity
+- cross language code generation
+- client and server side code generation
+- light weight
+- almost no noticeable perofoamnce impact by the reverse-proxy
+- gRPC calls are extremely performanct
+
+Using gRPC GateWayto generate client and server code as well as API documentation is a breeze to setup.
+Implementation is straight forward and the documentation is very solid.
+However the disadvantages are:
+
+- organization not used to Protobuf might struggle
+- the Protobuf annotations are hard to read
+- the Protobuf annotations are not as good documented as the rest of gRPC GateWay
+- openapi v3 is not supported (yet)
+
+To summarize, gRPC is a clear win for ogranization which are already used to it and want to reduce development overhead for frontend intgeration.
+For organization without expericene with gRPC or Protobuf I would not recommend the usage.
+
+### DynamoDb for geo hashing
+
+Using your geo hashing library of choice to implement a GIS DB on top of DynamoDB sounds appealing.
+However, the disadvantages are clear:
+
+- index predetermines query performance
+- inflexible and limited number of indices
+
+For business without clear requirements, rapid changes in needs, those issues may be immediate show stoppers.
+Nevertheless, DynamoDB provides a lot of advantages:
+
+- cheap
+- easy scalability
+- easy to set up multi-region tables
+- scalable
+
+In the case of clearly defined needs the advantages outweigh the disadvantages.
+Additionally, implementing the geo hashing on top of DynamoDB is not that complicated and relatively easy to maintain.
+
+Summarizing, if you now your business needs in advance and you dont expect major changes in query needs, you might be able to safe a lot of money and time by
+using DynamoDB instead of PostGIS.
