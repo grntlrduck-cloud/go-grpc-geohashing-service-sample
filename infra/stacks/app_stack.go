@@ -151,7 +151,7 @@ func NewAppStack(
 		}
 	}
 	// grant read and write permissions to dynamo table
-	props.Table.GrantWriteData(service.Service().TaskDefinition().TaskRole())
+	props.Table.GrantReadWriteData(service.Service().TaskDefinition().TaskRole())
 
 	// THE ALB AND ROUTING CONFIGURATIONS DOWN BELOW
 	// ensure default action on listener
