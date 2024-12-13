@@ -159,26 +159,25 @@ jobs:
       - name: Assume build role for eu-east to get public ECR access
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: us-east-1 # required for public ecr
+          aws-region: eu-west-1 # required for public ecr
           role-to-assume: ${{ secrets.CI_BUILD_ROLE_ARN }}
       - name: Login to Amazon ECR Public Gallery
         id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v2
+        env:
+          AWS_REGION: us-east-1
         with:
           registry-type: public
-      - name: Assume build role for eu-west-1
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: eu-west-1
-          role-to-assume: ${{ secrets.CI_BUILD_ROLE_ARN }}
       - name: Login to private ECR
+        env:
+          AWS_REGION: eu-west-1
         id: login-ecr-private
         uses: aws-actions/amazon-ecr-login@v2
-      - name: Build, Tag Docker image for PR
-        if: github.event_name == 'pull_request'
-        run: make build_tag_ci
+      #- name: Build, Tag Docker image for PR
+      #  if: github.event_name == 'pull_request'
+      #  run: make build_tag_ci
       - name: Build, Tag, Push Docker image
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         run: make build_tag_push_ci
 
   deploy-stacks:
