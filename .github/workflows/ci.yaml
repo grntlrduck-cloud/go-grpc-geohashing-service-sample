@@ -177,7 +177,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: make build_tag_ci
       - name: Build, Tag, Push Docker image
-        # if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         run: make build_tag_push_ci
 
   deploy-stacks:
