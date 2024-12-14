@@ -173,11 +173,11 @@ jobs:
           AWS_REGION: eu-west-1
         id: login-ecr-private
         uses: aws-actions/amazon-ecr-login@v2
-      #- name: Build, Tag Docker image for PR
-      #  if: github.event_name == 'pull_request'
-      #  run: make build_tag_ci
+      - name: Build, Tag Docker image for PR
+        if: github.event_name == 'pull_request'
+        run: make build_tag_ci
       - name: Build, Tag, Push Docker image
-        # if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         run: make build_tag_push_ci
 
   deploy-stacks:
