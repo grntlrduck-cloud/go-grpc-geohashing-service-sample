@@ -77,7 +77,10 @@ func NewDynamoDBWithInitialData(
 	awscdk.NewCustomResource(construct, jsii.String("LoadDataTrigger"), &awscdk.CustomResourceProps{
 		ServiceToken: provider.ServiceToken(),
 		Properties: &map[string]any{
-			"Timestamp": jsii.String(strconv.FormatInt(time.Now().Unix(), 10)),
+			"Timestamp":     jsii.String(strconv.FormatInt(time.Now().Unix(), 10)),
+			"ResourceId":    jsii.String(props.TableName + "-data-loader"),
+			"TableName":     jsii.String(props.TableName),
+			"CsvObjectPath": jsii.String(props.CsvObjectPath),
 		},
 	})
 	return &DynamoDBWithInitialData{

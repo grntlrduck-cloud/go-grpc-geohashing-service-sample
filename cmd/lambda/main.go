@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-lambda-go/cfn"
@@ -26,42 +27,38 @@ type TableInitHandler struct {
 
 func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event) {
 	resp := cfn.NewResponse(event)
-	if event.RequestType != cfn.RequestCreate {
+	resourceID := event.ResourceProperties["ResourceId"]
+	resourceIDStr := event.PhysicalResourceID
+	if resourceID != nil {
+		resourceIDStr = resourceID.(string)
 		handler.logger.Info(
-			"No create event, retuening instant with success",
-			zap.String("event_type", string(event.RequestType)),
+			"using resource id from properties",
+			zap.String("resource_id", resourceIDStr),
 		)
+	}
+	resp.PhysicalResourceID = resourceIDStr
+
+	logger := handler.logger.With(
+		zap.String("request_id", event.RequestID),
+		zap.String("resource_id", resourceIDStr),
+		zap.String("event_type", string(event.RequestType)),
+		zap.String("bucket_name", handler.bucketName),
+		zap.String("data_object_key", handler.csvObjectPath),
+	)
+
+	if event.RequestType != cfn.RequestCreate {
+		logger.Info("No create event, retuening instant with success")
 		resp.Status = cfn.StatusSuccess
 		_ = resp.Send()
 		return
 	}
-	handler.logger.Info(
-		"Processing CREATE event, initiating table",
-		zap.String("event_type", string(event.RequestType)),
-	)
+	logger.Info("Processing CREATE event, initiating table")
 
 	// get data from s3
-	data, err := handler.s3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &handler.bucketName,
-		Key:    &handler.csvObjectPath,
-	})
+	items, err := handler.getDataFromS3(ctx)
 	if err != nil {
-		handler.logger.Error(
-			"failed to get data from bucket",
-			zap.String("bucket_name", handler.bucketName),
-			zap.String("object_key", handler.csvObjectPath),
-			zap.Error(err),
-		)
-		resp.Status = cfn.StatusFailed
-		_ = resp.Send()
-	}
-	defer data.Body.Close()
-
-	var items []*dynamo.CPoIItem
-	err = gocsv.Unmarshal(data.Body, &items)
-	if err != nil {
-		handler.logger.Error(
-			"failed to read to unmarshall body from s3 GetObject response",
+		logger.Error(
+			"failed to read data from s3",
 			zap.Error(err),
 		)
 		resp.Status = cfn.StatusFailed
@@ -73,7 +70,7 @@ func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event
 	for i, v := range items {
 		d, errD := v.Domain()
 		if errD != nil {
-			handler.logger.Error(
+			logger.Error(
 				"failed to map items to domain",
 				zap.Error(errD),
 			)
@@ -95,6 +92,24 @@ func (handler *TableInitHandler) HandleCfn(ctx context.Context, event *cfn.Event
 	// send success response to CFN
 	resp.Status = cfn.StatusSuccess
 	_ = resp.Send()
+	logger.Info("Successful initiated table with data. Done!")
+}
+
+func (handler *TableInitHandler) getDataFromS3(ctx context.Context) ([]*dynamo.CPoIItem, error) {
+	data, err := handler.s3Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &handler.bucketName,
+		Key:    &handler.csvObjectPath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch data from s3: %w", err)
+	}
+	defer data.Body.Close()
+	var items []*dynamo.CPoIItem
+	err = gocsv.Unmarshal(data.Body, &items)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map data to struct: %w", err)
+	}
+	return items, nil
 }
 
 func main() {
