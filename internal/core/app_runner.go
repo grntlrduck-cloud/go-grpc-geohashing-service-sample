@@ -96,7 +96,7 @@ func (a *ApplicationRunner) createRepo() (poi.Repository, error) {
 	dyanmoClient, err := dynamo.NewClientWrapper(dynamoOpts...)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to create dynamoDb client, is IAM confiured correctlty? %w",
+			"failed to create dynamoDb client, is IAM configured correctlty? %w",
 			err,
 		)
 	}
@@ -153,12 +153,6 @@ func (a *ApplicationRunner) Run() {
 }
 
 func (a *ApplicationRunner) awaitTermination() {
-	for {
-		select {
-		case <-a.ctx.Done():
-			return
-		default:
-			continue
-		}
-	}
+	// Block until context is done, avoiding CPU-intensive busy waiting
+	<-a.ctx.Done()
 }
